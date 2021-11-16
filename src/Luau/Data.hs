@@ -9,11 +9,12 @@ data Window = Window { winTitle  ∷ String
                      , winSize   ∷ (Int,Int)
                      , winBuffs  ∷ [Int]
                      , winPages  ∷ [Page]
+                     , winLast   ∷ String
                      } deriving (Show, Eq)
 
 -- | each window contains pages, each page contains winElems
 data Page = Page { pageTitle  ∷ String
-                 , pageElems  ∷ WinElem
+                 , pageElems  ∷ [WinElem]
                  } deriving (Show, Eq)
 
 -- | possible keys, so we dont have to use the GLFW one everywhere

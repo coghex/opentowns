@@ -14,12 +14,10 @@ import Data.Maybe ( fromMaybe )
 import Load.Data
     ( DSStatus(..),
       DrawState(dsStatus, dsTiles, dsBuff, dsWins),
-      LoadCmd(LoadCmdNULL, LoadCmdPrint, LoadCmdDyns, LoadCmdNewWin,
-              LoadCmdSwitchWin, LoadCmdVerts, LoadCmdTest,
-              LoadCmdWindowSize ),
+      LoadCmd(..),
       LoadResult(..) )
 import Luau.Data ()
-import Luau.Window ()
+import Luau.Window ( addPageToWin )
 import Prog.Buff ( genDynBuffs, loadDyns )
 import Prog.Data ( Env(envLoadCh, envFontM, envLoadQ, envEventQ) )
 import Sign.Data
@@ -48,21 +46,21 @@ loadThread ∷ Env → GLFW.Window → IO ()
 loadThread env win = do
   logger ← makeDefaultLogger env (LogStdout 4096) LogInfo
 --  runLog logger $ log' LogInfo "asdf"
-  runLog logger $ runLoadLoop env win initDS TStop
+  runLog logger $ runLoadLoop win initDS TStop
   where initDS = initDrawState
 -- | timed loop so that its not running full speed all the time
-runLoadLoop ∷ (MonadLog μ,MonadFail μ) ⇒ Env → GLFW.Window → DrawState → TState → LogT μ ()
-runLoadLoop env win ds TStop = do
+runLoadLoop ∷ (MonadLog μ,MonadFail μ) ⇒ GLFW.Window → DrawState → TState → LogT μ ()
+runLoadLoop win ds TStop = do
   -- loop starts almost immediately
   tsNew ← readTimerBlocked
-  runLoadLoop env win ds tsNew
-runLoadLoop env win ds TStart = do
+  runLoadLoop win ds tsNew
+runLoadLoop win ds TStart = do
   start ← liftIO getCurrentTime
   timerState ← readTimer
   tsNew ← case timerState of
     Nothing → return TStart
     Just x  → return x
-  ds' ← processCommands env win ds
+  ds' ← processCommands win ds
   end ← liftIO getCurrentTime
   let diff  = diffUTCTime end start
       usecs = floor (toRational diff * 1000000) ∷ Int
@@ -70,58 +68,59 @@ runLoadLoop env win ds TStart = do
   if delay > 0
     then liftIO $ threadDelay delay
     else return ()
-  runLoadLoop env win ds' tsNew
+  runLoadLoop win ds' tsNew
 -- pause not needed for this timer
-runLoadLoop _   _   _ TPause = return ()
-runLoadLoop _   _   _ TNULL  = return ()
+runLoadLoop _   _ TPause = return ()
+runLoadLoop _   _ TNULL  = return ()
 
 -- | command queue processed once per loop
-processCommands ∷ (MonadLog μ,MonadFail μ) ⇒ Env → GLFW.Window → DrawState → LogT μ DrawState
-processCommands env win ds = do
+processCommands ∷ (MonadLog μ,MonadFail μ) ⇒ GLFW.Window → DrawState → LogT μ DrawState
+processCommands win ds = do
   mcmd ← readCommand
   case mcmd of
     Just cmd → do
-      ret ← processCommand env win ds cmd
+      ret ← processCommand win ds cmd
       case ret of
         -- if command success keep processing commands
-        ResSuccess       → processCommands env win ds
+        ResSuccess       → processCommands win ds
         -- request to change the draw state
         ResDrawState ds' → case dsStatus ds' of
-          DSSNULL → processCommands env win ds'
+          DSSNULL → processCommands win ds'
           DSSExit → do
             sendSys SysExit
             return ds'
           DSSLoadDyns → do
             sendLoadCmd LoadCmdDyns
-            processCommands env win ds''
+            processCommands win ds''
               where ds'' = ds' { dsStatus = DSSNULL }
           DSSLoadVerts → do
             sendLoadCmd LoadCmdVerts
-            processCommands env win ds''
+            processCommands win ds''
               where ds'' = ds' { dsStatus = DSSNULL }
           DSSRecreate → do
             sendSys SysRecreate
-            processCommands env win ds''
+            processCommands win ds''
               where ds'' = ds' { dsStatus = DSSNULL }
           DSSReload → do
             sendSys SysReload
-            processCommands env win ds''
+            processCommands win ds''
               where ds'' = ds' { dsStatus = DSSNULL }
           DSSLogDebug n str → do
             log' (LogDebug n) str
-            processCommands env win ds''
+            processCommands win ds''
               where ds'' = ds' { dsStatus = DSSNULL }
         ResError str → do
           log' LogError $ "load command error: " ⧺ str
-          processCommands env win ds
+          processCommands win ds
         ResNULL → do
           log' LogInfo "load null command"
           return ds
     Nothing → return ds
 
 -- | this is the case statement for processing load commands
-processCommand ∷ (MonadLog μ,MonadFail μ) ⇒ Env → GLFW.Window → DrawState → LoadCmd → LogT μ LoadResult
-processCommand env glfwwin ds cmd = case cmd of
+processCommand ∷ (MonadLog μ,MonadFail μ)
+  ⇒ GLFW.Window → DrawState → LoadCmd → LogT μ LoadResult
+processCommand glfwwin ds cmd = case cmd of
   -- context sensitive print
   LoadCmdPrint arg → do
     let ret = case arg of
@@ -148,6 +147,8 @@ processCommand env glfwwin ds cmd = case cmd of
     return $ ResDrawState ds'
   LoadCmdNewWin win → return $ ResDrawState ds'
     where ds' = ds { dsWins = win:dsWins ds }
+  LoadCmdNewPage win page → return $ ResDrawState ds'
+    where ds' = ds { dsWins = addPageToWin win page (dsWins ds) } 
   LoadCmdSwitchWin _   → do
     let ds' = ds
     --let ds' = ds { dsWins      = switchWin win (dsWins ds) }

@@ -13,13 +13,6 @@ import System.Directory (getDirectoryContents)
 import System.FilePath (combine)
 import Load.Data ( LoadCmd(LoadCmdDyns, LoadCmdVerts) )
 import Luau.Command
-    ( hsExit,
-      hsLogDebug,
-      hsLogError,
-      hsLogInfo,
-      hsNewWindow,
-      hsRecreate,
-      hsReload )
 import Prog.Data ( Env(envLoadQ, envEventQ, envLuaCh, envLuaSt) )
 import Sign.Data
     ( Event(EventLog, EventSys),
@@ -45,6 +38,7 @@ loadLuau env = do
     _ ← Lua.runWith ls $ do
       Lua.registerHaskellFunction "rawExit"         (hsExit         env)
       Lua.registerHaskellFunction "rawNewWindow"    (hsNewWindow    env)
+      Lua.registerHaskellFunction "rawNewPage"      (hsNewPage      env)
       Lua.registerHaskellFunction "logDebug"        (hsLogDebug     env)
       Lua.registerHaskellFunction "logInfo"         (hsLogInfo      env)
       Lua.registerHaskellFunction "logError"        (hsLogError     env)
