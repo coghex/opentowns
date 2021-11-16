@@ -6,6 +6,7 @@ module Luau.Window where
 -- functions to help manipulate windows
 import Prelude()
 import UPrelude
+import Elem.Data ( WinElem(..) )
 import Luau.Data ( Window(..), Page(..) )
 
 
@@ -29,3 +30,20 @@ addPageToWin name page (w:ws)
   | winTitle w ≡ name = [w'] ⧺ addPageToWin name page ws
   | otherwise         = [w]  ⧺ addPageToWin name page ws
       where w' = w { winPages = winPages w ⧺ [page] }
+
+-- | adds an elem into a page in a window
+addElemToPageInWin ∷ String → String → WinElem → [Window] → [Window]
+addElemToPageInWin _   _    _    []     = []
+addElemToPageInWin win page el (w:ws)
+  | win ≡ winTitle w = [w'] ⧺ addElemToPageInWin win page el ws
+  | otherwise        = [w]  ⧺ addElemToPageInWin win page el ws
+    where w'    = w { winPages = pages }
+          pages = addElemToPage page el (winPages w)
+
+-- | adds an elem into a page
+addElemToPage ∷ String → WinElem → [Page] → [Page]
+addElemToPage _    _  []     = []
+addElemToPage name el (p:ps)
+  | name ≡ pageTitle p = [p'] ⧺ addElemToPage name el ps
+  | otherwise          = [p]  ⧺ addElemToPage name el ps
+    where p'    = p { pageElems = pageElems p ⧺ [el] }

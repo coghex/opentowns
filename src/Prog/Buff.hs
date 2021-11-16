@@ -4,14 +4,16 @@ module Prog.Buff where
 -- a buffer of invisibly dynamic tiles to manipulate
 import Prelude()
 import UPrelude
+import Elem.Data
 import Load.Data
     ( DrawState(dsTiles, dsWins, dsBuff),
       DynData(DynData, ddTex),
       DynMap(DMNULL, DMBuff),
       Dyns(..),
       Tile(DTile, GTile) )
+import Luau.Data ( Window(..), Page(..) )
 import Luau.Window (currentWin)
-import Vulk.Font ( TTFData )
+import Vulk.Font ( TTFData(..), GlyphMetrics(..), indexTTFData )
 
 -- | buffer dyns initiated with size n, index b
 initBuff ∷ [Int] → [Dyns]
@@ -43,19 +45,66 @@ loadDynData ds ((DTile DMNULL _ _ _ _ _ _):ts)
 -- | generates buffs from drawstate
 genDynBuffs ∷ [TTFData] → DrawState → [Dyns]
 --genDynBuffs ttfdat ds = dynsRes
-genDynBuffs _      ds = dynsRes
+genDynBuffs ttfdat ds = dynsRes
   where dyns0 = dsBuff ds
         dyns1 = case currentWin (dsWins ds) of
           Nothing → dyns0
-          Just _ → dyns0
+          -- Just _ → dyns0
           -- TODO: generate dynamic buffers
-          --Just w → dyns0
+          Just w → genTextDyns ttfdat w dyns0
           --Just w  → genPUTextDyns ttfdat popups
           --            (genPopupDyns popups
           --            (genTextDyns ttfdat
           --            (genButtDyns (genLinkDyns dyns0 w) w) w) w) w
         dynsRes = dyns1
 --        popups = dsPopup ds
+
+-- | set dyns in buff
+setTileBuff ∷ Int → Dyns → [Dyns] → [Dyns]
+setTileBuff n dyns buff = take n buff ⧺ [dyns] ⧺ tail (drop n buff)
+
+-- | turns text from a window's page into dynamic data
+genTextDyns ∷ [TTFData] → Window → [Dyns] → [Dyns]
+genTextDyns ttfdat win = setTileBuff 2 dyns
+  where dyns = Dyns $ newD ⧺ take (256 - length newD)
+                 (repeat (DynData (0,0) (0,0) 0 (0,0)))
+        newD = findPagesText ttfdat (winSize win) (winPages win)
+
+-- | text data requires a buffer set to a 1x1 texture atlas
+findPagesText ∷ [TTFData] → (Int,Int) → [Page] → [DynData]
+findPagesText _      _    []     = []
+findPagesText ttfdat size (p:ps) = findPageText ttfdat size p ⧺ findPagesText ttfdat size ps
+
+-- | returns dynamic data for a single page's text
+findPageText ∷ [TTFData] → (Int,Int) → Page → [DynData]
+findPageText ttfdat size (Page _ elems) = findElemText ttfdat size elems
+
+-- | text data requires a buffer set to 1x1 texture atlas
+findElemText ∷ [TTFData] → (Int,Int) → [WinElem] → [DynData]
+findElemText _      _    []      = []
+findElemText ttfdat size ((WinElemText (x,y) _   str):wes) = dyns ⧺ findElemText ttfdat size wes
+  where dyns  = calcTextDD ttfdat pos' str
+        pos'  = ((2*x) - xNorm, (-2*y) + yNorm + 0.1)
+        xNorm = fromIntegral(fst size)/64.0
+        yNorm = fromIntegral(snd size)/64.0
+findElemText ttfdat size (_:wes) = findElemText ttfdat size wes
+
+---- functions to convert winelems to dyn data
+calcTextDD ∷ [TTFData] → (Double,Double) → String → [DynData]
+calcTextDD ttfdat pos = genStrDDs ttfdat (fst pos) pos
+---- dyns required for a string
+genStrDDs ∷ [TTFData] → Double → (Double,Double) → String → [DynData]
+genStrDDs _       _  _   []         = []
+genStrDDs ttfdat x0 (_,y) ('\n':str) = genStrDDs ttfdat x0 (x0,y - 1)  str
+genStrDDs ttfdat x0 (x,y) (' ':str)  = genStrDDs ttfdat x0 (x + 0.1,y) str
+genStrDDs ttfdat x0 (x,y) (ch:str)   = dd
+  where dd = case indexTTFData ttfdat ch of
+               Nothing → genStrDDs ttfdat x0 (x,y) str
+               Just (TTFData _ chInd (GlyphMetrics chW chH chX chY chA))
+                 → [DynData (realToFrac(x + (2*chX) + chW)
+                 , realToFrac(y + (2*chY) - chH - 0.1))
+                   (realToFrac chW,realToFrac chH) chInd (0,0)]
+                   ⧺ genStrDDs ttfdat x0 (x + (2*chA),y) str
 
 -- | returns a string summarising the buffer situation
 printBuff ∷ DrawState → String

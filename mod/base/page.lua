@@ -12,6 +12,9 @@ end
 
 function page:initPage (n)
     self.pName = n
+    for i,b in pairs(page.pBits) do
+        rawNewElem (self.lwName, page.pName,b)
+    end
 end
 
 function page:newBit (bit)

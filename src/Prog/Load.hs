@@ -17,7 +17,7 @@ import Load.Data
       LoadCmd(..),
       LoadResult(..) )
 import Luau.Data ()
-import Luau.Window ( addPageToWin )
+import Luau.Window ( addPageToWin, addElemToPageInWin )
 import Prog.Buff ( genDynBuffs, loadDyns )
 import Prog.Data ( Env(envLoadCh, envFontM, envLoadQ, envEventQ) )
 import Sign.Data
@@ -149,6 +149,8 @@ processCommand glfwwin ds cmd = case cmd of
     where ds' = ds { dsWins = win:dsWins ds }
   LoadCmdNewPage win page → return $ ResDrawState ds'
     where ds' = ds { dsWins = addPageToWin win page (dsWins ds) } 
+  LoadCmdNewElem win page el → return $ ResDrawState ds'
+    where ds' = ds { dsWins = addElemToPageInWin win page el (dsWins ds) }
   LoadCmdSwitchWin _   → do
     let ds' = ds
     --let ds' = ds { dsWins      = switchWin win (dsWins ds) }

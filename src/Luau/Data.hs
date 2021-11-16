@@ -7,7 +7,6 @@ import Elem.Data ( WinElem(..) )
 -- | abstract window
 data Window = Window { winTitle  ∷ String
                      , winSize   ∷ (Int,Int)
-                     , winBuffs  ∷ [Int]
                      , winPages  ∷ [Page]
                      , winLast   ∷ String
                      } deriving (Show, Eq)

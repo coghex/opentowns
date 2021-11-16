@@ -4,6 +4,7 @@ module Load.Data where
 import Prelude()
 import UPrelude
 import Data ( Color (..), PrintArg(..), FPS(..), Shell(..), Popup(..) )
+import Elem.Data ( WinElem(..) )
 import Luau.Data ( Window(..), Page(..) )
 
 -- | result of the loading thread
@@ -16,6 +17,7 @@ data LoadCmd = LoadCmdPrint !PrintArg
              | LoadCmdDyns
              | LoadCmdNewWin !Window
              | LoadCmdNewPage !String !Page
+             | LoadCmdNewElem !String !String !WinElem
              | LoadCmdSwitchWin !String
              | LoadCmdWindowSize !(Int,Int)
              | LoadCmdTest

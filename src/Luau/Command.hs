@@ -4,6 +4,8 @@ module Luau.Command where
 import Prelude()
 import UPrelude
 import qualified Foreign.Lua as Lua
+import Data ( Color(..) )
+import Elem.Data ( WinElem(..) )
 import Load.Data ( LoadCmd(..) )
 import Prog.Data ( Env(envEventQ, envLoadQ) )
 import Sign.Data
@@ -12,7 +14,7 @@ import Sign.Data
       SysAction(SysReload, SysExit, SysRecreate) )
 import Sign.Queue ( writeQueue )
 import Sign.Var ( atomically )
-import Luau.Data ( Window(Window), Page(..) )
+import Luau.Data ( Window(..), Page(..) )
 
 -- | quits everything using glfw
 hsExit ∷ Env → Lua.Lua ()
@@ -52,7 +54,7 @@ hsNewWindow env name = do
   let loadQ = envLoadQ env
   Lua.liftIO $ atomically $ writeQueue loadQ $ LoadCmdNewWin win
   -- TODO: unhardcode the window size
-  where win = Window name (1280,720) [] [] "NULL"
+  where win = Window name (1280,720) [] "NULL"
 
 -- | add a new page to the draw state
 hsNewPage ∷ Env → String → String → Lua.Lua()
@@ -60,6 +62,13 @@ hsNewPage env name pname = do
   let loadQ = envLoadQ env
   Lua.liftIO $ atomically $ writeQueue loadQ $ LoadCmdNewPage name page
   where page = Page pname []
+
+-- | add a new bit to the page
+hsNewElem ∷ Env → String → String → String → Lua.Lua()
+hsNewElem env name pname elem = do
+  let loadQ = envLoadQ env
+  Lua.liftIO $ atomically $ writeQueue loadQ $ LoadCmdNewElem name pname e
+    where e = WinElemText (0,0) (Color 1 1 1 0) "blop"
 
 -- | switches to page by name
 hsGoToPage ∷ Env → String → Lua.Lua()
