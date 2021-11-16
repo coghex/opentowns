@@ -5,10 +5,11 @@ module Prog.Input where
 -- a thread to handle input
 import Prelude()
 import UPrelude
+import Load.Data ( LoadCmd(..) )
 import Luau.Data ( KeyFunc(KFTest, KFEscape), KeyMap(..) )
 import Prog.Data
     ( CapType(CapNULL, CapKeyChange),
-      Env(envInpCh, envInpQ, envEventQ),
+      Env(..),
       ISStatus(ISSNULL, ISSLogDebug),
       InpResult(..),
       InputAct(..),
@@ -141,8 +142,7 @@ processLoadInput env _   inpSt keymap inp = case inp of
         atomically $ writeQueue (envEventQ env) $ EventSys SysExit
         return ResInpSuccess
       KFTest → do
-        atomically $ writeQueue (envEventQ env)
-          $ EventLog LogInfo $ show keymap
+        atomically $ writeQueue (envLoadQ env) LoadCmdTest
         return ResInpSuccess
       keyfunc → do
         atomically $ writeQueue (envEventQ env)

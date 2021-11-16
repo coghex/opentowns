@@ -14,7 +14,7 @@ import Prog.Data
     ( Env(envEventQ, envDyns, envVerts),
       ReloadState(RSRecreate, RSReload),
       State(stWindow, stReload) )
-import Prog.Util ( logError, logExcept, logInfo, logWarn )
+import Prog.Util ( logError, logExcept, logInfo, logWarn, logDebug )
 import Prog.KeyEvent ( evalKey )
 import Prog.Mouse ( evalMouse, evalScroll )
 import Sign.Data
@@ -49,7 +49,7 @@ processEvent event = case event of
       Just win → liftIO $ GLFW.setWindowShouldClose win True
       Nothing  → logError "no glfw window to close"
   -- multiple types of logging
-  (EventLog (LogDebug _    ) str) → logInfo  str
+  (EventLog (LogDebug _    ) str) → logDebug str
   (EventLog LogInfo          str) → logInfo  str
   (EventLog LogWarn          str) → logWarn  str
   (EventLog LogError         str) → logError str

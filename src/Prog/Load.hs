@@ -21,11 +21,8 @@ import Luau.Window ( addPageToWin, addElemToPageInWin )
 import Prog.Buff ( genDynBuffs, loadDyns )
 import Prog.Data ( Env(envLoadCh, envFontM, envLoadQ, envEventQ) )
 import Sign.Data
-    ( Event(EventLog, EventSys, EventLoad),
-      LoadData(LoadDyns, LoadVerts),
-      LogLevel(LogDebug, LogError, LogInfo),
-      SysAction(SysReload, SysExit, SysRecreate),
-      TState(..) )
+    ( LoadData(LoadDyns, LoadVerts),
+      LogLevel(..), SysAction(..), TState(..) )
 import Sign.Log
 import Sign.Var ( atomically, readTVar )
 import Sign.Queue
@@ -44,7 +41,7 @@ import System.Log.FastLogger (LogType'(LogStdout))
 -- | threaded loop provides work so main thread doesnt stutter
 loadThread ∷ Env → GLFW.Window → IO ()
 loadThread env win = do
-  logger ← makeDefaultLogger env (LogStdout 4096) LogInfo
+  logger ← makeDefaultLogger env (LogStdout 4096) (LogDebug 2)
 --  runLog logger $ log' LogInfo "asdf"
   runLog logger $ runLoadLoop win initDS TStop
   where initDS = initDrawState
@@ -123,11 +120,13 @@ processCommand ∷ (MonadLog μ,MonadFail μ)
 processCommand glfwwin ds cmd = case cmd of
   -- context sensitive print
   LoadCmdPrint arg → do
+    log' (LogDebug 3) "LoadCmdPrint"
     let ret = case arg of
                 PrintNULL → "print null command"
     log' LogInfo ret
     return ResSuccess
   LoadCmdVerts → do
+    log' (LogDebug 3) "LoadCmdVerts"
     ttfdat' ← readFontMapM
     (w',h') ← liftIO $ GLFW.getWindowSize glfwwin
     let ttfdat   = fromMaybe [] ttfdat'
@@ -139,19 +138,27 @@ processCommand glfwwin ds cmd = case cmd of
     sendLoadCmd LoadCmdDyns
     return $ ResDrawState ds'
   LoadCmdDyns → do
+    log' (LogDebug 3) "LoadCmdDyns"
     ttfdat' ← readFontMapM
     let newDyns = loadDyns ds'
         ds'     = ds { dsBuff = genDynBuffs ttfdat ds }
         ttfdat  = fromMaybe [] ttfdat'
     sendLoad $ LoadDyns newDyns
     return $ ResDrawState ds'
-  LoadCmdNewWin win → return $ ResDrawState ds'
+  LoadCmdNewWin win → do
+    log' (LogDebug 3) "LoadCmdNewWin"
+    return $ ResDrawState ds'
     where ds' = ds { dsWins = win:dsWins ds }
-  LoadCmdNewPage win page → return $ ResDrawState ds'
+  LoadCmdNewPage win page → do
+    log' (LogDebug 3) "LoadCmdNewPage"
+    return $ ResDrawState ds'
     where ds' = ds { dsWins = addPageToWin win page (dsWins ds) } 
-  LoadCmdNewElem win page el → return $ ResDrawState ds'
+  LoadCmdNewElem win page el → do
+    log' (LogDebug 3) "LoadCmdNewElem"
+    return $ ResDrawState ds'
     where ds' = ds { dsWins = addElemToPageInWin win page el (dsWins ds) }
   LoadCmdSwitchWin _   → do
+    log' (LogDebug 3) "LoadCmdSwitchWin"
     let ds' = ds
     --let ds' = ds { dsWins      = switchWin win (dsWins ds) }
     --    buffSizes = case (findWin win (dsWins ds)) of
@@ -163,6 +170,6 @@ processCommand glfwwin ds cmd = case cmd of
   -- sometimes you need to test something with a command
   LoadCmdWindowSize _ → return ResSuccess
   LoadCmdTest → do
-    log' (LogDebug 1) "LoadCmdTest"
+    log' (LogDebug 2) "LoadCmdTest"
     return ResSuccess
   LoadCmdNULL → return ResNULL

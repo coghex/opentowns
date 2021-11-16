@@ -71,10 +71,18 @@ runLog l m = runReaderT (runLogT m) l
 log' ∷ (MonadLog μ, MonadFail μ) ⇒ LogLevel → String → μ ()
 log' lvl msg = do
   (Log fil env _   _   _) ← askLog
-  when (fil ≡ lvl) $ liftIO $ do
+  when (lvlbelow fil lvl) $ liftIO $ do
     atomically $ writeQueue (envEventQ env) $ EventLog lvl msg
     -- this line would use the fast logger, this may be better to use
 --    ( fun ∘ toLogStr ) (fmt lvl msg)
+-- | checks that the message level is below verbosity
+lvlbelow ∷ LogLevel → LogLevel → Bool
+lvlbelow (LogDebug n) (LogDebug m) = n ≥ m -- debug level
+lvlbelow (LogDebug _) _            = True
+lvlbelow _            (LogDebug _) = False
+lvlbelow LogInfo      LogInfo      = True
+lvlbelow _            LogInfo      = False
+lvlbelow _            _            = True
 -- | hangs execution until it reads something
 readTimerBlocked ∷ (MonadLog μ, MonadFail μ) ⇒ μ TState
 readTimerBlocked = do
