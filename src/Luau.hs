@@ -25,8 +25,8 @@ import Sign.Var (atomically)
 
 -- | initialization of each mod file, as well as registering all
 --   of the raw functions, and kickoff of the vertex generation
-loadLuau ∷ Env → IO ()
-loadLuau env = do
+luauThread ∷ Env → IO ()
+luauThread env = do
   modFiles ← findModFiles "mod/game/"
   if modFiles == [] then do
     let eventQ = envEventQ env

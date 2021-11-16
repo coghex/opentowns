@@ -17,8 +17,8 @@ import Load.Data
       LoadCmd(..),
       LoadResult(..) )
 import Luau.Data ()
-import Luau.Window ( addPageToWin, addElemToPageInWin )
-import Prog.Buff ( genDynBuffs, loadDyns )
+import Luau.Window ( addPageToWin, addElemToPageInWin, currentWin )
+import Prog.Buff ( genDynBuffs, loadDyns, initBuff )
 import Prog.Data ( Env(envLoadCh, envFontM, envLoadQ, envEventQ) )
 import Sign.Data
     ( LoadData(LoadDyns, LoadVerts),
@@ -41,7 +41,7 @@ import System.Log.FastLogger (LogType'(LogStdout))
 -- | threaded loop provides work so main thread doesnt stutter
 loadThread ∷ Env → GLFW.Window → IO ()
 loadThread env win = do
-  logger ← makeDefaultLogger env (LogStdout 4096) (LogDebug 2)
+  logger ← makeDefaultLogger env (LogStdout 4096) (LogDebug 3)
 --  runLog logger $ log' LogInfo "asdf"
   runLog logger $ runLoadLoop win initDS TStop
   where initDS = initDrawState
@@ -145,6 +145,12 @@ processCommand glfwwin ds cmd = case cmd of
         ttfdat  = fromMaybe [] ttfdat'
     sendLoad $ LoadDyns newDyns
     return $ ResDrawState ds'
+  LoadCmdInitBuff tiles → do
+    return $ ResDrawState $ ds { dsTiles = tiles
+ --                              , dsBuff  = initBuff $ case currentWin (dsWins ds) of
+                               , dsBuff  = initBuff [64,64,256,64,256,256] }
+        --                         Nothing → []
+        --                         Just w0 → winBuffs w0 }
   LoadCmdNewWin win → do
     log' (LogDebug 3) "LoadCmdNewWin"
     return $ ResDrawState ds'
@@ -170,6 +176,6 @@ processCommand glfwwin ds cmd = case cmd of
   -- sometimes you need to test something with a command
   LoadCmdWindowSize _ → return ResSuccess
   LoadCmdTest → do
-    log' (LogDebug 2) "LoadCmdTest"
+    log' (LogDebug 2) $ show $ dsWins ds
     return ResSuccess
   LoadCmdNULL → return ResNULL

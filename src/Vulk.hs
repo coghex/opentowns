@@ -18,8 +18,9 @@ import GHC.Stack ( HasCallStack)
 import Data ( Color(Color), FPS(FPS) )
 import Load.Data
     ( Dyns(Dyns),
-      LoadCmd(LoadCmdVerts, LoadCmdWindowSize),
+      LoadCmd(..),
       Tile(GTile) )
+import Luau ( luauThread )
 import Prog
     ( MonadIO(liftIO),
       Prog,
@@ -141,7 +142,7 @@ runVulk = do
         _ ← liftIO $ forkIO $ loadThread env window
         liftIO $ atomically $ writeChan (envLoadCh env) TStart
         -- interprets and runs the lua files every tick
-     --    _ ← liftIO $ forkIO $ luauThread env
+        _ ← liftIO $ forkIO $ luauThread env
         -- mouse input tracking and key input processing thread
         _ ← liftIO $ forkIO $ inputThread env window
         liftIO $ atomically $ writeChan (envInpCh env) TStart
@@ -377,7 +378,8 @@ genCommandBuffs dev pdev commandPool queues graphicsPipeline renderPass
   --      let ttfdat = fromMaybe [] ttfdat'
         liftIO . atomically $ do
           modifyTVar' (envVerts env) $ const $ Just $ Verts res
- --         writeQueue (envLoadQ env) $ LoadCmdInitBuff tiles
+          -- this initializes the first dynamic buffer
+          writeQueue (envLoadQ env) $ LoadCmdInitBuff tiles
           writeQueue (envLoadQ env) LoadCmdVerts
         return res
       Just (Verts vs) → return vs

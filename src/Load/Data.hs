@@ -15,6 +15,7 @@ data LoadResult = ResSuccess | ResError String
 data LoadCmd = LoadCmdPrint !PrintArg
              | LoadCmdVerts
              | LoadCmdDyns
+             | LoadCmdInitBuff ![Tile]
              | LoadCmdNewWin !Window
              | LoadCmdNewPage !String !Page
              | LoadCmdNewElem !String !String !WinElem
