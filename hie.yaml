@@ -1,0 +1,172 @@
+cradle:
+  cabal:
+    - path: "src/Main.hs"
+      component: "opentowns:exe:opentowns"
+
+    - path: "src/UPrelude.hs"
+      component: "opentowns:exe:opentowns"
+
+    - path: "src/Data.hs"
+      component: "opentowns:exe:opentowns"
+
+    - path: "src/Elem.hs"
+      component: "opentowns:exe:opentowns"
+
+    - path: "src/Elem/Data.hs"
+      component: "opentowns:exe:opentowns"
+
+    - path: "src/Load/Data.hs"
+      component: "opentowns:exe:opentowns"
+
+    - path: "src/Luau.hs"
+      component: "opentowns:exe:opentowns"
+
+    - path: "src/Luau/Command.hs"
+      component: "opentowns:exe:opentowns"
+
+    - path: "src/Luau/Data.hs"
+      component: "opentowns:exe:opentowns"
+
+    - path: "src/Luau/Window.hs"
+      component: "opentowns:exe:opentowns"
+
+    - path: "src/Prog.hs"
+      component: "opentowns:exe:opentowns"
+
+    - path: "src/Prog/Buff.hs"
+      component: "opentowns:exe:opentowns"
+
+    - path: "src/Prog/Data.hs"
+      component: "opentowns:exe:opentowns"
+
+    - path: "src/Prog/Event.hs"
+      component: "opentowns:exe:opentowns"
+
+    - path: "src/Prog/Foreign.hs"
+      component: "opentowns:exe:opentowns"
+
+    - path: "src/Prog/Init.hs"
+      component: "opentowns:exe:opentowns"
+
+    - path: "src/Prog/Input.hs"
+      component: "opentowns:exe:opentowns"
+
+    - path: "src/Prog/KeyEvent.hs"
+      component: "opentowns:exe:opentowns"
+
+    - path: "src/Prog/Load.hs"
+      component: "opentowns:exe:opentowns"
+
+    - path: "src/Prog/Mouse.hs"
+      component: "opentowns:exe:opentowns"
+
+    - path: "src/Prog/Util.hs"
+      component: "opentowns:exe:opentowns"
+
+    - path: "src/Sign.hs"
+      component: "opentowns:exe:opentowns"
+
+    - path: "src/Sign/Data.hs"
+      component: "opentowns:exe:opentowns"
+
+    - path: "src/Sign/Except.hs"
+      component: "opentowns:exe:opentowns"
+
+    - path: "src/Sign/Log.hs"
+      component: "opentowns:exe:opentowns"
+
+    - path: "src/Sign/Queue.hs"
+      component: "opentowns:exe:opentowns"
+
+    - path: "src/Sign/Thread.hs"
+      component: "opentowns:exe:opentowns"
+
+    - path: "src/Sign/Util.hs"
+      component: "opentowns:exe:opentowns"
+
+    - path: "src/Sign/Var.hs"
+      component: "opentowns:exe:opentowns"
+
+    - path: "src/Vulk.hs"
+      component: "opentowns:exe:opentowns"
+
+    - path: "src/Vulk/Atlas.hs"
+      component: "opentowns:exe:opentowns"
+
+    - path: "src/Vulk/Calc.hs"
+      component: "opentowns:exe:opentowns"
+
+    - path: "src/Vulk/Callback.hs"
+      component: "opentowns:exe:opentowns"
+
+    - path: "src/Vulk/Command.hs"
+      component: "opentowns:exe:opentowns"
+
+    - path: "src/Vulk/Data.hs"
+      component: "opentowns:exe:opentowns"
+
+    - path: "src/Vulk/Desc.hs"
+      component: "opentowns:exe:opentowns"
+
+    - path: "src/Vulk/Device.hs"
+      component: "opentowns:exe:opentowns"
+
+    - path: "src/Vulk/Draw.hs"
+      component: "opentowns:exe:opentowns"
+
+    - path: "src/Vulk/Event.hs"
+      component: "opentowns:exe:opentowns"
+
+    - path: "src/Vulk/Font.hs"
+      component: "opentowns:exe:opentowns"
+
+    - path: "src/Vulk/Foreign.hs"
+      component: "opentowns:exe:opentowns"
+
+    - path: "src/Vulk/GLFW.hs"
+      component: "opentowns:exe:opentowns"
+
+    - path: "src/Vulk/Instance.hs"
+      component: "opentowns:exe:opentowns"
+
+    - path: "src/Vulk/Mouse.hs"
+      component: "opentowns:exe:opentowns"
+
+    - path: "src/Vulk/Pipeline.hs"
+      component: "opentowns:exe:opentowns"
+
+    - path: "src/Vulk/Pres.hs"
+      component: "opentowns:exe:opentowns"
+
+    - path: "src/Vulk/Shader.hs"
+      component: "opentowns:exe:opentowns"
+
+    - path: "src/Vulk/Sync.hs"
+      component: "opentowns:exe:opentowns"
+
+    - path: "src/Vulk/Texture.hs"
+      component: "opentowns:exe:opentowns"
+
+    - path: "src/Vulk/TH.hs"
+      component: "opentowns:exe:opentowns"
+
+    - path: "src/Vulk/Trans.hs"
+      component: "opentowns:exe:opentowns"
+
+    - path: "src/Vulk/Vertex.hs"
+      component: "opentowns:exe:opentowns"
+
+    - path: "src/Vulk/Buff.hs"
+      component: "opentowns:exe:opentowns"
+
+    - path: "src/Vulk/VulkData.hs"
+      component: "opentowns:exe:opentowns"
+
+    - path: "src/Vulk/VulkDraw.hs"
+      component: "opentowns:exe:opentowns"
+
+    - path: "src/Vulk/VulkGLFW.hs"
+      component: "opentowns:exe:opentowns"
+
+    - path: "src/Vulk/VulkLoad.hs"
+      component: "opentowns:exe:opentowns"

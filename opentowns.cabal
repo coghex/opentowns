@@ -1,0 +1,144 @@
+cabal-version: >=1.10
+name: opentowns
+version: 0.0.0.1
+license: BSD3
+license-file: LICENSE
+maintainer: vincecoghlan@gmail.com
+author: Vince Coghlan
+category: Game
+build-type: Simple
+
+flag dev
+    default: True
+
+executable opentowns
+    main-is: Main.hs
+    hs-source-dirs: src
+    other-modules: UPrelude
+                   Data
+                   Elem
+                   Elem.Data
+                   Load.Data
+                   Luau
+                   Luau.Command
+                   Luau.Data
+                   Luau.Window
+                   Prog
+                   Prog.Buff
+                   Prog.Data
+                   Prog.Event
+                   Prog.Foreign
+                   Prog.Init
+                   Prog.Input
+                   Prog.KeyEvent
+                   Prog.Load
+                   Prog.Mouse
+                   Prog.Util
+                   Sign
+                   Sign.Data
+                   Sign.Except
+                   Sign.Log
+                   Sign.Queue
+                   Sign.Thread
+                   Sign.Util
+                   Sign.Var
+                   Vulk
+                   Vulk.Atlas
+                   Vulk.Calc
+                   Vulk.Callback
+                   Vulk.Command
+                   Vulk.Data
+                   Vulk.Desc
+                   Vulk.Device
+                   Vulk.Draw
+                   Vulk.Event
+                   Vulk.Font
+                   Vulk.Foreign
+                   Vulk.GLFW
+                   Vulk.Instance
+                   Vulk.Mouse
+                   Vulk.Pipeline
+                   Vulk.Pres
+                   Vulk.Shader
+                   Vulk.Sync
+                   Vulk.Texture
+                   Vulk.TH
+                   Vulk.Trans
+                   Vulk.Vertex
+                   Vulk.Buff
+                   Vulk.VulkData
+                   Vulk.VulkDraw
+                   Vulk.VulkGLFW
+                   Vulk.VulkLoad
+    default-language: Haskell2010
+    --ghc-options: -O2 -fexcess-precision -threaded -eventlog -rtsopts -feager-blackholing -haddock
+    build-depends: base
+                 , base-unicode-symbols
+                 , filepath
+                 , directory
+                 , time
+                 , split
+                 , bytestring
+                 , monad-logger
+                 , exceptions
+                 , fast-logger
+                 , aeson
+                 , mmorph
+                 , transformers
+                 , hslua < 1.4
+                 , stm
+                 , mtl
+                 , random
+                 , process
+                 , vector
+                 , dimensions
+                 , containers
+                 , JuicyPixels
+                 , vulkan-api >= 1.3
+                 , easytensor
+                 , easytensor-vulkan
+                 , GLFW-b
+                 , freetype2
+                 , template-haskell
+    default-extensions: DataKinds
+                        ExplicitForAll
+                        FlexibleInstances
+                        LambdaCase
+                        MagicHash
+                        MultiWayIf
+                        NamedFieldPuns
+                        NegativeLiterals
+                        RecordWildCards
+                        TypeSynonymInstances
+                        UnicodeSyntax
+    other-extensions:   AllowAmbiguousTypes
+                        BangPatterns
+                        ConstraintKinds
+                        CPP
+                        DeriveGeneric
+                        ExistentialQuantification
+                        FlexibleContexts
+                        GADTs
+                        InstanceSigs
+                        KindSignatures
+                        LiberalTypeSynonyms
+                        MonoLocalBinds
+                        MultiParamTypeClasses
+                        PatternSynonyms
+                        PolyKinds
+                        RankNTypes
+                        ScopedTypeVariables
+                        StandaloneDeriving
+                        Strict
+                        StrictData
+                        TemplateHaskell
+                        TypeApplications
+                        TypeOperators
+                        UnboxedTuples
+                        UndecidableInstances
+                        ViewPatterns
+    if flag (dev)
+        cpp-options: -DDEVELOPMENT
+        ghc-options: -O0 -Wall -Wcompat -Wincomplete-record-updates -Wincomplete-uni-patterns -threaded -eventlog -rtsopts -fprof-auto -haddock
+    else
+        ghc-options: -O2 -optc-O3 -fexcess-precision -threaded -rtsopts -feager-blackholing -haddock

@@ -1,0 +1,165 @@
+{-# LANGUAGE Strict #-}
+-- | a huge portion of the engine is here in the load thread.
+--   any time a change needs to occur on screen, the abstract
+--   representation of the draw state needs to be calculated
+--   into dynamic data and passed to the main draw thread. any
+--   changes to the number of objects on screen will trigger
+--   this thread to also generate the verticies and indicies
+module Prog.Load where
+-- a thread to help recreate the swapchain
+import Prelude()
+import UPrelude
+import Data ( PrintArg(PrintNULL) )
+import Data.Maybe ( fromMaybe )
+import Load.Data
+    ( DSStatus(..),
+      DrawState(dsStatus, dsTiles, dsBuff, dsWins),
+      LoadCmd(LoadCmdNULL, LoadCmdPrint, LoadCmdDyns, LoadCmdNewWin,
+              LoadCmdSwitchWin, LoadCmdVerts, LoadCmdTest,
+              LoadCmdWindowSize ),
+      LoadResult(..) )
+import Luau.Data ()
+import Luau.Window ()
+import Prog.Buff ( genDynBuffs, loadDyns )
+import Prog.Data ( Env(envLoadCh, envFontM, envLoadQ, envEventQ) )
+import Sign.Data
+    ( Event(EventLog, EventSys, EventLoad),
+      LoadData(LoadDyns, LoadVerts),
+      LogLevel(LogDebug, LogError, LogInfo),
+      SysAction(SysReload, SysExit, SysRecreate),
+      TState(..) )
+import Sign.Log
+import Sign.Var ( atomically, readTVar )
+import Sign.Queue
+    ( readChan, tryReadChan, tryReadQueue, writeQueue )
+import Prog.Init ( initDrawState )
+import Vulk.Calc ( calcVertices )
+import Vulk.Data ( Verts(Verts) )
+import Vulk.Draw ( loadTiles )
+import Vulk.Mouse ()
+import Control.Concurrent (threadDelay)
+import Control.Monad.IO.Class ( liftIO, MonadIO(..) )
+import Data.Time.Clock (diffUTCTime, getCurrentTime)
+import qualified Vulk.GLFW as GLFW
+import System.Log.FastLogger (LogType'(LogStdout))
+
+-- | threaded loop provides work so main thread doesnt stutter
+loadThread ∷ Env → GLFW.Window → IO ()
+loadThread env win = do
+  logger ← makeDefaultLogger env (LogStdout 4096) LogInfo
+--  runLog logger $ log' LogInfo "asdf"
+  runLog logger $ runLoadLoop env win initDS TStop
+  where initDS = initDrawState
+-- | timed loop so that its not running full speed all the time
+runLoadLoop ∷ (MonadLog μ,MonadFail μ) ⇒ Env → GLFW.Window → DrawState → TState → LogT μ ()
+runLoadLoop env win ds TStop = do
+  -- loop starts almost immediately
+  tsNew ← readTimerBlocked
+  runLoadLoop env win ds tsNew
+runLoadLoop env win ds TStart = do
+  start ← liftIO getCurrentTime
+  timerState ← readTimer
+  tsNew ← case timerState of
+    Nothing → return TStart
+    Just x  → return x
+  ds' ← processCommands env win ds
+  end ← liftIO getCurrentTime
+  let diff  = diffUTCTime end start
+      usecs = floor (toRational diff * 1000000) ∷ Int
+      delay = 1000 - usecs
+  if delay > 0
+    then liftIO $ threadDelay delay
+    else return ()
+  runLoadLoop env win ds' tsNew
+-- pause not needed for this timer
+runLoadLoop _   _   _ TPause = return ()
+runLoadLoop _   _   _ TNULL  = return ()
+
+-- | command queue processed once per loop
+processCommands ∷ (MonadLog μ,MonadFail μ) ⇒ Env → GLFW.Window → DrawState → LogT μ DrawState
+processCommands env win ds = do
+  mcmd ← readCommand
+  case mcmd of
+    Just cmd → do
+      ret ← processCommand env win ds cmd
+      case ret of
+        -- if command success keep processing commands
+        ResSuccess       → processCommands env win ds
+        -- request to change the draw state
+        ResDrawState ds' → case dsStatus ds' of
+          DSSNULL → processCommands env win ds'
+          DSSExit → do
+            sendSys SysExit
+            return ds'
+          DSSLoadDyns → do
+            sendLoadCmd LoadCmdDyns
+            processCommands env win ds''
+              where ds'' = ds' { dsStatus = DSSNULL }
+          DSSLoadVerts → do
+            sendLoadCmd LoadCmdVerts
+            processCommands env win ds''
+              where ds'' = ds' { dsStatus = DSSNULL }
+          DSSRecreate → do
+            sendSys SysRecreate
+            processCommands env win ds''
+              where ds'' = ds' { dsStatus = DSSNULL }
+          DSSReload → do
+            sendSys SysReload
+            processCommands env win ds''
+              where ds'' = ds' { dsStatus = DSSNULL }
+          DSSLogDebug n str → do
+            log' (LogDebug n) str
+            processCommands env win ds''
+              where ds'' = ds' { dsStatus = DSSNULL }
+        ResError str → do
+          log' LogError $ "load command error: " ⧺ str
+          processCommands env win ds
+        ResNULL → do
+          log' LogInfo "load null command"
+          return ds
+    Nothing → return ds
+
+-- | this is the case statement for processing load commands
+processCommand ∷ (MonadLog μ,MonadFail μ) ⇒ Env → GLFW.Window → DrawState → LoadCmd → LogT μ LoadResult
+processCommand env glfwwin ds cmd = case cmd of
+  -- context sensitive print
+  LoadCmdPrint arg → do
+    let ret = case arg of
+                PrintNULL → "print null command"
+    log' LogInfo ret
+    return ResSuccess
+  LoadCmdVerts → do
+    ttfdat' ← readFontMapM
+    (w',h') ← liftIO $ GLFW.getWindowSize glfwwin
+    let ttfdat   = fromMaybe [] ttfdat'
+        winSize  = (fromIntegral w'/64.0,fromIntegral h'/64.0)
+        newVerts = Verts $ calcVertices $ loadTiles ds winSize ttfdat
+        ds'      = ds { dsTiles = loadTiles ds winSize ttfdat }
+    sendLoad $ LoadVerts newVerts
+    -- TODO: test if the next line is neccesary
+    sendLoadCmd LoadCmdDyns
+    return $ ResDrawState ds'
+  LoadCmdDyns → do
+    ttfdat' ← readFontMapM
+    let newDyns = loadDyns ds'
+        ds'     = ds { dsBuff = genDynBuffs ttfdat ds }
+        ttfdat  = fromMaybe [] ttfdat'
+    sendLoad $ LoadDyns newDyns
+    return $ ResDrawState ds'
+  LoadCmdNewWin win → return $ ResDrawState ds'
+    where ds' = ds { dsWins = win:dsWins ds }
+  LoadCmdSwitchWin _   → do
+    let ds' = ds
+    --let ds' = ds { dsWins      = switchWin win (dsWins ds) }
+    --    buffSizes = case (findWin win (dsWins ds)) of
+    --                  Nothing → []
+    --                  Just w  → winBuffs w
+    sendLoadCmd LoadCmdVerts
+    --atomically $ writeQueue (envInpQ  env) $ InputSwitchWin win
+    return $ ResDrawState ds'
+  -- sometimes you need to test something with a command
+  LoadCmdWindowSize _ → return ResSuccess
+  LoadCmdTest → do
+    log' (LogDebug 1) "LoadCmdTest"
+    return ResSuccess
+  LoadCmdNULL → return ResNULL

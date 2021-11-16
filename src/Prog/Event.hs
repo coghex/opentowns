@@ -1,0 +1,97 @@
+{-# LANGUAGE Strict #-}
+-- | events are processed in the parent thread so
+--   as little work as possible is done here
+module Prog.Event where
+-- events and exceptions are handled
+import Prelude()
+import UPrelude
+import Control.Monad.State.Class (modify,gets)
+import System.Exit (exitSuccess)
+import qualified Vulk.GLFW as GLFW
+import Prog
+    ( MonadIO(liftIO), Prog, MonadReader(ask), MonadState(get) )
+import Prog.Data
+    ( Env(envEventQ, envDyns, envVerts),
+      ReloadState(RSRecreate, RSReload),
+      State(stWindow, stReload) )
+import Prog.Util ( logError, logExcept, logInfo, logWarn )
+import Prog.KeyEvent ( evalKey )
+import Prog.Mouse ( evalMouse, evalScroll )
+import Sign.Data
+    ( Event(..),
+      InputEvent(InputMouseScroll, InputKey, InputMouseButton),
+      LoadData(LoadVerts, LoadDyns),
+      LogLevel(LogError, LogDebug, LogInfo, LogWarn),
+      SysAction(SysReload, SysExit, SysRecreate) )
+import Sign.Except ( ExType(ExVulk) )
+import Sign.Queue ( tryReadQueue )
+import Sign.Var ( atomically, modifyTVar' )
+
+-- | reads event channel, then exectutes events recursively
+processEvents ∷ Prog ε σ ()
+processEvents = do
+  env ← ask
+  event ← liftIO $ atomically $ tryReadQueue $ envEventQ env
+  case event of
+    Just e → do
+      processEvent e
+      processEvents
+    Nothing → return ()
+-- | case statement on each event, these are mostly callbacks
+--   since we want as little work as possible here
+processEvent ∷ Event → Prog ε σ ()
+processEvent event = case event of
+  -- this bit only parses glfw errors
+  (EventError err str) → do
+    st ← get
+    _  ← logExcept err ExVulk str
+    case stWindow st of
+      Just win → liftIO $ GLFW.setWindowShouldClose win True
+      Nothing  → logError "no glfw window to close"
+  -- multiple types of logging
+  (EventLog (LogDebug _    ) str) → logInfo  str
+  (EventLog LogInfo          str) → logInfo  str
+  (EventLog LogWarn          str) → logWarn  str
+  (EventLog LogError         str) → logError str
+  (EventLog _        str) → logInfo $ "unknown log type: " ⧺ str
+  -- this will exit the game
+  (EventSys SysExit) → do
+    st ← get
+    case stWindow st of
+      Just win → liftIO $ GLFW.setWindowShouldClose win True
+      Nothing  → liftIO exitSuccess
+  -- recreation of the swapchain, reloading all textures
+  (EventSys SysRecreate) → do
+    modify $ \s → s { stReload = RSRecreate }
+  -- reloading of dynamic data to apply to trans functions
+  (EventSys SysReload) → do
+    stRel ← gets stReload
+    case stRel of
+      RSRecreate → return ()
+      _          → modify $ \s → s { stReload = RSReload }
+  (EventSys cmd) → logInfo $ "no known sys command" ⧺ show cmd
+  -- processing of input occurs in the input thread
+  (EventInput (InputKey         win k _ ks mk))
+    → evalKey win k ks mk
+  (EventInput (InputMouseButton win mb mbs mk))
+    → evalMouse win mb mbs mk
+  (EventInput (InputMouseScroll win x y      ))
+    → evalScroll win x y
+  -- take the dyns from the load thread and copy to transactional memory
+  (EventLoad (LoadDyns  dyns))  → do
+    env ← ask
+    liftIO . atomically $ modifyTVar' (envDyns env) $ \_ → Just dyns
+  -- take the verts, but also make sure to recreate
+  -- since we need new command bufferss
+  (EventLoad (LoadVerts verts)) → do
+    stRel ← gets stReload
+    env ← ask
+    case stRel of
+      RSRecreate  → liftIO . atomically $ modifyTVar' (envVerts env)
+                      $ \_ → Just verts
+      _           → do
+          liftIO . atomically $ modifyTVar' (envVerts env)
+                      $ \_ → Just verts
+          modify $ \s → s { stReload = RSRecreate }
+  --(EventGLFW cmd) → processGLFWCommand cmd
+  --(EventSettings cmd) → processSettCmd cmd
