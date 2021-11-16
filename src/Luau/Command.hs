@@ -5,12 +5,14 @@ import Prelude()
 import UPrelude
 import qualified Foreign.Lua as Lua
 import Data ( Color(..) )
+import Data.List.Split (splitOn)
+import Numeric ( readHex )
+import Text.Read ( readMaybe )
 import Elem.Data ( WinElem(..) )
 import Load.Data ( LoadCmd(..) )
 import Prog.Data ( Env(envEventQ, envLoadQ) )
 import Sign.Data
-    ( Event(EventSys, EventLog),
-      LogLevel(LogError, LogDebug, LogInfo),
+    ( Event(EventSys, EventLog), LogLevel(..),
       SysAction(SysReload, SysExit, SysRecreate) )
 import Sign.Queue ( writeQueue )
 import Sign.Var ( atomically )
@@ -65,11 +67,46 @@ hsNewPage env name pname = do
 
 -- | add a new bit to the page
 hsNewElem ∷ Env → String → String → String → Lua.Lua()
-hsNewElem env name pname elem = do
-  let loadQ = envLoadQ env
-  Lua.liftIO $ atomically $ writeQueue loadQ $ LoadCmdNewElem name pname e
-    where e = WinElemText (0,0) (Color 1 1 1 0) "blop"
-
+hsNewElem env name pname el = case head $ splitOn ":" el of
+  "text" → do
+    let loadQ  = envLoadQ env
+        e      = WinElemText pos color text
+        args   = tail $ splitOn ":" el
+        text   = head args
+        x'     = readMaybe (head (tail args))        ∷ Maybe Double
+        y'     = readMaybe (head (tail (tail args))) ∷ Maybe Double
+        pos    = sanitizeXY x' y'
+        color  = sanitizeColor $ head $ tail $ tail $ tail args
+        -- TODO: get arguments going
+     --   ellink = last args
+    Lua.liftIO $ atomically $ writeQueue loadQ $ LoadCmdNewElem name pname e
+  unk → Lua.liftIO $ atomically $ writeQueue (envEventQ env) $ EventLog LogWarn
+    $ "unknown element: " ⧺ unk
+-- | makes sure x,y pair strings are readable, if not, returns 0's
+sanitizeXY ∷ Maybe Double → Maybe Double → (Double,Double)
+sanitizeXY Nothing  Nothing  = (0,0)
+sanitizeXY (Just x) Nothing  = (x,0)
+sanitizeXY Nothing  (Just y) = (0,y)
+sanitizeXY (Just x) (Just y) = (x,y)
+-- | makes sure the hex color values are legible, if not, returns
+-- | (1,1,1,0). accepts formats "0xRRGGBB" "RRGGBB", with optional "AA"
+sanitizeColor ∷ String → Color
+sanitizeColor str = if (head str ≡ '0') ∧ (head (tail str) ≡ 'x') then
+  sanitizeColorF (tail (tail str)) else sanitizeColorF str
+-- | sanitizes hex values after "0x" is stripped
+sanitizeColorF ∷ String → Color
+sanitizeColorF str
+  | length str ≡ 6  = Color r g b 0
+  | length str ≡ 8  = Color r g b a
+  | otherwise       = Color 1 1 1 0
+  where (r,_) = head $ readHex r'
+        (g,_) = head $ readHex g'
+        (b,_) = head $ readHex b'
+        (a,_) = head $ readHex a'
+        r'    = [str ‼ 0,str ‼ 1]
+        g'    = [str ‼ 2,str ‼ 3]
+        b'    = [str ‼ 4,str ‼ 5]
+        a'    = [str ‼ 6,str ‼ 7]
 -- | switches to page by name
 hsGoToPage ∷ Env → String → Lua.Lua()
 hsGoToPage env name = do

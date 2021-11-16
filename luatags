@@ -1,0 +1,22 @@
+!_TAG_FILE_FORMAT	2	/extended format; --format=1 will not append ;" to lines/
+!_TAG_FILE_SORTED	1	/0=unsorted, 1=sorted, 2=foldcase/
+!_TAG_OUTPUT_FILESEP	slash	/slash or backslash/
+!_TAG_OUTPUT_MODE	u-ctags	/u-ctags or e-ctags/
+!_TAG_PATTERN_LENGTH_LIMIT	96	/0 for no limit/
+!_TAG_PROGRAM_AUTHOR	Universal Ctags Team	//
+!_TAG_PROGRAM_NAME	Universal Ctags	/Derived from Exuberant Ctags/
+!_TAG_PROGRAM_URL	https://ctags.io/	/official site/
+!_TAG_PROGRAM_VERSION	0.0.0	//
+game.print	./mod/base/game.lua	/^function game.print(str)$/;"	f
+initLuau	./mod/base/game.lua	/^function initLuau (files)$/;"	f
+initMod	./mod/game/opentowns.lua	/^function initMod ()$/;"	f
+page:initPage	./mod/base/page.lua	/^function page:initPage (n)$/;"	f
+page:new	./mod/base/page.lua	/^function page:new (o)$/;"	f
+page:newBit	./mod/base/page.lua	/^function page:newBit (bit)$/;"	f
+runLuau	./mod/base/game.lua	/^function runLuau (files)$/;"	f
+runMod	./mod/game/opentowns.lua	/^function runMod ()$/;"	f
+textBit	./mod/base/bit.lua	/^function textBit (mx,my,text,color,name)$/;"	f
+window:addPage	./mod/base/window.lua	/^function window:addPage (page)$/;"	f
+window:goToPage	./mod/base/window.lua	/^function window:goToPage (n)$/;"	f
+window:initWindow	./mod/base/window.lua	/^function window:initWindow (n)$/;"	f
+window:new	./mod/base/window.lua	/^function window:new (o)$/;"	f

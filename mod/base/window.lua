@@ -1,6 +1,7 @@
 -- base mod defines some basic gameplay
 -- this data type represents a classlike
 -- interface to the haskell objects
+require "mod/base/page"
 window = {}
 
 function window:new (o)
@@ -20,9 +21,12 @@ end
 function window:goToPage (n)
     rawGoToPage (n)
 end
-  
+
 function window:addPage (page)
     rawNewPage (self.lwName,page.pName)
+    for i,b in pairs(page.pBits) do
+        rawNewElem (self.lwName, page.pName,b)
+    end
 end
 
 return window

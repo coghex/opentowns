@@ -40,6 +40,7 @@ luauThread env = do
       Lua.registerHaskellFunction "rawNewWindow"    (hsNewWindow    env)
       Lua.registerHaskellFunction "rawNewPage"      (hsNewPage      env)
       Lua.registerHaskellFunction "rawNewElem"      (hsNewElem      env)
+      Lua.registerHaskellFunction "rawGoToPage"     (hsGoToPage     env)
       Lua.registerHaskellFunction "logDebug"        (hsLogDebug     env)
       Lua.registerHaskellFunction "logInfo"         (hsLogInfo      env)
       Lua.registerHaskellFunction "logError"        (hsLogError     env)
