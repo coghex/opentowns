@@ -21,7 +21,8 @@ switchWin ∷ String → [Window] → [Window]
 switchWin name wins = [win1] ⧺ olds
   where olds = filter (\w → winTitle w ≠ name) wins
         win0 = head $ filter (\w → winTitle w ≠ name) wins
-        win1 = win0 { winLast = winTitle $ head olds }
+        win1 = win0 { winCurr = name
+                    , winLast = winTitle $ head olds }
 
 -- | adds a page to a window
 addPageToWin ∷ String → Page → [Window] → [Window]

@@ -68,16 +68,20 @@ genTextDyns ∷ [TTFData] → Window → [Dyns] → [Dyns]
 genTextDyns ttfdat win = setTileBuff 2 dyns
   where dyns = Dyns $ newD ⧺ take (256 - length newD)
                  (repeat (DynData (0,0) (0,0) 0 (0,0)))
-        newD = findPagesText ttfdat (winSize win) (winPages win)
+        newD = findPagesText ttfdat (winSize win) (winCurr win) (winPages win)
 
 -- | text data requires a buffer set to a 1x1 texture atlas
-findPagesText ∷ [TTFData] → (Int,Int) → [Page] → [DynData]
-findPagesText _      _    []     = []
-findPagesText ttfdat size (p:ps) = findPageText ttfdat size p ⧺ findPagesText ttfdat size ps
+findPagesText ∷ [TTFData] → (Int,Int) → String → [Page] → [DynData]
+findPagesText _      _    _       []     = []
+findPagesText ttfdat size current (p:ps)
+  = findPageText ttfdat size current p
+  ⧺ findPagesText ttfdat size current ps
 
 -- | returns dynamic data for a single page's text
-findPageText ∷ [TTFData] → (Int,Int) → Page → [DynData]
-findPageText ttfdat size (Page _ elems) = findElemText ttfdat size elems
+findPageText ∷ [TTFData] → (Int,Int) → String → Page → [DynData]
+findPageText ttfdat size current (Page name elems)
+  | current ≡ name = findElemText ttfdat size elems
+  | otherwise      = []
 
 -- | text data requires a buffer set to 1x1 texture atlas
 findElemText ∷ [TTFData] → (Int,Int) → [WinElem] → [DynData]
