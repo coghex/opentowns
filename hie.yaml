@@ -15,6 +15,9 @@ cradle:
     - path: "src/Elem/Data.hs"
       component: "opentowns:exe:opentowns"
 
+    - path: "src/Load.hs"
+      component: "opentowns:exe:opentowns"
+
     - path: "src/Load/Data.hs"
       component: "opentowns:exe:opentowns"
 
@@ -52,9 +55,6 @@ cradle:
       component: "opentowns:exe:opentowns"
 
     - path: "src/Prog/KeyEvent.hs"
-      component: "opentowns:exe:opentowns"
-
-    - path: "src/Prog/Load.hs"
       component: "opentowns:exe:opentowns"
 
     - path: "src/Prog/Mouse.hs"

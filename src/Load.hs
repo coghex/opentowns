@@ -5,7 +5,7 @@
 --   into dynamic data and passed to the main draw thread. any
 --   changes to the number of objects on screen will trigger
 --   this thread to also generate the verticies and indicies
-module Prog.Load where
+module Load where
 -- a thread to help recreate the swapchain
 import Prelude()
 import UPrelude
@@ -41,7 +41,7 @@ import System.Log.FastLogger (LogType'(LogStdout))
 -- | threaded loop provides work so main thread doesnt stutter
 loadThread ∷ Env → GLFW.Window → IO ()
 loadThread env win = do
-  logger ← makeDefaultLogger env (LogStdout 4096) (LogDebug 3)
+  logger ← makeDefaultLogger env (LogStdout 4096) (LogDebug 2)
 --  runLog logger $ log' LogInfo "asdf"
   runLog logger $ runLoadLoop win initDS TStop
   where initDS = initDrawState

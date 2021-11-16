@@ -18,6 +18,7 @@ executable opentowns
                    Data
                    Elem
                    Elem.Data
+                   Load
                    Load.Data
                    Luau
                    Luau.Command
@@ -31,7 +32,6 @@ executable opentowns
                    Prog.Init
                    Prog.Input
                    Prog.KeyEvent
-                   Prog.Load
                    Prog.Mouse
                    Prog.Util
                    Sign

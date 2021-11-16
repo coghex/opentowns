@@ -34,7 +34,7 @@ import Prog.Data
 import Prog.Event ( processEvents )
 import Prog.Foreign ( mallocRes, newArrayRes )
 import Prog.Input ( inputThread )
-import Prog.Load ( loadThread )
+import Load ( loadThread )
 import Prog.Util ( getTime, logDebug, logExcept, logInfo, loop )
 import Sign.Data ( TState(TStart) )
 import Sign.Except ( testEx, ExType(ExVulk) )
