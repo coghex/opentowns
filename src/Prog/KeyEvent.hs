@@ -5,7 +5,7 @@ module Prog.KeyEvent where
 import Prelude()
 import UPrelude
 import qualified Data.Map as Map
-import Luau.Data ( Key(..), KeyFunc, KeyMap(..) )
+import Data ( Key(..), KeyFunc, KeyMap(..) )
 import Prog
     ( MonadIO(liftIO), Prog, MonadReader(ask) )
 import Prog.Data

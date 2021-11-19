@@ -4,11 +4,12 @@ module Prog.Data where
 import Prelude()
 import UPrelude
 import qualified Control.Monad.Logger.CallStack as Logger
-import Data ( FPS(..), Difficulty(..) )
+import Data ( FPS(..), Difficulty(..)
+            , Key, KeyFunc, KeyMap )
 import Data.Time.Clock.System ( SystemTime )
 import qualified Foreign.Lua as Lua
+import Elem.Data ( Button(..) )
 import Load.Data ( LoadCmd(..), Dyns(..) )
-import Luau.Data ( Key, KeyFunc, KeyMap )
 import Sign.Data ( Event, TState )
 import Sign.Except ( ProgExcept )
 import Sign.Queue ( Queue, TChan )
@@ -105,14 +106,14 @@ data CapType = CapKeyChange Int KeyFunc
 
 
 -- | input state related to various winelems
-data InputElem = IENULL deriving (Show, Eq)
-
+data InputElem = IEButt Button | IENULL deriving (Show, Eq)
 -- | possible input actions
 data InputAct = InpActKey GLFW.Key GLFW.KeyState GLFW.ModifierKeys 
               | InpActMouse GLFW.MouseButton
                   GLFW.MouseButtonState GLFW.ModifierKeys
               | InpActSwitchWin String
               | InpActSetCap CapType
+              | InpActSetLink Button
               | InpActNULL deriving (Show, Eq)
 
 -- | certain keys state

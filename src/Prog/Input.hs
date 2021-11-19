@@ -5,8 +5,8 @@ module Prog.Input where
 -- a thread to handle input
 import Prelude()
 import UPrelude
+import Data ( KeyFunc(KFTest, KFEscape), KeyMap(..) )
 import Load.Data ( LoadCmd(..) )
-import Luau.Data ( KeyFunc(KFTest, KFEscape), KeyMap(..) )
 import Prog.Data
     ( CapType(CapNULL, CapKeyChange),
       Env(..),

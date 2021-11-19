@@ -6,17 +6,19 @@ import UPrelude
 import qualified Foreign.Lua as Lua
 import Data ( Color(..) )
 import Data.List.Split (splitOn)
+import Data.Maybe ( fromMaybe )
 import Numeric ( readHex )
 import Text.Read ( readMaybe )
-import Elem.Data ( WinElem(..) )
+import Elem.Data ( WinElem(..), ButtAction(..) )
 import Load.Data ( LoadCmd(..) )
-import Prog.Data ( Env(envEventQ, envLoadQ) )
+import Prog.Data ( Env(..) )
 import Sign.Data
     ( Event(EventSys, EventLog), LogLevel(..),
       SysAction(SysReload, SysExit, SysRecreate) )
 import Sign.Queue ( writeQueue )
-import Sign.Var ( atomically )
+import Sign.Var ( atomically, readTVar )
 import Luau.Data ( Window(..), Page(..) )
+import Vulk.Draw ( calcTextBoxSize )
 
 -- | quits everything using glfw
 hsExit ∷ Env → Lua.Lua ()
@@ -80,8 +82,24 @@ hsNewElem env name pname el = case head $ splitOn ":" el of
         -- TODO: get arguments going
      --   ellink = last args
     Lua.liftIO $ atomically $ writeQueue loadQ $ LoadCmdNewElem name pname e
-  unk → Lua.liftIO $ atomically $ writeQueue (envEventQ env) $ EventLog LogWarn
-    $ "unknown element: " ⧺ unk
+  "butt" → do
+    let loadQ  = envLoadQ env
+        args   = tail $ splitOn ":" el
+        text   = head args
+        x'     = readMaybe (head (tail args))        ∷ Maybe Double
+        y'     = readMaybe (head (tail (tail args))) ∷ Maybe Double
+        pos    = sanitizeXY x' y'
+        color  = sanitizeColor $ head $ tail $ tail $ tail args
+        -- TODO: get arguments going
+        ellink = last args
+    ttfdat' ← Lua.liftIO $ atomically $ readTVar (envFontM env)
+    let ttfdat = fromMaybe [] ttfdat'
+        (w,h)  = calcTextBoxSize text ttfdat
+        e      = WinElemButt pos color (w,h) w (ButtActionLink ellink) (-1) text False
+    Lua.liftIO $ atomically $ writeQueue loadQ
+      $ LoadCmdNewElem name pname e
+  unk → Lua.liftIO $ atomically $ writeQueue (envEventQ env)
+    $ EventLog LogWarn $ "unknown element: " ⧺ unk
 -- | makes sure x,y pair strings are readable, if not, returns 0's
 sanitizeXY ∷ Maybe Double → Maybe Double → (Double,Double)
 sanitizeXY Nothing  Nothing  = (0,0)

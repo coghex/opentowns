@@ -4,7 +4,7 @@ module Load.Data where
 import Prelude()
 import UPrelude
 import Data ( Color (..), PrintArg(..), FPS(..), Shell(..), Popup(..) )
-import Elem.Data ( WinElem(..) )
+import Elem.Data ( WinElem(..), Button(..) )
 import Luau.Data ( Window(..), Page(..) )
 
 -- | result of the loading thread
@@ -21,6 +21,7 @@ data LoadCmd = LoadCmdPrint !PrintArg
              | LoadCmdNewElem !String !String !WinElem
              | LoadCmdSwitchWin !String
              | LoadCmdWindowSize !(Int,Int)
+             | LoadCmdDS !DrawStateCmd
              | LoadCmdTest
              | LoadCmdNULL deriving (Show, Eq)
 
@@ -63,6 +64,12 @@ data DSStatus = DSSLogDebug Int String
  --             | DSSSwitchWin String
               | DSSExit
               | DSSNULL deriving (Show, Eq)
+
+-- | draw state commands are the enumeration of commands to change
+--   the draw state, if these were enumerated as LoadCmds, the Load.hs
+--   file would be huge, so we process them seperately in Load.Cmd
+data DrawStateCmd = DSCToggleButts [Button]
+                  | DSCNULL deriving (Show, Eq)
 
 -- | gtiles represent abstract tiles
 data Tile = GTile { tPos   ∷ (Double,Double)

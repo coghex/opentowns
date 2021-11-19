@@ -5,11 +5,16 @@ module Prog.Mouse where
 -- mouse input is handled
 import Prelude()
 import UPrelude
+import Elem.Data
+    ( Button(..),
+      ButtFunc(..) )
+import Load.Data ( LoadCmd(..), DrawStateCmd(..) )
 import Prog ( MonadIO(liftIO), Prog, MonadReader(ask) )
 import Prog.Data
-    ( Env(envInpQ),
+    ( Env(..),
       InputAct(InpActMouse),
-      InputState(mousePos) )
+      InputState(..),
+      InputElem(..) )
 import Prog.Util ( logInfo )
 import Sign.Queue ( writeQueue )
 import Sign.Var ( atomically )
@@ -59,12 +64,16 @@ normaliseCoord (mx,my) (_ ,_ ) = (x,y)
 
 -- | processes mouse position every frame
 processLoadMouse ∷ Env → GLFW.Window → InputState → IO InputState
-processLoadMouse _   win inpSt = do
+processLoadMouse env win inpSt = do
   pos ← GLFW.getCursorPos win
 --  case linkTest (findLinks (isElems inpSt)) pos of
 --    Just l0 → atomically $ writeQueue (envLoadQ env) $ LoadCmdLink l0
 --    Nothing → return ()
   let inpSt' = inpSt { mousePos = pos }
+      -- TODO: unhardcode window size
+      butts  = findAllButtsUnder w0 (1280,720) (findButts (isElems inpSt)) pos
+      w0     = isWin inpSt'
+  atomically $ writeQueue (envLoadQ env) $ LoadCmdDS $ DSCToggleButts butts
 --      links  = findAllLinksUnder win (1280,720)
 --                 (findLinks (isElems inpSt)) pos
 --      butts  = findAllButtsUnder win (1280,720)
@@ -75,3 +84,19 @@ processLoadMouse _   win inpSt = do
 --  atomically $ writeQueue (envLoadQ env) $ LoadCmdToggleButts butts
   return inpSt'
   --else return inpSt'
+
+findButts ∷ [InputElem] → [Button]
+findButts []                  = []
+findButts ((IEButt butt):ies) = [butt] ⧺ findButts ies
+findButts (_:ies)             = findButts ies
+
+findAllButtsUnder ∷ String → (Int,Int) → [Button] → (Double,Double) → [Button]
+findAllButtsUnder _   _    []     _   = []
+findAllButtsUnder win size (b:bs) pos
+  | buttUnder win size b pos = [b] ⧺ findAllButtsUnder win size bs pos
+  | otherwise                = findAllButtsUnder win size bs pos
+
+buttUnder ∷ String → (Int,Int) → Button → (Double,Double) → Bool
+buttUnder name _ (Button _ (x,y) (w,h) win) (mx,my)
+  | name ≡ win = (abs((mx / 64.0) - x - 0.5) < (0.5*w)) ∧ (abs((my / 64.0) - y) < (0.25*h))
+  | otherwise  = False

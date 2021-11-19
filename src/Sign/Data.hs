@@ -4,6 +4,7 @@ module Sign.Data where
 import Prelude()
 import UPrelude
 import Data ( PrintArg(..) )
+import Elem.Data ( Button(..) )
 import Load.Data ( Dyns(..) )
 import Vulk.Data ( Verts(..) )
 import qualified Vulk.GLFW as GLFW
@@ -51,3 +52,5 @@ data SettCmd = SettCmdNULL deriving (Show, Eq)
 -- | commands for functionality at the lowest level
 data SysAction = SysRecreate | SysReload
                | SysExit | SysNULL deriving (Show, Eq)
+
+

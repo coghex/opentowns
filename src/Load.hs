@@ -11,6 +11,7 @@ import Prelude()
 import UPrelude
 import Data ( PrintArg(PrintNULL) )
 import Data.Maybe ( fromMaybe )
+import Load.Cmd
 import Load.Data
     ( DSStatus(..),
       DrawState(dsStatus, dsTiles, dsBuff, dsWins),
@@ -160,6 +161,9 @@ processCommand glfwwin ds cmd = case cmd of
     log' (LogDebug 3) "LoadCmdNewPage"
     return $ ResDrawState ds'
     where ds' = ds { dsWins = addPageToWin win page (dsWins ds) } 
+  LoadCmdDS dsCmd → do
+    ds' ← liftIO $ processDrawStateCommand ds dsCmd
+    return $ ResDrawState ds'
   LoadCmdNewElem win page el → do
     log' (LogDebug 3) "LoadCmdNewElem"
     return $ ResDrawState ds'

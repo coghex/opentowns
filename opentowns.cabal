@@ -19,6 +19,7 @@ executable opentowns
                    Elem
                    Elem.Data
                    Load
+                   Load.Cmd
                    Load.Data
                    Luau
                    Luau.Command

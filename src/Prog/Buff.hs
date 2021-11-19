@@ -46,22 +46,49 @@ loadDynData ds ((DTile DMNULL _ _ _ _ _ _):ts)
 genDynBuffs ∷ [TTFData] → DrawState → [Dyns]
 --genDynBuffs ttfdat ds = dynsRes
 genDynBuffs ttfdat ds = dynsRes
-  where dyns0 = dsBuff ds
-        dyns1 = case currentWin (dsWins ds) of
+  where dyns0   = dsBuff ds
+        dynsRes = case currentWin (dsWins ds) of
           Nothing → dyns0
           -- Just _ → dyns0
           -- TODO: generate dynamic buffers
-          Just w → genTextDyns ttfdat w dyns0
+          Just w → dyns2
+            where dyns2 = genButtDyns dyns1 w
+                  dyns1 = genTextDyns ttfdat w dyns0
           --Just w  → genPUTextDyns ttfdat popups
           --            (genPopupDyns popups
           --            (genTextDyns ttfdat
           --            (genButtDyns (genLinkDyns dyns0 w) w) w) w) w
-        dynsRes = dyns1
 --        popups = dsPopup ds
 
 -- | set dyns in buff
 setTileBuff ∷ Int → Dyns → [Dyns] → [Dyns]
 setTileBuff n dyns buff = take n buff ⧺ [dyns] ⧺ tail (drop n buff)
+
+-- generate dynamic data for a button
+genButtDyns ∷ [Dyns] → Window → [Dyns]
+genButtDyns buff win = setTileBuff 1 dyns buff
+  where dyns = Dyns $ newD ⧺ take (64 - length newD) (repeat (DynData (0,0) (0,0) 0 (0,0)))
+        newD = findPageElemData (winSize win) (winCurr win) (winPages win)
+
+findPageElemData ∷ (Int,Int) → String → [Page] → [DynData]
+findPageElemData _    _   []     = []
+findPageElemData size str ((Page name elems):ps)
+  | str ≡ name = findElemData size elems ⧺ findPageElemData size str ps
+  | otherwise  = findPageElemData size str ps
+
+findElemData ∷ (Int,Int) → [WinElem] → [DynData]
+findElemData _    []         = []
+findElemData size ((WinElemButt (x,y) _ (w,_) _ _ _ _ hov):wes) = case hov of
+  True  → [dyn] ⧺ findElemData size wes
+            where dyn     = DynData pos' box' 107 (4,2)
+                  (x',y') = (realToFrac x, realToFrac y)
+                  w'      = realToFrac w
+                  pos'    = ((2*x') - xNorm + w', (-2*y') + yNorm + 0.1)
+                  xNorm   = fromIntegral(fst size)/64.0
+                  yNorm   = fromIntegral(snd size)/64.0
+                  box'    = (w', 0.25)
+  False → findElemData size wes
+findElemData size (_:wes) = findElemData size wes
 
 -- | turns text from a window's page into dynamic data
 genTextDyns ∷ [TTFData] → Window → [Dyns] → [Dyns]
@@ -87,6 +114,11 @@ findPageText ttfdat size current (Page name elems)
 findElemText ∷ [TTFData] → (Int,Int) → [WinElem] → [DynData]
 findElemText _      _    []      = []
 findElemText ttfdat size ((WinElemText (x,y) _   str):wes) = dyns ⧺ findElemText ttfdat size wes
+  where dyns  = calcTextDD ttfdat pos' str
+        pos'  = ((2*x) - xNorm, (-2*y) + yNorm + 0.1)
+        xNorm = fromIntegral(fst size)/64.0
+        yNorm = fromIntegral(snd size)/64.0
+findElemText ttfdat size ((WinElemButt (x,y) _ _ _ _ _ str _):wes) = dyns ⧺ findElemText ttfdat size wes
   where dyns  = calcTextDD ttfdat pos' str
         pos'  = ((2*x) - xNorm, (-2*y) + yNorm + 0.1)
         xNorm = fromIntegral(fst size)/64.0

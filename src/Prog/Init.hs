@@ -15,7 +15,7 @@ import qualified Foreign.Lua as Lua
 import GHC.Stack ( HasCallStack) -- , prettyCallStack, callStack )
 import Data ( Difficulty(DNormal), FPS(FPS), Shell(Shell) )
 import Load.Data ( DSStatus(DSSNULL), DrawState(DrawState) )
-import Luau.Data
+import Data
     ( Key(KeyT, KeyEscape, KeyW, KeyUp, KeyS, KeyDown, KeyA, KeyLeft,
           KeyD, KeyRight, KeyTilde),
       KeyFunc(KFTest, KFEscape, KFScrollUp, KFScrollDown, KFScrollLeft,
