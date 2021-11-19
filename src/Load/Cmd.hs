@@ -4,35 +4,66 @@ module Load.Cmd where
 -- up the main loading thread.
 import Prelude()
 import UPrelude
-import Elem.Data ( WinElem(..) )
+import Elem.Data ( WinElem(..), Button(..), ButtFunc(..) )
 import Load.Data ( DrawState(..), DrawStateCmd(..)
                  , LoadCmd(..), DSStatus(..) )
 import Luau.Data ( Window(..), Page(..) )
 import Sign.Log ( MonadLog(..), LogT(..), sendLoadCmd )
 
--- TODO: this should only toggle listed buttons, not all
-processDrawStateCommand ∷ (MonadLog μ, MonadFail μ) ⇒ DrawState → DrawStateCmd → LogT μ DrawState
-processDrawStateCommand ds (DSCToggleButts _ b) = do
+-- | handles possible commands designed to change the draw state
+processDrawStateCommand ∷ (MonadLog μ, MonadFail μ)
+  ⇒ DrawState → DrawStateCmd → LogT μ DrawState
+processDrawStateCommand ds (DSCToggleButts butts b) = do
   sendLoadCmd LoadCmdDyns
-  return $ ds { dsWins   = toggleButts b (dsWins ds) }
+  -- currently only toggles the first button being hovered over
+  if length butts ≡ 0 then
+    return $ ds { dsWins = allButtsOff (dsWins ds) }
+  else
+    return $ ds { dsWins = toggleButts b (head butts) (dsWins ds) }
 processDrawStateCommand ds _                  = return ds
 
-toggleButts ∷ Bool → [Window] → [Window]
-toggleButts _ []     = []
-toggleButts b (w:ws) = [w'] ⧺ toggleButts b ws
-  where w' = w { winPages = togglePageButts b (winPages w) }
+-- | toggles the desired button in the list of windows
+toggleButts ∷ Bool → Button → [Window] → [Window]
+toggleButts _ _    []     = []
+toggleButts b butt (w:ws) = [w'] ⧺ toggleButts b butt ws
+  where w' = w { winPages = togglePageButts b butt (winPages w) }
 
-togglePageButts ∷ Bool → [Page] → [Page]
-togglePageButts _ []     = []
-togglePageButts b (p:ps) = [p'] ⧺ togglePageButts b ps
-  where p' = p { pageElems = togglePageElemButts b (pageElems p) }
+togglePageButts ∷ Bool → Button → [Page] → [Page]
+togglePageButts _ _    []     = []
+togglePageButts b butt (p:ps) = [p'] ⧺ togglePageButts b butt ps
+  where p' = p { pageElems = togglePageElemButts b butt (pageElems p) }
 
-togglePageElemButts ∷ Bool → [WinElem] → [WinElem]
-togglePageElemButts _ []       = []
-togglePageElemButts b (we:wes) = [we'] ⧺ togglePageElemButts b wes
-  where we' = toggleWinElemButt b we
+togglePageElemButts ∷ Bool → Button → [WinElem] → [WinElem]
+togglePageElemButts _ _    []       = []
+togglePageElemButts b butt (we:wes)
+  = [we'] ⧺ togglePageElemButts b butt wes
+    where we' = toggleWinElemButt b butt we
 
-toggleWinElemButt ∷ Bool → WinElem → WinElem
-toggleWinElemButt b (WinElemButt pos col box adv act ind val _)
-  = WinElemButt pos col box adv act ind val b
-toggleWinElemButt _ we = we
+toggleWinElemButt ∷ Bool → Button → WinElem → WinElem
+toggleWinElemButt b (Button (ButtFuncLink i) _ _ _ _)
+  (WinElemButt pos col box adv act ind val h)
+    | i ≡ ind   = WinElemButt pos col box adv act ind val b
+    | otherwise = WinElemButt pos col box adv act ind val h
+toggleWinElemButt _ _    we = we
+
+-- | sets all buttons off when there are no butts under the mouse
+allButtsOff ∷ [Window] → [Window]
+allButtsOff []     = []
+allButtsOff (w:ws) = [w'] ⧺ allButtsOff ws
+  where w' = w { winPages = offPageButts (winPages w) }
+
+offPageButts ∷ [Page] → [Page]
+offPageButts []     = []
+offPageButts (p:ps) = [p'] ⧺ offPageButts ps
+  where p' = p { pageElems = offPageElemButts (pageElems p) }
+
+offPageElemButts ∷ [WinElem] → [WinElem]
+offPageElemButts []       = []
+offPageElemButts (we:wes)
+  = [we'] ⧺ offPageElemButts wes
+    where we' = offWinElemButt we
+
+offWinElemButt ∷ WinElem → WinElem
+offWinElemButt (WinElemButt pos col box adv act ind val _)
+  = WinElemButt pos col box adv act ind val False
+offWinElemButt we = we
