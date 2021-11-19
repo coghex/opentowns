@@ -163,6 +163,7 @@ processLoadInput env win inpSt keymap inp = case inp of
         else case head butts of
           Button (ButtFuncLink _) _ _ _ _ → do
             atomically $ writeQueue (envInpQ env) $ InpActButton $ head butts
+            atomically $ writeQueue (envLoadQ env) $ LoadCmdInput $ InpActButton $ head butts
             return ResInpSuccess
           _ → return ResInpSuccess
      --   print $ show pos
@@ -174,7 +175,8 @@ processLoadInput env win inpSt keymap inp = case inp of
   InpActSetLink butt → do
     return $ ResInpState inpSt'
     where inpSt' = inpSt { isElems = isElems inpSt ⧺ [IEButt butt] }
-  InpActButton butt → do
-    print $ "button press: " ⧺ show butt
+  InpActButton _ → do
+  -- InpActButton butt → do
+    --print $ "button press: " ⧺ show butt
     return ResInpSuccess
   InpActNULL        → return ResInpSuccess

@@ -166,7 +166,12 @@ processCommand glfwwin ds cmd = case cmd of
   LoadCmdDS dsCmd → do
     ds' ← processDrawStateCommand ds dsCmd
     return $ ResDrawState ds'
-  LoadCmdInput inpAction → return ResSuccess
+  LoadCmdInput (InpActButton butt) → do
+    log' LogInfo $ "load command button callback: " ⧺ show butt
+    return ResSuccess
+  LoadCmdInput inpAction → do
+    log' LogWarn $ "unknown inpAction " ⧺ show inpAction
+    return ResSuccess
   LoadCmdNewElem win page el → do
     log' (LogDebug 3) "LoadCmdNewElem"
     let els = case currentWin (dsWins ds) of
