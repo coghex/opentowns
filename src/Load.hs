@@ -12,6 +12,7 @@ import UPrelude
 import Data ( PrintArg(PrintNULL) )
 import Data.Maybe ( fromMaybe )
 import Elem ( initElem, currentPage )
+import Elem.Data ( InputAct(..) )
 import Load.Cmd
 import Load.Data
     ( DSStatus(..),
@@ -22,7 +23,7 @@ import Luau.Data ( Page(..) )
 import Luau.Window ( addPageToWin, addElemToPageInWin
                    , currentWin, switchWin )
 import Prog.Buff ( genDynBuffs, loadDyns, initBuff )
-import Prog.Data ( Env(..), InputAct(..) )
+import Prog.Data ( Env(..) )
 import Sign.Data
     ( LoadData(LoadDyns, LoadVerts),
       LogLevel(..), SysAction(..), TState(..) )
@@ -165,6 +166,7 @@ processCommand glfwwin ds cmd = case cmd of
   LoadCmdDS dsCmd → do
     ds' ← processDrawStateCommand ds dsCmd
     return $ ResDrawState ds'
+  LoadCmdInput inpAction → return ResSuccess
   LoadCmdNewElem win page el → do
     log' (LogDebug 3) "LoadCmdNewElem"
     let els = case currentWin (dsWins ds) of

@@ -4,6 +4,7 @@ module Elem.Data where
 import Prelude()
 import UPrelude
 import Data ( Color(..), Difficulty(..), Key(..), KeyFunc(..) )
+import qualified Vulk.GLFW as GLFW
 
 -- |  various win elements and their associated data
 data WinElem
@@ -57,4 +58,21 @@ data ButtFunc = ButtFuncOnOff Int
               | ButtFuncKey   Int
               | ButtFuncLink  Int
               | ButtFuncNULL deriving (Show, Eq)
+
+-- | input state related to various winelems
+data InputElem = IEButt Button | IENULL deriving (Show, Eq)
+-- | possible input actions
+data InputAct = InpActKey GLFW.Key GLFW.KeyState GLFW.ModifierKeys 
+              | InpActMouse GLFW.MouseButton
+                  GLFW.MouseButtonState GLFW.ModifierKeys
+              | InpActSwitchWin String
+              | InpActSetCap CapType
+              | InpActSetLink Button
+              | InpActButton Button
+              | InpActNULL deriving (Show, Eq)
+
+-- | various situations in which a key may be captured
+data CapType = CapKeyChange Int KeyFunc
+             | CapNULL deriving (Show, Eq)
+
 

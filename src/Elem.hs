@@ -3,10 +3,12 @@ module Elem where
 -- main elem functions are found
 import Prelude()
 import UPrelude
-import Elem.Data ( WinElem(..), ButtAction(..), Button(..), ButtFunc(..) )
+import Elem.Data ( WinElem(..), ButtAction(..)
+                 , Button(..), ButtFunc(..)
+                 , InputAct(..) )
 import Load.Data ( Tile(..) )
 import Luau.Data ( Page(..), Window(..) )
-import Prog.Data ( Env(..), InputAct(..) )
+import Prog.Data ( Env(..) )
 import Sign.Log ( LogT(..), MonadLog(..), sendInpAct )
 import Sign.Var ( atomically )
 import Sign.Queue ( writeQueue )

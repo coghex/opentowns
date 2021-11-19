@@ -11,7 +11,8 @@ import Control.Monad.Morph
 import Control.Monad.Reader
 import Data.Maybe ( fromMaybe )
 import System.Log.FastLogger
-import Prog.Data ( Env(..), InputAct(..) )
+import Elem.Data ( InputAct(..) )
+import Prog.Data ( Env(..) )
 import Sign.Data ( LogLevel(..), Event(..), TState(..), SysAction(..), LoadData(..) )
 import Sign.Var ( atomically, readTVar )
 import Sign.Queue ( writeQueue, readChan, tryReadChan, tryReadQueue )

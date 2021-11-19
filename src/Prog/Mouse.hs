@@ -7,15 +7,15 @@ import Prelude()
 import UPrelude
 import Elem.Data
     ( Button(..),
-      ButtFunc(..) )
+      ButtFunc(..),
+      InputAct(..),
+      InputElem(..))
 import Load.Data ( LoadCmd(..), DrawStateCmd(..) )
 import Prog ( MonadIO(liftIO), Prog, MonadReader(ask) )
 import Prog.Data
     ( Env(..),
-      InputAct(InpActMouse),
       InputState(..),
-      Halt(..),
-      InputElem(..) )
+      Halt(..) )
 import Prog.Util ( logInfo )
 import Sign.Queue ( writeQueue )
 import Sign.Var ( atomically )

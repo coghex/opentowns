@@ -8,7 +8,7 @@ import Data ( FPS(..), Difficulty(..)
             , Key, KeyFunc, KeyMap )
 import Data.Time.Clock.System ( SystemTime )
 import qualified Foreign.Lua as Lua
-import Elem.Data ( Button(..) )
+import Elem.Data ( Button(..), InputAct(..), InputElem(..), CapType(..) )
 import Load.Data ( LoadCmd(..), Dyns(..) )
 import Sign.Data ( Event, TState )
 import Sign.Except ( ProgExcept )
@@ -102,25 +102,10 @@ data InpResult = ResInpSuccess | ResInpError String
                | ResInpState InputState
                | ResInpChangeKey KeyFunc Key Int | ResInpNULL
 
--- | various situations in which a key may be captured
-data CapType = CapKeyChange Int KeyFunc
-             | CapNULL deriving (Show, Eq)
-
 -- | various situations in which a bit of data needs to be held
 --   for caching and toggle functionality
 data Halt = HaltButton Bool
           | HaltNULL deriving (Show, Eq)
-
--- | input state related to various winelems
-data InputElem = IEButt Button | IENULL deriving (Show, Eq)
--- | possible input actions
-data InputAct = InpActKey GLFW.Key GLFW.KeyState GLFW.ModifierKeys 
-              | InpActMouse GLFW.MouseButton
-                  GLFW.MouseButtonState GLFW.ModifierKeys
-              | InpActSwitchWin String
-              | InpActSetCap CapType
-              | InpActSetLink Button
-              | InpActNULL deriving (Show, Eq)
 
 -- | certain keys state
 data ISKeys = ISKeys { keyUp    ∷ Bool

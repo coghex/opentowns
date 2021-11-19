@@ -6,18 +6,19 @@ module Prog.Input where
 import Prelude()
 import UPrelude
 import Data ( KeyFunc(KFTest, KFEscape), KeyMap(..) )
+import Elem.Data
+    ( CapType(CapNULL, CapKeyChange),
+      Button(..), ButtFunc(..),
+      InputAct(..), InputElem(..) )
 import Load.Data ( LoadCmd(..) )
 import Prog.Data
-    ( CapType(CapNULL, CapKeyChange),
-      Env(..),
+    ( Env(..),
       ISStatus(ISSNULL, ISSLogDebug),
       InpResult(..),
-      InputAct(..),
-      InputElem(..),
       InputState(..) )
 import Prog.KeyEvent ( changeKeyMap, findKey, lookupKey )
 import Prog.Init ( initKeyMap, initInpState )
-import Prog.Mouse ( processLoadMouse )
+import Prog.Mouse ( processLoadMouse, findAllButtsUnder, findButts )
 import Prog.Util ()
 import Sign.Data
     ( Event(EventLog, EventSys),
@@ -156,8 +157,15 @@ processLoadInput env win inpSt keymap inp = case inp of
     → if ((mb ≡ GLFW.mousebutt1) ∧ not (GLFW.modifierKeysControl mk))
            ∧ (mbs ≡ GLFW.MouseButtonState'Pressed) then do
         pos   ← GLFW.getCursorPos win
-        print $ show pos
-        return ResInpSuccess
+        -- TODO: unhardcode the screen size here
+        let butts = findAllButtsUnder (isWin inpSt) (1280,720) (findButts (isElems inpSt)) pos
+        if butts ≡ [] then return ResInpSuccess
+        else case head butts of
+          Button (ButtFuncLink _) _ _ _ _ → do
+            atomically $ writeQueue (envInpQ env) $ InpActButton $ head butts
+            return ResInpSuccess
+          _ → return ResInpSuccess
+     --   print $ show pos
     else return ResInpSuccess
   InpActSetCap cap → return $ ResInpState inpSt'
     where inpSt' = inpSt { inpCap = cap }
@@ -166,4 +174,7 @@ processLoadInput env win inpSt keymap inp = case inp of
   InpActSetLink butt → do
     return $ ResInpState inpSt'
     where inpSt' = inpSt { isElems = isElems inpSt ⧺ [IEButt butt] }
+  InpActButton butt → do
+    print $ "button press: " ⧺ show butt
+    return ResInpSuccess
   InpActNULL        → return ResInpSuccess

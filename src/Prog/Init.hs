@@ -14,6 +14,7 @@ import Data.Time.Clock.System ( getSystemTime )
 import qualified Foreign.Lua as Lua
 import GHC.Stack ( HasCallStack) -- , prettyCallStack, callStack )
 import Data ( Difficulty(DNormal), FPS(FPS), Shell(Shell) )
+import Elem.Data ( CapType(..) )
 import Load.Data ( DSStatus(DSSNULL), DrawState(DrawState) )
 import Data
     ( Key(KeyT, KeyEscape, KeyW, KeyUp, KeyS, KeyDown, KeyA, KeyLeft,
@@ -23,8 +24,7 @@ import Data
       KeyMap(..) )
 import Prog ( Prog(unProg) )
 import Prog.Data
-    ( CapType(CapNULL),
-      Env(..), Halt(..),
+    ( Env(..), Halt(..),
       ISKeys(..),
       ISStatus(ISSNULL),
       InputState(..),

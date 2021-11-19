@@ -16,6 +16,7 @@ processDrawStateCommand ∷ (MonadLog μ, MonadFail μ)
 processDrawStateCommand ds (DSCToggleButts butts b) = do
   sendLoadCmd LoadCmdDyns
   -- currently only toggles the first button being hovered over
+  -- TODO: should allow multiple buttons to be handles together
   if length butts ≡ 0 then
     return $ ds { dsWins = allButtsOff (dsWins ds) }
   else

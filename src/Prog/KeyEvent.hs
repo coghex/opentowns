@@ -6,11 +6,11 @@ import Prelude()
 import UPrelude
 import qualified Data.Map as Map
 import Data ( Key(..), KeyFunc, KeyMap(..) )
+import Elem.Data ( InputAct(..) )
 import Prog
     ( MonadIO(liftIO), Prog, MonadReader(ask) )
 import Prog.Data
-    ( Env(envInpQ),
-      InputAct(InpActKey) )
+    ( Env(envInpQ) )
 import Sign.Queue ( writeQueue )
 import Sign.Var ( atomically )
 import qualified Vulk.GLFW as GLFW

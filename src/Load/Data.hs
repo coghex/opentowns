@@ -4,7 +4,7 @@ module Load.Data where
 import Prelude()
 import UPrelude
 import Data ( Color (..), PrintArg(..), FPS(..), Shell(..), Popup(..) )
-import Elem.Data ( WinElem(..), Button(..) )
+import Elem.Data ( WinElem(..), Button(..), InputAct(..) )
 import Luau.Data ( Window(..), Page(..) )
 
 -- | result of the loading thread
@@ -22,6 +22,7 @@ data LoadCmd = LoadCmdPrint !PrintArg
              | LoadCmdSwitchWin !String
              | LoadCmdWindowSize !(Int,Int)
              | LoadCmdDS !DrawStateCmd
+             | LoadCmdInput InputAct
              | LoadCmdTest
              | LoadCmdNULL deriving (Show, Eq)
 
