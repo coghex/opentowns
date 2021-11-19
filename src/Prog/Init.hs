@@ -24,8 +24,8 @@ import Data
 import Prog ( Prog(unProg) )
 import Prog.Data
     ( CapType(CapNULL),
-      Env(..),
-      ISKeys(ISKeys, keyUp, keyLeft, keyDown, keyRight, keyAccel),
+      Env(..), Halt(..),
+      ISKeys(..),
       ISStatus(ISSNULL),
       InputState(..),
       ProgResult(ProgSuccess),
@@ -35,7 +35,6 @@ import Prog.Data
 import Sign.Except ( ExType(ExProg), ProgExcept(ProgExcept) )
 import Sign.Queue ( newQueue, newTChan )
 import Sign.Var ( atomically, newTVar, TVar )
-import Sign.Data ()
 
 -- | the entire monad is unraveled here, after the init functions
 runProg ∷ HasCallStack ⇒ (Either ProgExcept α → IO σ)
@@ -139,7 +138,9 @@ initInpState = InputState { inpStatus = ISSNULL
                           , mouse3    = Nothing
                           , mousePos  = (0,0)
                           , isElems   = []
-                          , isWin     = "menu1"
+                          , isWin     = "win1"
+                          , isPage    = "menu1"
+                          , isHalt    = HaltNULL
                           , inpCap    = CapNULL
                           , accelCap  = False
                           , keySt     = initKS }

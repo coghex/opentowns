@@ -68,7 +68,7 @@ data DSStatus = DSSLogDebug Int String
 -- | draw state commands are the enumeration of commands to change
 --   the draw state, if these were enumerated as LoadCmds, the Load.hs
 --   file would be huge, so we process them seperately in Load.Cmd
-data DrawStateCmd = DSCToggleButts [Button]
+data DrawStateCmd = DSCToggleButts [Button] Bool
                   | DSCNULL deriving (Show, Eq)
 
 -- | gtiles represent abstract tiles

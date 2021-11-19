@@ -11,17 +11,18 @@ import Prelude()
 import UPrelude
 import Data ( PrintArg(PrintNULL) )
 import Data.Maybe ( fromMaybe )
+import Elem ( initElem, currentPage )
 import Load.Cmd
 import Load.Data
     ( DSStatus(..),
       DrawState(dsStatus, dsTiles, dsBuff, dsWins),
       LoadCmd(..),
       LoadResult(..) )
-import Luau.Data ()
+import Luau.Data ( Page(..) )
 import Luau.Window ( addPageToWin, addElemToPageInWin
                    , currentWin, switchWin )
 import Prog.Buff ( genDynBuffs, loadDyns, initBuff )
-import Prog.Data ( Env(envLoadCh, envFontM, envLoadQ, envEventQ) )
+import Prog.Data ( Env(..), InputAct(..) )
 import Sign.Data
     ( LoadData(LoadDyns, LoadVerts),
       LogLevel(..), SysAction(..), TState(..) )
@@ -162,12 +163,16 @@ processCommand glfwwin ds cmd = case cmd of
     return $ ResDrawState ds'
     where ds' = ds { dsWins = addPageToWin win page (dsWins ds) } 
   LoadCmdDS dsCmd → do
-    ds' ← liftIO $ processDrawStateCommand ds dsCmd
+    ds' ← processDrawStateCommand ds dsCmd
     return $ ResDrawState ds'
   LoadCmdNewElem win page el → do
     log' (LogDebug 3) "LoadCmdNewElem"
+    let els = case currentWin (dsWins ds) of
+                Nothing → []
+                Just w0 → pageElems $ currentPage w0
+    el' ← initElem win page el (length els)
+    let ds' = ds { dsWins = addElemToPageInWin win page el' (dsWins ds) }
     return $ ResDrawState ds'
-    where ds' = ds { dsWins = addElemToPageInWin win page el (dsWins ds) }
   LoadCmdSwitchWin win → do
     log' (LogDebug 3) "LoadCmdSwitchWin"
     let ds'  = ds { dsWins      = switchWin win (dsWins ds) }
@@ -175,6 +180,7 @@ processCommand glfwwin ds cmd = case cmd of
     --                  Nothing → []
     --                  Just w  → winBuffs w
     sendLoadCmd LoadCmdVerts
+    sendInpAct $ InpActSwitchWin win
     --atomically $ writeQueue (envInpQ  env) $ InputSwitchWin win
     return $ ResDrawState ds'
   -- sometimes you need to test something with a command

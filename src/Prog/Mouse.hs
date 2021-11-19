@@ -14,6 +14,7 @@ import Prog.Data
     ( Env(..),
       InputAct(InpActMouse),
       InputState(..),
+      Halt(..),
       InputElem(..) )
 import Prog.Util ( logInfo )
 import Sign.Queue ( writeQueue )
@@ -71,9 +72,17 @@ processLoadMouse env win inpSt = do
 --    Nothing → return ()
   let inpSt' = inpSt { mousePos = pos }
       -- TODO: unhardcode window size
-      butts  = findAllButtsUnder w0 (1280,720) (findButts (isElems inpSt)) pos
-      w0     = isWin inpSt'
-  atomically $ writeQueue (envLoadQ env) $ LoadCmdDS $ DSCToggleButts butts
+      butts  = findAllButtsUnder w0 (1280,720)
+                 (findButts (isElems inpSt)) pos
+      w0     = isPage inpSt'
+  if length butts ≡ 0 ∧ halting inpSt then do
+    atomically $ writeQueue (envLoadQ env)
+      $ LoadCmdDS $ DSCToggleButts butts False
+    return inpSt' { isHalt = HaltNULL }
+  else if length butts > 0 ∧ not (halting inpSt) then do
+    atomically $ writeQueue (envLoadQ env)
+      $ LoadCmdDS $ DSCToggleButts butts True
+    return inpSt' { isHalt = HaltButton True }
 --      links  = findAllLinksUnder win (1280,720)
 --                 (findLinks (isElems inpSt)) pos
 --      butts  = findAllButtsUnder win (1280,720)
@@ -82,8 +91,14 @@ processLoadMouse env win inpSt = do
   --if (length links) > 0 then do
 --  atomically $ writeQueue (envLoadQ env) $ LoadCmdToggleLinks links
 --  atomically $ writeQueue (envLoadQ env) $ LoadCmdToggleButts butts
-  return inpSt'
+  else return inpSt'
   --else return inpSt'
+
+-- | returns a bool true if a halt is active
+halting ∷ InputState → Bool
+halting inpSt = case isHalt inpSt of
+  HaltButton b → b
+  HaltNULL     → False
 
 findButts ∷ [InputElem] → [Button]
 findButts []                  = []
@@ -97,6 +112,6 @@ findAllButtsUnder win size (b:bs) pos
   | otherwise                = findAllButtsUnder win size bs pos
 
 buttUnder ∷ String → (Int,Int) → Button → (Double,Double) → Bool
-buttUnder name _ (Button _ (x,y) (w,h) win) (mx,my)
-  | name ≡ win = (abs((mx / 64.0) - x - 0.5) < (0.5*w)) ∧ (abs((my / 64.0) - y) < (0.25*h))
+buttUnder name _ (Button _ (x,y) (w,h) _ page) (mx,my)
+  | name ≡ page = (abs((mx / 64.0) - x - 0.5) < (0.5*w)) ∧ (abs((my / 64.0) - y) < (0.25*h))
   | otherwise  = False

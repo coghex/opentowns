@@ -13,7 +13,8 @@ import Prog.Data
       ISStatus(ISSNULL, ISSLogDebug),
       InpResult(..),
       InputAct(..),
-      InputState(inpStatus, inpCap, isWin) )
+      InputElem(..),
+      InputState(..) )
 import Prog.KeyEvent ( changeKeyMap, findKey, lookupKey )
 import Prog.Init ( initKeyMap, initInpState )
 import Prog.Mouse ( processLoadMouse )
@@ -122,7 +123,7 @@ processLoadInputs env win inpSt keymap = do
 -- | indiviual input command processing
 processLoadInput ∷ Env → GLFW.Window → InputState → KeyMap
   → InputAct → IO InpResult
-processLoadInput env _   inpSt keymap inp = case inp of
+processLoadInput env win inpSt keymap inp = case inp of
   -- key press action, if the keys have been captured by a
   -- window, we need to functionnn differently
   InpActKey k ks _  → case inpCap inpSt of
@@ -154,11 +155,15 @@ processLoadInput env _   inpSt keymap inp = case inp of
   InpActMouse mb mbs mk
     → if ((mb ≡ GLFW.mousebutt1) ∧ not (GLFW.modifierKeysControl mk))
            ∧ (mbs ≡ GLFW.MouseButtonState'Pressed) then do
-   --     pos   ← GLFW.getCursorPos win
+        pos   ← GLFW.getCursorPos win
+        print $ show pos
         return ResInpSuccess
     else return ResInpSuccess
   InpActSetCap cap → return $ ResInpState inpSt'
     where inpSt' = inpSt { inpCap = cap }
   InpActSwitchWin w0  → return $ ResInpState inpSt'
     where inpSt' = inpSt { isWin = w0 }
+  InpActSetLink butt → do
+    return $ ResInpState inpSt'
+    where inpSt' = inpSt { isElems = isElems inpSt ⧺ [IEButt butt] }
   InpActNULL        → return ResInpSuccess

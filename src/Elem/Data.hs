@@ -47,6 +47,7 @@ data Button = Button { bFunc ∷ ButtFunc
                      , bPos  ∷ (Double,Double)
                      , bSize ∷ (Double,Double)
                      , bWin  ∷ String
+                     , bPage ∷ String
                      } deriving (Show, Eq)
 data ButtFunc = ButtFuncOnOff Int
               | ButtFunc100   Int

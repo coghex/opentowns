@@ -11,7 +11,7 @@ import Control.Monad.Morph
 import Control.Monad.Reader
 import Data.Maybe ( fromMaybe )
 import System.Log.FastLogger
-import Prog.Data ( Env(..) )
+import Prog.Data ( Env(..), InputAct(..) )
 import Sign.Data ( LogLevel(..), Event(..), TState(..), SysAction(..), LoadData(..) )
 import Sign.Var ( atomically, readTVar )
 import Sign.Queue ( writeQueue, readChan, tryReadChan, tryReadQueue )
@@ -118,3 +118,8 @@ sendLoad ∷ (MonadLog μ, MonadFail μ) ⇒ LoadData → LogT μ ()
 sendLoad cmd = do
   (Log _   env _   _   _) ← askLog
   liftIO $ atomically $ writeQueue (envEventQ env) $ EventLoad cmd
+-- | sends a input action over the input queue
+sendInpAct ∷ (MonadLog μ, MonadFail μ) ⇒ InputAct → LogT μ ()
+sendInpAct cmd = do
+  (Log _   env _   _   _) ← askLog
+  liftIO $ atomically $ writeQueue (envInpQ env) cmd

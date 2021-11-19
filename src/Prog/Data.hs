@@ -86,7 +86,9 @@ data InputState = InputState { inpStatus ∷ ISStatus
                              , mouse3    ∷ Maybe (Double,Double)
                              , mousePos  ∷ (Double,Double)
                              , isElems   ∷ [InputElem]
+                             , isHalt    ∷ Halt
                              , isWin     ∷ String
+                             , isPage    ∷ String
                              , inpCap    ∷ CapType
                              , accelCap  ∷ Bool
                              , keySt     ∷ ISKeys
@@ -104,6 +106,10 @@ data InpResult = ResInpSuccess | ResInpError String
 data CapType = CapKeyChange Int KeyFunc
              | CapNULL deriving (Show, Eq)
 
+-- | various situations in which a bit of data needs to be held
+--   for caching and toggle functionality
+data Halt = HaltButton Bool
+          | HaltNULL deriving (Show, Eq)
 
 -- | input state related to various winelems
 data InputElem = IEButt Button | IENULL deriving (Show, Eq)
