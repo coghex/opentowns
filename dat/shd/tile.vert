@@ -50,9 +50,10 @@ void main() {
     
     mat4 dynV = (inMove.y > 0.0) ? (trans.model * (dyn.move[dynI])) : trans.model;
     gl_Position = proj * view * dynV * vec4(inPosition, 1.0);
-    fragColor = inColor;
     int inTex = int(inTexCoord.z);
     mat4 dynTC = dynTex.dynTexI[dynI];
+    vec4 dynColor = vec4(dynTC[0][3],dynTC[1][3],dynTC[2][3],dynTC[3][3]);
+    fragColor = (inMove.x > 0.0) ? inColor * dynColor : inColor;
     int texI = int(floor(dynTC[3][2]));
     fragTexCoord = (inMove.y > 0.0) ? (vec2 (inTexCoord.x + ((dynTC[3][0])/32.0), inTexCoord.y + ((dynTC[3][1])/32.0))) : inTexCoord.xy;
     fragTexIndex = (inMove.x > 0.0) ? inTex + texI : inTex;

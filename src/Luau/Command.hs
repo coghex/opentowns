@@ -139,9 +139,9 @@ sanitizeColor str = if (head str ≡ '0') ∧ (head (tail str) ≡ 'x') then
 -- | sanitizes hex values after "0x" is stripped
 sanitizeColorF ∷ String → Color
 sanitizeColorF str
-  | length str ≡ 6  = Color r g b 0
+  | length str ≡ 6  = Color r g b 1
   | length str ≡ 8  = Color r g b a
-  | otherwise       = Color 1 1 1 0
+  | otherwise       = Color 1 1 1 1
   where (r,_) = head $ readHex r'
         (g,_) = head $ readHex g'
         (b,_) = head $ readHex b'

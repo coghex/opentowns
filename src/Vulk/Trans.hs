@@ -9,6 +9,7 @@ module Vulk.Trans where
 import Prelude()
 import UPrelude
 import Control.Monad (replicateM)
+import Data ( Color(..) )
 import Foreign.Ptr (castPtr,plusPtr)
 import GHC.Generics (Generic)
 import Graphics.Vulkan
@@ -116,7 +117,7 @@ updateTransDyn nDyn dyns device _      uniBuf = do
   liftIO $ vkUnmapMemory device uniBuf
 
 -- | updates the texture data allowing us to cycle through textures
---   on the same vertex data
+--   on the same vertex data, we use this matrix for other data too
 updateTransTex ∷ Int → [DynData] → VkDevice → VkExtent2D
   → VkDeviceMemory → Prog ε σ ()
 updateTransTex _    []   _      _      _      = return ()
@@ -128,14 +129,17 @@ updateTransTex nDyn dyns device _      uniBuf = do
       updateTransTexFunc _     []       _       = return ()
       updateTransTexFunc nDyn0 (dd:dds) uboPtr0 = do
         let dtexi = DF4
-              (DF4 1 0 0 0)
-              (DF4 0 1 0 0)
-              (DF4 0 0 1 0)
-              (DF4 x y n 1)
-            (x ,y)  = (fromIntegral x', fromIntegral y')
-            (x',y') = ddTIndex dd
-            n       = fromIntegral $ ddTex dd
-            nDyn0'  = nDyn0 - 1
+              (DF4 1 0 0 r)
+              (DF4 0 1 0 g)
+              (DF4 0 0 1 b)
+              (DF4 x y n a)
+            Color r' g' b' a' = ddColor dd
+            (r,g,b,a) = (fromIntegral r', fromIntegral g'
+                        ,fromIntegral b', fromIntegral a')
+            (x ,y)    = (fromIntegral x', fromIntegral y')
+            (x',y')   = ddTIndex dd
+            n         = fromIntegral $ ddTex dd
+            nDyn0'    = nDyn0 - 1
         poke (plusPtr (castPtr uboPtr0)
           (nDyn0'*bSizeOf @DynTexTransObject undefined))
           (scalar $ DynTexTransObject dtexi)

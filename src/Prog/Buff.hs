@@ -4,6 +4,7 @@ module Prog.Buff where
 -- a buffer of invisibly dynamic tiles to manipulate
 import Prelude()
 import UPrelude
+import Data ( Color(..) )
 import Elem.Data
 import Load.Data
     ( DrawState(dsTiles, dsWins, dsBuff),
@@ -19,7 +20,7 @@ import Vulk.Font ( TTFData(..), GlyphMetrics(..), indexTTFData )
 initBuff ∷ [Int] → [Dyns]
 initBuff []     = []
 initBuff (n:ns) = dyns : initBuff ns
-  where dyns = Dyns $ take n $ repeat $ DynData (0,0) (1,1) 0 (0,0)
+  where dyns = Dyns $ take n $ repeat $ DynData (0,0) (1,1) 0 (0,0) (Color 1 1 1 0)
 
 -- | b is the buffer index, n is the buffer
 --   size, move is movability, atl is the atlas size
@@ -40,7 +41,7 @@ loadDynData ds ((DTile (DMBuff b n) _ _ _ _ _ _):ts)
   = [buff !! n] ⧺ loadDynData ds ts
     where Dyns buff = dsBuff ds !! b
 loadDynData ds ((DTile DMNULL _ _ _ _ _ _):ts)
-  = [DynData (0,0) (1,1) 0 (0,0)] ⧺ loadDynData ds ts
+  = [DynData (0,0) (1,1) 0 (0,0) (Color 1 1 1 0)] ⧺ loadDynData ds ts
 
 -- | generates buffs from drawstate
 genDynBuffs ∷ [TTFData] → DrawState → [Dyns]
@@ -67,7 +68,7 @@ setTileBuff n dyns buff = take n buff ⧺ [dyns] ⧺ tail (drop n buff)
 -- generate dynamic data for a button
 genButtDyns ∷ [Dyns] → Window → [Dyns]
 genButtDyns buff win = setTileBuff 1 dyns buff
-  where dyns = Dyns $ newD ⧺ take (64 - length newD) (repeat (DynData (0,0) (0,0) 0 (0,0)))
+  where dyns = Dyns $ newD ⧺ take (64 - length newD) (repeat (DynData (0,0) (0,0) 0 (0,0) (Color 1 1 1 0)))
         newD = findPageElemData (winSize win) (winCurr win) (winPages win)
 
 findPageElemData ∷ (Int,Int) → String → [Page] → [DynData]
@@ -78,9 +79,9 @@ findPageElemData size str ((Page name elems):ps)
 
 findElemData ∷ (Int,Int) → [WinElem] → [DynData]
 findElemData _    []         = []
-findElemData size ((WinElemButt (x,y) _ (w,_) _ _ _ _ hov):wes) = case hov of
+findElemData size ((WinElemButt (x,y) col (w,_) _ _ _ _ hov):wes) = case hov of
   True  → [dyn] ⧺ findElemData size wes
-            where dyn     = DynData pos' box' 107 (4,2)
+            where dyn     = DynData pos' box' 107 (4,2) col
                   (x',y') = (realToFrac x, realToFrac y)
                   w'      = realToFrac w
                   pos'    = ((2*x') - xNorm + w', (-2*y') + yNorm + 0.1)
@@ -94,7 +95,7 @@ findElemData size (_:wes) = findElemData size wes
 genTextDyns ∷ [TTFData] → Window → [Dyns] → [Dyns]
 genTextDyns ttfdat win = setTileBuff 2 dyns
   where dyns = Dyns $ newD ⧺ take (256 - length newD)
-                 (repeat (DynData (0,0) (0,0) 0 (0,0)))
+                 (repeat (DynData (0,0) (0,0) 0 (0,0) (Color 1 1 1 0)))
         newD = findPagesText ttfdat (winSize win) (winCurr win) (winPages win)
 
 -- | text data requires a buffer set to a 1x1 texture atlas
@@ -113,34 +114,34 @@ findPageText ttfdat size current (Page name elems)
 -- | text data requires a buffer set to 1x1 texture atlas
 findElemText ∷ [TTFData] → (Int,Int) → [WinElem] → [DynData]
 findElemText _      _    []      = []
-findElemText ttfdat size ((WinElemText (x,y) _   str):wes) = dyns ⧺ findElemText ttfdat size wes
-  where dyns  = calcTextDD ttfdat pos' str
+findElemText ttfdat size ((WinElemText (x,y) c   str):wes) = dyns ⧺ findElemText ttfdat size wes
+  where dyns  = calcTextDD c ttfdat pos' str
         pos'  = ((2*x) - xNorm, (-2*y) + yNorm + 0.1)
         xNorm = fromIntegral(fst size)/64.0
         yNorm = fromIntegral(snd size)/64.0
-findElemText ttfdat size ((WinElemButt (x,y) _ _ _ _ _ str _):wes) = dyns ⧺ findElemText ttfdat size wes
-  where dyns  = calcTextDD ttfdat pos' str
+findElemText ttfdat size ((WinElemButt (x,y) c _ _ _ _ str _):wes) = dyns ⧺ findElemText ttfdat size wes
+  where dyns  = calcTextDD c ttfdat pos' str
         pos'  = ((2*x) - xNorm, (-2*y) + yNorm + 0.1)
         xNorm = fromIntegral(fst size)/64.0
         yNorm = fromIntegral(snd size)/64.0
 findElemText ttfdat size (_:wes) = findElemText ttfdat size wes
 
 ---- functions to convert winelems to dyn data
-calcTextDD ∷ [TTFData] → (Double,Double) → String → [DynData]
-calcTextDD ttfdat pos = genStrDDs ttfdat (fst pos) pos
+calcTextDD ∷ Color → [TTFData] → (Double,Double) → String → [DynData]
+calcTextDD col ttfdat pos = genStrDDs col ttfdat (fst pos) pos
 ---- dyns required for a string
-genStrDDs ∷ [TTFData] → Double → (Double,Double) → String → [DynData]
-genStrDDs _       _  _   []         = []
-genStrDDs ttfdat x0 (_,y) ('\n':str) = genStrDDs ttfdat x0 (x0,y - 1)  str
-genStrDDs ttfdat x0 (x,y) (' ':str)  = genStrDDs ttfdat x0 (x + 0.1,y) str
-genStrDDs ttfdat x0 (x,y) (ch:str)   = dd
+genStrDDs ∷ Color → [TTFData] → Double → (Double,Double) → String → [DynData]
+genStrDDs _   _       _  _   []         = []
+genStrDDs col ttfdat x0 (_,y) ('\n':str) = genStrDDs col ttfdat x0 (x0,y - 1)  str
+genStrDDs col ttfdat x0 (x,y) (' ':str)  = genStrDDs col ttfdat x0 (x + 0.1,y) str
+genStrDDs col ttfdat x0 (x,y) (ch:str)   = dd
   where dd = case indexTTFData ttfdat ch of
-               Nothing → genStrDDs ttfdat x0 (x,y) str
+               Nothing → genStrDDs col ttfdat x0 (x,y) str
                Just (TTFData _ chInd (GlyphMetrics chW chH chX chY chA))
                  → [DynData (realToFrac(x + (2*chX) + chW)
                  , realToFrac(y + (2*chY) - chH - 0.1))
-                   (realToFrac chW,realToFrac chH) chInd (0,0)]
-                   ⧺ genStrDDs ttfdat x0 (x + (2*chA),y) str
+                   (realToFrac chW,realToFrac chH) chInd (0,0) col]
+                   ⧺ genStrDDs col ttfdat x0 (x + (2*chA),y) str
 
 -- | returns a string summarising the buffer situation
 printBuff ∷ DrawState → String

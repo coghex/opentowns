@@ -98,6 +98,7 @@ data DynData = DynData { ddPos     ∷ (Float,Float)
                        , ddScale   ∷ (Float,Float)
                        , ddTex     ∷ Int
                        , ddTIndex  ∷ (Int,Int)
+                       , ddColor   ∷ Color
                        } deriving (Show, Eq)
 
 -- | mapping of buffer to tiles, this could be used
