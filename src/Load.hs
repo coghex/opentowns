@@ -195,6 +195,9 @@ processCommand glfwwin ds cmd = case cmd of
   -- sometimes you need to test something with a command
   LoadCmdWindowSize _ → return ResSuccess
   LoadCmdTest → do
-    log' (LogDebug 2) $ show $ dsWins ds
+    log' LogInfo $ show $ dsWins ds
+    return ResSuccess
+  LoadCmdTest2 → do
+    sendInpAct InpActTest
     return ResSuccess
   LoadCmdNULL → return ResNULL

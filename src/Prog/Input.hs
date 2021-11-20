@@ -5,7 +5,7 @@ module Prog.Input where
 -- a thread to handle input
 import Prelude()
 import UPrelude
-import Data ( KeyFunc(KFTest, KFEscape), KeyMap(..) )
+import Data ( KeyFunc(..), KeyMap(..) )
 import Elem.Data
     ( CapType(CapNULL, CapKeyChange),
       Button(..), ButtFunc(..),
@@ -138,18 +138,22 @@ processLoadInput env win inpSt keymap inp = case inp of
   --          else [head k0,(findKey k)]
         return $ ResInpChangeKey keyFunc (findKey k) n
       else return ResInpSuccess
-    -- no input capture
-    CapNULL → case lookupKey keymap (findKey k) of
-      KFEscape → do
-        atomically $ writeQueue (envEventQ env) $ EventSys SysExit
-        return ResInpSuccess
-      KFTest → do
-        atomically $ writeQueue (envLoadQ env) LoadCmdTest
-        return ResInpSuccess
-      keyfunc → do
-        atomically $ writeQueue (envEventQ env)
-          $ EventLog (LogDebug 1) $ "unknown key " ⧺ show keyfunc
-        return ResInpSuccess
+    -- if no input capture, case on each key function
+    CapNULL → if ks ≡ GLFW.KeyState'Pressed then case lookupKey keymap (findKey k) of
+        KFEscape → do
+          atomically $ writeQueue (envEventQ env) $ EventSys SysExit
+          return ResInpSuccess
+        KFTest → do
+          atomically $ writeQueue (envLoadQ env) LoadCmdTest
+          return ResInpSuccess
+        KFTest2 → do
+          atomically $ writeQueue (envLoadQ env) LoadCmdTest2
+          return ResInpSuccess
+        keyfunc → do
+          atomically $ writeQueue (envEventQ env)
+            $ EventLog (LogDebug 1) $ "unknown key " ⧺ show keyfunc
+          return ResInpSuccess
+      else return ResInpSuccess
 -- for mouse button presses, note that the position and state
 -- of the mouse are monitored in a completely different place,
 -- but we have this simple GLFW interface we can use here too
@@ -158,7 +162,7 @@ processLoadInput env win inpSt keymap inp = case inp of
            ∧ (mbs ≡ GLFW.MouseButtonState'Pressed) then do
         pos   ← GLFW.getCursorPos win
         -- TODO: unhardcode the screen size here
-        let butts = findAllButtsUnder (isWin inpSt) (1280,720) (findButts (isElems inpSt)) pos
+        let butts = findAllButtsUnder (isWin inpSt) (isPage inpSt) (1280,720) (findButts (isElems inpSt)) pos
         if butts ≡ [] then return ResInpSuccess
         else case head butts of
           Button (ButtFuncLink _) _ _ _ _ → do
@@ -175,8 +179,12 @@ processLoadInput env win inpSt keymap inp = case inp of
   InpActSetLink butt → do
     return $ ResInpState inpSt'
     where inpSt' = inpSt { isElems = isElems inpSt ⧺ [IEButt butt] }
-  InpActButton _ → do
   -- InpActButton butt → do
     --print $ "button press: " ⧺ show butt
+  InpActButton _         → return ResInpSuccess
+  InpActSetPage w page → return $ ResInpState $ inpSt { isWin  = w
+                                                      , isPage = page }
+  InpActTest → do
+    atomically $ writeQueue (envEventQ env) $ EventLog LogInfo $ show inpSt
     return ResInpSuccess
-  InpActNULL        → return ResInpSuccess
+  InpActNULL             → return ResInpSuccess

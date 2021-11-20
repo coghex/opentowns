@@ -69,6 +69,8 @@ data InputAct = InpActKey GLFW.Key GLFW.KeyState GLFW.ModifierKeys
               | InpActSetCap CapType
               | InpActSetLink Button
               | InpActButton Button
+              | InpActSetPage String String
+              | InpActTest
               | InpActNULL deriving (Show, Eq)
 
 -- | various situations in which a key may be captured

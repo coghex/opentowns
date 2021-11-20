@@ -72,9 +72,10 @@ processLoadMouse env win inpSt = do
 --    Nothing → return ()
   let inpSt' = inpSt { mousePos = pos }
       -- TODO: unhardcode window size
-      butts  = findAllButtsUnder w0 (1280,720)
+      butts  = findAllButtsUnder w0 p0 (1280,720)
                  (findButts (isElems inpSt)) pos
-      w0     = isPage inpSt'
+      w0     = isWin inpSt'
+      p0     = isPage inpSt'
   if length butts ≡ 0 ∧ halting inpSt then do
     atomically $ writeQueue (envLoadQ env)
       $ LoadCmdDS $ DSCToggleButts butts False
@@ -105,11 +106,12 @@ findButts []                  = []
 findButts ((IEButt butt):ies) = [butt] ⧺ findButts ies
 findButts (_:ies)             = findButts ies
 
-findAllButtsUnder ∷ String → (Int,Int) → [Button] → (Double,Double) → [Button]
-findAllButtsUnder _   _    []     _   = []
-findAllButtsUnder win size (b:bs) pos
-  | buttUnder win size b pos = [b] ⧺ findAllButtsUnder win size bs pos
-  | otherwise                = findAllButtsUnder win size bs pos
+-- | currently ignoring window check
+findAllButtsUnder ∷ String → String→ (Int,Int) → [Button] → (Double,Double) → [Button]
+findAllButtsUnder _   _    _    []     _   = []
+findAllButtsUnder win page size (b:bs) pos
+  | buttUnder page size b pos = [b] ⧺ findAllButtsUnder win page size bs pos
+  | otherwise                 = findAllButtsUnder win page size bs pos
 
 buttUnder ∷ String → (Int,Int) → Button → (Double,Double) → Bool
 buttUnder name _ (Button _ (x,y) (w,h) _ page) (mx,my)

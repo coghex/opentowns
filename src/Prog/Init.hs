@@ -17,10 +17,7 @@ import Data ( Difficulty(DNormal), FPS(FPS), Shell(Shell) )
 import Elem.Data ( CapType(..) )
 import Load.Data ( DSStatus(DSSNULL), DrawState(DrawState) )
 import Data
-    ( Key(KeyT, KeyEscape, KeyW, KeyUp, KeyS, KeyDown, KeyA, KeyLeft,
-          KeyD, KeyRight, KeyTilde),
-      KeyFunc(KFTest, KFEscape, KFScrollUp, KFScrollDown, KFScrollLeft,
-              KFScrollRight, KFShell),
+    ( Key(..), KeyFunc(..),
       KeyMap(..) )
 import Prog ( Prog(unProg) )
 import Prog.Data
@@ -159,5 +156,6 @@ initKeyMap = KeyMap $ Map.fromList
   ,(KFScrollDown,[KeyS,KeyDown])
   ,(KFScrollLeft,[KeyA,KeyLeft])
   ,(KFScrollRight,[KeyD,KeyRight])
-  ,(KFShell,[KeyTilde]),(KFTest,[KeyT])]
+  ,(KFShell,[KeyTilde])
+  ,(KFTest,[KeyT]), (KFTest2,[KeyI])]
 

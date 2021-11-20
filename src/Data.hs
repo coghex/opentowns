@@ -193,4 +193,5 @@ data KeyFunc = KFUp
              | KFEscape
              | KFShell
              | KFTest
+             | KFTest2
              | KFNULL deriving (Show, Eq, Ord)

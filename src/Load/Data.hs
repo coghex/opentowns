@@ -24,6 +24,7 @@ data LoadCmd = LoadCmdPrint !PrintArg
              | LoadCmdDS !DrawStateCmd
              | LoadCmdInput InputAct
              | LoadCmdTest
+             | LoadCmdTest2
              | LoadCmdNULL deriving (Show, Eq)
 
 -- | the drawstate is converted into verticies and indicies

@@ -57,9 +57,12 @@ initElem _   _   we       _ = return we
 
 -- | handles individual button presses
 processButton ∷ (MonadLog μ, MonadFail μ) ⇒ DrawState → Button → LogT μ DrawState
-processButton ds (Button (ButtFuncLink ind) _ _ win page) = return ds'
+processButton ds (Button (ButtFuncLink ind) _ _ win page) = do
+  sendInpAct $ InpActSetPage win new
+  return ds'
   where ds'  = ds { dsWins   = changePageInWins (dsWins ds) ind win page
-                 , dsStatus = DSSReload }
+                  , dsStatus = DSSReload }
+        new  = findNewPageInWins (dsWins ds) ind win page
 processButton ds _ = return ds
 changePageInWins ∷ [Window] → Int → String → String → [Window]
 changePageInWins []     _    _   _    = []
@@ -72,6 +75,11 @@ changePage ∷ Window → String → Window
 changePage win page = win { 
                             winCurr = page
                           , winLast = winCurr win }
+findNewPageInWins ∷ [Window] → Int → String → String → String
+findNewPageInWins [] _ _ _ = []
+findNewPageInWins (w:ws) dest win page
+  | winTitle w ≡ win = findButtonDestByInd dest (winPages w)
+  | otherwise        = findNewPageInWins ws dest win page
 
 -- this only works if names are unique
 findButtonDestByInd ∷ Int → [Page] → String
