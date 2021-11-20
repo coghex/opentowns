@@ -6,7 +6,7 @@ import UPrelude
 import Elem.Data ( WinElem(..), ButtAction(..)
                  , Button(..), ButtFunc(..)
                  , InputAct(..) )
-import Load.Data ( Tile(..) )
+import Load.Data ( DrawState(..), Tile(..), DSStatus(..) )
 import Luau.Data ( Page(..), Window(..) )
 import Prog.Data ( Env(..) )
 import Sign.Log ( LogT(..), MonadLog(..), sendInpAct )
@@ -54,3 +54,33 @@ initElem win page
   sendInpAct $ InpActSetLink butt
   return $ WinElemButt pos col box adv (ButtActionLink dest) ind args hov
 initElem _   _   we       _ = return we     
+
+-- | handles individual button presses
+processButton ∷ (MonadLog μ, MonadFail μ) ⇒ DrawState → Button → LogT μ DrawState
+processButton ds (Button (ButtFuncLink ind) _ _ win page) = return ds'
+  where ds'  = ds { dsWins   = changePageInWins (dsWins ds) ind win page
+                 , dsStatus = DSSReload }
+processButton ds _ = return ds
+changePageInWins ∷ [Window] → Int → String → String → [Window]
+changePageInWins []     _    _   _    = []
+changePageInWins (w:ws) dest win page
+  | winTitle w ≡ win = [w'] ⧺ changePageInWins ws dest win page
+  | otherwise        = [w]  ⧺ changePageInWins ws dest win page
+    where w'  = changePage w new
+          new = findButtonDestByInd dest (winPages w)
+changePage ∷ Window → String → Window
+changePage win page = win { 
+                            winCurr = page
+                          , winLast = winCurr win }
+
+-- this only works if names are unique
+findButtonDestByInd ∷ Int → [Page] → String
+findButtonDestByInd _ []     = []
+findButtonDestByInd n (p:ps) = findButtonDestByIndElem n (pageElems p)
+  ⧺ findButtonDestByInd n ps
+findButtonDestByIndElem ∷ Int → [WinElem] → String
+findButtonDestByIndElem _ []       = []
+findButtonDestByIndElem n ((WinElemButt _ _ _ _ (ButtActionLink dest) ind _ _):wes)
+  | ind ≡ n   = dest
+  | otherwise = findButtonDestByIndElem n wes
+findButtonDestByIndElem n (_:wes) = findButtonDestByIndElem n wes

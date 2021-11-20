@@ -14,9 +14,14 @@ function initMod ()
     menu1:initPage("menu1")
     win1:addPage(menu1)
     local menu2 = page:new ()
-    menu2:newBit(textBit (1.0,2.5,"second menu","0xFFFF00","menu3"))
+    menu2:newBit(linkButton (1.0,2.5,"second menu","0xFFFF00","menu1"))
     menu2:initPage("menu2")
     win1:addPage(menu2)
+    local menu3 = page:new ()
+    menu3:newBit(linkButton (1.0,2.5,"third menu","0xFFFF00","menu1"))
+    menu3:initPage("menu3")
+    win1:addPage(menu3)
+
 
     win1:goToPage("menu1")
     return 0

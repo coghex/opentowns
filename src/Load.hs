@@ -11,7 +11,7 @@ import Prelude()
 import UPrelude
 import Data ( PrintArg(PrintNULL) )
 import Data.Maybe ( fromMaybe )
-import Elem ( initElem, currentPage )
+import Elem ( initElem, currentPage, processButton )
 import Elem.Data ( InputAct(..) )
 import Load.Cmd
 import Load.Data
@@ -45,7 +45,7 @@ import System.Log.FastLogger (LogType'(LogStdout))
 -- | threaded loop provides work so main thread doesnt stutter
 loadThread ∷ Env → GLFW.Window → IO ()
 loadThread env win = do
-  logger ← makeDefaultLogger env (LogStdout 4096) (LogDebug 2)
+  logger ← makeDefaultLogger env (LogStdout 4096) (LogDebug 3)
 --  runLog logger $ log' LogInfo "asdf"
   runLog logger $ runLoadLoop win initDS TStop
   where initDS = initDrawState
@@ -86,7 +86,6 @@ processCommands win ds = do
         ResSuccess       → processCommands win ds
         -- request to change the draw state
         ResDrawState ds' → case dsStatus ds' of
-          DSSNULL → processCommands win ds'
           DSSExit → do
             sendSys SysExit
             return ds'
@@ -99,17 +98,19 @@ processCommands win ds = do
             processCommands win ds''
               where ds'' = ds' { dsStatus = DSSNULL }
           DSSRecreate → do
-            sendSys SysRecreate
+            sendLoadCmd LoadCmdVerts
             processCommands win ds''
               where ds'' = ds' { dsStatus = DSSNULL }
           DSSReload → do
-            sendSys SysReload
+            log' (LogDebug 3) "reloading dyns..."
+            sendLoadCmd LoadCmdDyns
             processCommands win ds''
               where ds'' = ds' { dsStatus = DSSNULL }
           DSSLogDebug n str → do
             log' (LogDebug n) str
             processCommands win ds''
               where ds'' = ds' { dsStatus = DSSNULL }
+          DSSNULL → processCommands win ds'
         ResError str → do
           log' LogError $ "load command error: " ⧺ str
           processCommands win ds
@@ -167,8 +168,9 @@ processCommand glfwwin ds cmd = case cmd of
     ds' ← processDrawStateCommand ds dsCmd
     return $ ResDrawState ds'
   LoadCmdInput (InpActButton butt) → do
-    log' LogInfo $ "load command button callback: " ⧺ show butt
-    return ResSuccess
+    log' (LogDebug 3) "LoadCmdInput"
+    ds' ← processButton ds butt
+    return $ ResDrawState ds'
   LoadCmdInput inpAction → do
     log' LogWarn $ "unknown inpAction " ⧺ show inpAction
     return ResSuccess

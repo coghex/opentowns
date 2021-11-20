@@ -38,7 +38,10 @@ addElemToPageInWin _   _    _    []     = []
 addElemToPageInWin win page el (w:ws)
   | win ≡ winTitle w = [w'] ⧺ addElemToPageInWin win page el ws
   | otherwise        = [w]  ⧺ addElemToPageInWin win page el ws
-    where w'    = w { winPages = pages }
+    where w'    = w { winPages = pages
+    -- the first page added will become the current page
+                    , winCurr  = if winCurr w ≡ "NULL" then page
+                                 else winCurr w }
           pages = addElemToPage page el (winPages w)
 
 -- | adds an elem into a page
