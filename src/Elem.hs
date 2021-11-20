@@ -9,8 +9,8 @@ import Elem.Data ( WinElem(..), ButtAction(..)
 import Load.Data ( DrawState(..), Tile(..), DSStatus(..) )
 import Luau.Data ( Page(..), Window(..) )
 import Prog.Data ( Env(..) )
-import Sign.Data ( LogLevel(..) )
-import Sign.Log ( LogT(..), MonadLog(..), sendInpAct, log' )
+import Sign.Data ( LogLevel(..), SysAction(..) )
+import Sign.Log ( LogT(..), MonadLog(..), sendInpAct, log', sendSys )
 import Sign.Var ( atomically )
 import Sign.Queue ( writeQueue )
 import Vulk.Font ( TTFData(..) )
@@ -63,17 +63,29 @@ initElem win page
                     , bPage = page }
   sendInpAct $ InpActSetLink butt
   return $ WinElemButt pos col box adv ButtActionBack ind args hov
-initElem _   _   we       _ = return we     
+initElem win page
+  (WinElemButt pos col box adv ButtActionExit _ args hov) ind = do
+  let butt = Button { bFunc = ButtFuncLink ind
+                    , bPos  = pos
+                    , bSize = box
+                    , bWin  = win
+                    , bPage = page }
+  sendInpAct $ InpActSetLink butt
+  return $ WinElemButt pos col box adv ButtActionExit ind args hov
+initElem _   _   we       _ = return we
 
 -- | handles individual button presses
-processButton ∷ (MonadLog μ, MonadFail μ) ⇒ DrawState → Button → LogT μ DrawState
+processButton ∷ (MonadLog μ, MonadFail μ)
+  ⇒ DrawState → Button → LogT μ DrawState
 processButton ds (Button (ButtFuncLink ind) _ _ win page) = do
-  sendInpAct $ InpActSetPage win new
-  log' LogInfo new
-  return ds'
-  where ds'  = ds { dsWins   = changePageInWins (dsWins ds) ind win page
-                  , dsStatus = DSSReload }
-        new  = findNewPageInWins (dsWins ds) ind win page
+  -- there are some reserved menu names, for simplicity
+  let new  = findNewPageInWins (dsWins ds) ind win page
+  if new ≡ "EXIT" then sendSys SysExit ≫ return ds else do
+    sendInpAct $ InpActSetPage win new
+    log' LogInfo new
+    return ds'
+    where ds'  = ds { dsWins   = changePageInWins (dsWins ds) ind win page
+                    , dsStatus = DSSReload }
 processButton ds _ = return ds
 changePageInWins ∷ [Window] → Int → String → String → [Window]
 changePageInWins []     _    _   _    = []
@@ -105,6 +117,9 @@ findButtonDestByIndElem n lt ((WinElemButt _ _ _ _ (ButtActionLink dest) ind _ _
   | otherwise = findButtonDestByIndElem n lt wes
 findButtonDestByIndElem n lt ((WinElemButt _ _ _ _ ButtActionBack ind _ _):wes)
   | ind ≡ n   = lt
+  | otherwise = findButtonDestByIndElem n lt wes
+findButtonDestByIndElem n lt ((WinElemButt _ _ _ _ ButtActionExit ind _ _):wes)
+  | ind ≡ n   = "EXIT"
   | otherwise = findButtonDestByIndElem n lt wes
 findButtonDestByIndElem n lt (_:wes) = findButtonDestByIndElem n lt wes
 

@@ -42,6 +42,7 @@ data ButtAction = ButtActionMusic Bool
                 | ButtActionKey KeyFunc [Key]
                 | ButtActionLink String
                 | ButtActionBack
+                | ButtActionExit
                 | ButtActionNULL deriving (Show, Eq)
 
 -- buttons are like links but change their value when clicked

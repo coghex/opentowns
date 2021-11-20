@@ -13,5 +13,8 @@ end
 function backButton (mx,my)
     return ("back:"..(tostring(mx))..":"..(tostring(my)))
 end
+function exitButton (mx,my)
+    return ("exit:"..(tostring(mx))..":"..(tostring(my)))
+end
 
 return bit
