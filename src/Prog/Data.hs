@@ -104,7 +104,7 @@ data InpResult = ResInpSuccess | ResInpError String
 
 -- | various situations in which a bit of data needs to be held
 --   for caching and toggle functionality
-data Halt = HaltButton Bool
+data Halt = HaltButton Int
           | HaltNULL deriving (Show, Eq)
 
 -- | certain keys state

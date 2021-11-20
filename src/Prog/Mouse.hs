@@ -76,30 +76,41 @@ processLoadMouse env win inpSt = do
                  (findButts (isElems inpSt)) pos
       w0     = isWin inpSt'
       p0     = isPage inpSt'
-  if length butts ≡ 0 ∧ halting inpSt then do
+  if length butts ≡ 0 ∧ (halting inpSt ≥ 0) then do
     atomically $ writeQueue (envLoadQ env)
       $ LoadCmdDS $ DSCToggleButts butts False
     return inpSt' { isHalt = HaltNULL }
-  else if length butts > 0 ∧ not (halting inpSt) then do
+--  else if length butts > 0 ∧ halting inpSt ≡ -1 then do
+--    atomically $ writeQueue (envLoadQ env)
+--      $ LoadCmdDS $ DSCToggleButts butts True
+--    return inpSt' { isHalt = HaltButton (buttInd (head butts)) }
+----      links  = findAllLinksUnder win (1280,720)
+----                 (findLinks (isElems inpSt)) pos
+----      butts  = findAllButtsUnder win (1280,720)
+----                 (findButts (isElems inpSt)) pos
+----      win    = isWin inpSt'
+--  --if (length links) > 0 then do
+----  atomically $ writeQueue (envLoadQ env) $ LoadCmdToggleLinks links
+----  atomically $ writeQueue (envLoadQ env) $ LoadCmdToggleButts butts
+  else if length butts > 0 ∧ halting inpSt ≠ buttInd (head butts) then do
     atomically $ writeQueue (envLoadQ env)
       $ LoadCmdDS $ DSCToggleButts butts True
-    return inpSt' { isHalt = HaltButton True }
---      links  = findAllLinksUnder win (1280,720)
---                 (findLinks (isElems inpSt)) pos
---      butts  = findAllButtsUnder win (1280,720)
---                 (findButts (isElems inpSt)) pos
---      win    = isWin inpSt'
-  --if (length links) > 0 then do
---  atomically $ writeQueue (envLoadQ env) $ LoadCmdToggleLinks links
---  atomically $ writeQueue (envLoadQ env) $ LoadCmdToggleButts butts
+    return inpSt' { isHalt = HaltButton (buttInd (head butts)) }
   else return inpSt'
   --else return inpSt'
 
 -- | returns a bool true if a halt is active
-halting ∷ InputState → Bool
+halting ∷ InputState → Int
 halting inpSt = case isHalt inpSt of
   HaltButton b → b
-  HaltNULL     → False
+  HaltNULL     → -1
+
+-- | returns index of a button
+buttInd ∷ Button → Int
+buttInd butt = buttFuncInd $ bFunc butt
+buttFuncInd ∷ ButtFunc → Int
+buttFuncInd (ButtFuncLink ind) = ind
+buttFuncInd _                  = -1
 
 findButts ∷ [InputElem] → [Button]
 findButts []                  = []

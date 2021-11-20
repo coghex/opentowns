@@ -15,36 +15,38 @@ processDrawStateCommand ∷ (MonadLog μ, MonadFail μ)
   ⇒ DrawState → DrawStateCmd → LogT μ DrawState
 processDrawStateCommand ds (DSCToggleButts butts b) = do
   sendLoadCmd LoadCmdDyns
-  -- currently only toggles the first button being hovered over
-  -- TODO: should allow multiple buttons to be handles together
   if length butts ≡ 0 then
     return $ ds { dsWins = allButtsOff (dsWins ds) }
   else
-    return $ ds { dsWins = toggleButts b (head butts) (dsWins ds) }
+    return $ ds { dsWins = toggleButts b butts (dsWins ds) }
 processDrawStateCommand ds _                  = return ds
 
--- | toggles the desired button in the list of windows
-toggleButts ∷ Bool → Button → [Window] → [Window]
+-- | toggles the desired buttons in the list of windows
+toggleButts ∷ Bool → [Button] → [Window] → [Window]
 toggleButts _ _    []     = []
 toggleButts b butt (w:ws) = [w'] ⧺ toggleButts b butt ws
   where w' = w { winPages = togglePageButts b butt (winPages w) }
 
-togglePageButts ∷ Bool → Button → [Page] → [Page]
+togglePageButts ∷ Bool → [Button] → [Page] → [Page]
 togglePageButts _ _    []     = []
 togglePageButts b butt (p:ps) = [p'] ⧺ togglePageButts b butt ps
   where p' = p { pageElems = togglePageElemButts b butt (pageElems p) }
 
-togglePageElemButts ∷ Bool → Button → [WinElem] → [WinElem]
+togglePageElemButts ∷ Bool → [Button] → [WinElem] → [WinElem]
 togglePageElemButts _ _    []       = []
 togglePageElemButts b butt (we:wes)
   = [we'] ⧺ togglePageElemButts b butt wes
-    where we' = toggleWinElemButt b butt we
+    where we' = toggleWinElemButts b butt we
 
+toggleWinElemButts ∷ Bool → [Button] → WinElem → WinElem
+toggleWinElemButts _ []     we = we
+toggleWinElemButts bool (b:bs) we = toggleWinElemButts bool bs we'
+  where we' = toggleWinElemButt bool b we
 toggleWinElemButt ∷ Bool → Button → WinElem → WinElem
 toggleWinElemButt b (Button (ButtFuncLink i) _ _ _ _)
-  (WinElemButt pos col box adv act ind val h)
+  (WinElemButt pos col box adv act ind val _)
     | i ≡ ind   = WinElemButt pos col box adv act ind val b
-    | otherwise = WinElemButt pos col box adv act ind val h
+    | otherwise = WinElemButt pos col box adv act ind val False
 toggleWinElemButt _ _    we = we
 
 -- | sets all buttons off when there are no butts under the mouse
