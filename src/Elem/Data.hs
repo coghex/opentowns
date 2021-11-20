@@ -41,6 +41,7 @@ data ButtAction = ButtActionMusic Bool
                 | ButtActionCPUUsageLevel Int
                 | ButtActionKey KeyFunc [Key]
                 | ButtActionLink String
+                | ButtActionBack
                 | ButtActionNULL deriving (Show, Eq)
 
 -- buttons are like links but change their value when clicked

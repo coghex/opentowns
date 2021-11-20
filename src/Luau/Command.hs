@@ -98,6 +98,18 @@ hsNewElem env name pname el = case head $ splitOn ":" el of
         e      = WinElemButt pos color (w,h) w (ButtActionLink ellink) (-1) text False
     Lua.liftIO $ atomically $ writeQueue loadQ
       $ LoadCmdNewElem name pname e
+  "back" → do
+    let loadQ = envLoadQ env
+        args  = tail $ splitOn ":" el
+        x'    = readMaybe (head args)        ∷ Maybe Double
+        y'    = readMaybe (head (tail args)) ∷ Maybe Double
+        pos   = sanitizeXY x' y'
+    ttfdat' ← Lua.liftIO $ atomically $ readTVar (envFontM env)
+    let ttfdat = fromMaybe [] ttfdat'
+        (w,h)  = calcTextBoxSize "Back" ttfdat
+        e      = WinElemButt pos (sanitizeColor "0xFFFFFF") (w,h) w ButtActionBack (-1) "Back" False
+    Lua.liftIO $ atomically $ writeQueue loadQ
+      $ LoadCmdNewElem name pname e
   unk → Lua.liftIO $ atomically $ writeQueue (envEventQ env)
     $ EventLog LogWarn $ "unknown element: " ⧺ unk
 -- | makes sure x,y pair strings are readable, if not, returns 0's

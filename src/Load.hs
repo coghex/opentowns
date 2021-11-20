@@ -11,7 +11,7 @@ import Prelude()
 import UPrelude
 import Data ( PrintArg(PrintNULL) )
 import Data.Maybe ( fromMaybe )
-import Elem ( initElem, currentPage, processButton )
+import Elem ( initElem, currentPage, processButton, lengthAllElems )
 import Elem.Data ( InputAct(..) )
 import Load.Cmd
 import Load.Data
@@ -45,7 +45,7 @@ import System.Log.FastLogger (LogType'(LogStdout))
 -- | threaded loop provides work so main thread doesnt stutter
 loadThread ∷ Env → GLFW.Window → IO ()
 loadThread env win = do
-  logger ← makeDefaultLogger env (LogStdout 4096) (LogDebug 3)
+  logger ← makeDefaultLogger env (LogStdout 4096) (LogDebug 2)
 --  runLog logger $ log' LogInfo "asdf"
   runLog logger $ runLoadLoop win initDS TStop
   where initDS = initDrawState
@@ -176,10 +176,10 @@ processCommand glfwwin ds cmd = case cmd of
     return ResSuccess
   LoadCmdNewElem win page el → do
     log' (LogDebug 3) "LoadCmdNewElem"
-    let els = case currentWin (dsWins ds) of
-                Nothing → []
-                Just w0 → pageElems $ currentPage w0
-    el' ← initElem win page el (length els)
+--    let els = case currentWin (dsWins ds) of
+--                Nothing → []
+--                Just w0 → pageElems $ currentPage w0
+    el' ← initElem win page el (lengthAllElems (dsWins ds))
     let ds' = ds { dsWins = addElemToPageInWin win page el' (dsWins ds) }
     return $ ResDrawState ds'
   LoadCmdSwitchWin win → do

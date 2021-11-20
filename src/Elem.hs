@@ -54,6 +54,15 @@ initElem win page
   --atomically $ writeQueue (envInpQ env) $ InpActSetLink butt
   sendInpAct $ InpActSetLink butt
   return $ WinElemButt pos col box adv (ButtActionLink dest) ind args hov
+initElem win page
+  (WinElemButt pos col box adv ButtActionBack _ args hov) ind = do
+  let butt = Button { bFunc = ButtFuncLink ind
+                    , bPos  = pos
+                    , bSize = box
+                    , bWin  = win
+                    , bPage = page }
+  sendInpAct $ InpActSetLink butt
+  return $ WinElemButt pos col box adv ButtActionBack ind args hov
 initElem _   _   we       _ = return we     
 
 -- | handles individual button presses
@@ -72,7 +81,7 @@ changePageInWins (w:ws) dest win page
   | winTitle w ≡ win = [w'] ⧺ changePageInWins ws dest win page
   | otherwise        = [w]  ⧺ changePageInWins ws dest win page
     where w'  = changePage w new
-          new = findButtonDestByInd dest page (winPages w)
+          new = findButtonDestByInd dest page (winLast w) (winPages w)
 changePage ∷ Window → String → Window
 changePage win page = win { 
                             winCurr = page
@@ -80,18 +89,28 @@ changePage win page = win {
 findNewPageInWins ∷ [Window] → Int → String → String → String
 findNewPageInWins [] _ _ _ = []
 findNewPageInWins (w:ws) dest win page
-  | winTitle w ≡ win = findButtonDestByInd dest page (winPages w)
+  | winTitle w ≡ win = findButtonDestByInd dest page (winLast w) (winPages w)
   | otherwise        = findNewPageInWins ws dest win page
 
 -- this only works if names are unique
-findButtonDestByInd ∷ Int → String → [Page] → String
-findButtonDestByInd _ _    []     = []
-findButtonDestByInd n page (p:ps)
-  | page ≡ pageTitle p = findButtonDestByIndElem n (pageElems p)
-  | otherwise          = findButtonDestByInd n page ps
-findButtonDestByIndElem ∷ Int → [WinElem] → String
-findButtonDestByIndElem _ []       = []
-findButtonDestByIndElem n ((WinElemButt _ _ _ _ (ButtActionLink dest) ind _ _):wes)
+findButtonDestByInd ∷ Int → String → String → [Page] → String
+findButtonDestByInd _ _    _    []     = []
+findButtonDestByInd n page lt (p:ps)
+  | page ≡ pageTitle p = findButtonDestByIndElem n lt (pageElems p)
+  | otherwise          = findButtonDestByInd n page lt ps
+findButtonDestByIndElem ∷ Int → String → [WinElem] → String
+findButtonDestByIndElem _ _    []       = []
+findButtonDestByIndElem n lt ((WinElemButt _ _ _ _ (ButtActionLink dest) ind _ _):wes)
   | ind ≡ n   = dest
-  | otherwise = findButtonDestByIndElem n wes
-findButtonDestByIndElem n (_:wes) = findButtonDestByIndElem n wes
+  | otherwise = findButtonDestByIndElem n lt wes
+findButtonDestByIndElem n lt ((WinElemButt _ _ _ _ ButtActionBack ind _ _):wes)
+  | ind ≡ n   = lt
+  | otherwise = findButtonDestByIndElem n lt wes
+findButtonDestByIndElem n lt (_:wes) = findButtonDestByIndElem n lt wes
+
+-- | returns the amount of page elements currently in all pages
+--   the reason it looks so nifty is that it was written by hlint
+lengthAllElems ∷ [Window] → Int
+lengthAllElems = foldr ((+) . lengthPageElems . winPages) 0
+lengthPageElems ∷ [Page] → Int
+lengthPageElems = foldr ((+) . length . pageElems) 0
