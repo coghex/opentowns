@@ -21,8 +21,8 @@ import Sign.Data
     ( Event(..),
       InputEvent(InputMouseScroll, InputKey, InputMouseButton),
       LoadData(LoadVerts, LoadDyns),
-      LogLevel(LogError, LogDebug, LogInfo, LogWarn),
-      SysAction(SysReload, SysExit, SysRecreate) )
+      LogLevel(..),
+      SysAction(..) )
 import Sign.Except ( ExType(ExVulk) )
 import Sign.Queue ( tryReadQueue )
 import Sign.Var ( atomically, modifyTVar' )
@@ -69,6 +69,7 @@ processEvent event = case event of
     case stRel of
       RSRecreate → return ()
       _          → modify $ \s → s { stReload = RSReload }
+  (EventSys SysToggleFullScreen) → logInfo $ "toggle fullscreen event"
   (EventSys cmd) → logInfo $ "no known sys command" ⧺ show cmd
   -- processing of input occurs in the input thread
   (EventInput (InputKey         win k _ ks mk))

@@ -110,6 +110,7 @@ buttInd ∷ Button → Int
 buttInd butt = buttFuncInd $ bFunc butt
 buttFuncInd ∷ ButtFunc → Int
 buttFuncInd (ButtFuncLink ind) = ind
+buttFuncInd (ButtFuncFunc ind) = ind
 buttFuncInd _                  = -1
 
 findButts ∷ [InputElem] → [Button]

@@ -16,4 +16,3 @@ data Page = Page { pageTitle  ∷ String
                  , pageElems  ∷ [WinElem]
                  } deriving (Show, Eq)
 
-

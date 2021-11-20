@@ -124,3 +124,8 @@ sendInpAct ∷ (MonadLog μ, MonadFail μ) ⇒ InputAct → LogT μ ()
 sendInpAct cmd = do
   (Log _   env _   _   _) ← askLog
   liftIO $ atomically $ writeQueue (envInpQ env) cmd
+-- | preforms necessary work to toggle fullscreen
+toggleFullScreen ∷ (MonadLog μ, MonadFail μ) ⇒ LogT μ ()
+toggleFullScreen = do
+  (Log _   env _   _   _) ← askLog
+  liftIO $ atomically $ writeQueue (envEventQ env) $ EventSys SysToggleFullScreen

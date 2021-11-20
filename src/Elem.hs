@@ -3,14 +3,15 @@ module Elem where
 -- main elem functions are found
 import Prelude()
 import UPrelude
+import Data.List.Split ( splitOn )
 import Elem.Data ( WinElem(..), ButtAction(..)
                  , Button(..), ButtFunc(..)
-                 , InputAct(..) )
+                 , InputAct(..), LuaFunc(..) )
 import Load.Data ( DrawState(..), Tile(..), DSStatus(..) )
 import Luau.Data ( Page(..), Window(..) )
 import Prog.Data ( Env(..) )
 import Sign.Data ( LogLevel(..), SysAction(..) )
-import Sign.Log ( LogT(..), MonadLog(..), sendInpAct, log', sendSys )
+import Sign.Log ( LogT(..), MonadLog(..), sendInpAct, log', sendSys, toggleFullScreen )
 import Sign.Var ( atomically )
 import Sign.Queue ( writeQueue )
 import Vulk.Font ( TTFData(..) )
@@ -72,6 +73,15 @@ initElem win page
                     , bPage = page }
   sendInpAct $ InpActSetLink butt
   return $ WinElemButt pos col box adv ButtActionExit ind args hov
+initElem win page
+  (WinElemButt pos col box adv (ButtActionFunc func) _ args hov) ind = do
+  let butt = Button { bFunc = ButtFuncFunc ind
+                    , bPos  = pos
+                    , bSize = box
+                    , bWin  = win
+                    , bPage = page }
+  sendInpAct $ InpActSetLink butt
+  return $ WinElemButt pos col box adv (ButtActionFunc func) ind args hov
 initElem _   _   we       _ = return we
 
 -- | handles individual button presses
@@ -80,12 +90,16 @@ processButton ∷ (MonadLog μ, MonadFail μ)
 processButton ds (Button (ButtFuncLink ind) _ _ win page) = do
   -- there are some reserved menu names, for simplicity
   let new  = findNewPageInWins (dsWins ds) ind win page
-  if new ≡ "EXIT" then sendSys SysExit ≫ return ds else do
+  if new ≡ "EXIT" then sendSys SysExit ≫ return ds
+  else do
     sendInpAct $ InpActSetPage win new
     log' LogInfo new
     return ds'
     where ds'  = ds { dsWins   = changePageInWins (dsWins ds) ind win page
                     , dsStatus = DSSReload }
+processButton ds (Button (ButtFuncFunc ind) _ _ win page) = do
+  execButtonFunc (dsWins ds) ind win page
+  return ds
 processButton ds _ = return ds
 changePageInWins ∷ [Window] → Int → String → String → [Window]
 changePageInWins []     _    _   _    = []
@@ -129,3 +143,31 @@ lengthAllElems ∷ [Window] → Int
 lengthAllElems = foldr ((+) . lengthPageElems . winPages) 0
 lengthPageElems ∷ [Page] → Int
 lengthPageElems = foldr ((+) . length . pageElems) 0
+
+-- | executes the function atttached to a button
+execButtonFunc ∷ (MonadLog μ, MonadFail μ) ⇒ [Window] → Int → String → String → LogT μ ()
+execButtonFunc wins ind win page = do
+  let func = findFunc wins ind win page
+  case func of
+    LuaFuncToggleFullScreen → toggleFullScreen
+    LuaFuncUnknown str → log' LogWarn $ "unknown lua command: " ⧺ str
+    LuaFuncNULL → log' LogError "lua NULL function"
+
+findFunc ∷ [Window] → Int → String → String → LuaFunc
+findFunc []      _   _   _    = LuaFuncNULL
+findFunc (w:wes) ind win page
+  | winTitle w ≡ win = findFuncInPage (winPages w) ind page
+  | otherwise        = findFunc wes ind win page
+
+findFuncInPage ∷ [Page] → Int → String → LuaFunc
+findFuncInPage []     _   _    = LuaFuncNULL
+findFuncInPage (p:ps) ind page
+  | pageTitle p ≡ page = findFuncInElems (pageElems p) ind
+  | otherwise          = findFuncInPage ps ind page
+
+findFuncInElems ∷ [WinElem] → Int → LuaFunc
+findFuncInElems []       _   = LuaFuncNULL
+findFuncInElems (we:wes) ind = case we of
+  WinElemButt _ _ _ _ (ButtActionFunc func) i _ _ → if i ≡ ind then func
+    else findFuncInElems wes ind
+  _ → findFuncInElems wes ind
