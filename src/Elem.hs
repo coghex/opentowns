@@ -9,7 +9,8 @@ import Elem.Data ( WinElem(..), ButtAction(..)
 import Load.Data ( DrawState(..), Tile(..), DSStatus(..) )
 import Luau.Data ( Page(..), Window(..) )
 import Prog.Data ( Env(..) )
-import Sign.Log ( LogT(..), MonadLog(..), sendInpAct )
+import Sign.Data ( LogLevel(..) )
+import Sign.Log ( LogT(..), MonadLog(..), sendInpAct, log' )
 import Sign.Var ( atomically )
 import Sign.Queue ( writeQueue )
 import Vulk.Font ( TTFData(..) )
@@ -59,6 +60,7 @@ initElem _   _   we       _ = return we
 processButton ∷ (MonadLog μ, MonadFail μ) ⇒ DrawState → Button → LogT μ DrawState
 processButton ds (Button (ButtFuncLink ind) _ _ win page) = do
   sendInpAct $ InpActSetPage win new
+  log' LogInfo new
   return ds'
   where ds'  = ds { dsWins   = changePageInWins (dsWins ds) ind win page
                   , dsStatus = DSSReload }
@@ -70,7 +72,7 @@ changePageInWins (w:ws) dest win page
   | winTitle w ≡ win = [w'] ⧺ changePageInWins ws dest win page
   | otherwise        = [w]  ⧺ changePageInWins ws dest win page
     where w'  = changePage w new
-          new = findButtonDestByInd dest (winPages w)
+          new = findButtonDestByInd dest page (winPages w)
 changePage ∷ Window → String → Window
 changePage win page = win { 
                             winCurr = page
@@ -78,14 +80,15 @@ changePage win page = win {
 findNewPageInWins ∷ [Window] → Int → String → String → String
 findNewPageInWins [] _ _ _ = []
 findNewPageInWins (w:ws) dest win page
-  | winTitle w ≡ win = findButtonDestByInd dest (winPages w)
+  | winTitle w ≡ win = findButtonDestByInd dest page (winPages w)
   | otherwise        = findNewPageInWins ws dest win page
 
 -- this only works if names are unique
-findButtonDestByInd ∷ Int → [Page] → String
-findButtonDestByInd _ []     = []
-findButtonDestByInd n (p:ps) = findButtonDestByIndElem n (pageElems p)
-  ⧺ findButtonDestByInd n ps
+findButtonDestByInd ∷ Int → String → [Page] → String
+findButtonDestByInd _ _    []     = []
+findButtonDestByInd n page (p:ps)
+  | page ≡ pageTitle p = findButtonDestByIndElem n (pageElems p)
+  | otherwise          = findButtonDestByInd n page ps
 findButtonDestByIndElem ∷ Int → [WinElem] → String
 findButtonDestByIndElem _ []       = []
 findButtonDestByIndElem n ((WinElemButt _ _ _ _ (ButtActionLink dest) ind _ _):wes)
