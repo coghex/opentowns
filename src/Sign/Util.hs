@@ -3,7 +3,7 @@ module Sign.Util where
 -- we defines functions to let us pass callstacks to logger
 import Prelude()
 import UPrelude
-import GHC.Stack ( HasCallStack, callStack )
+import GHC.Stack ( HasCallStack )
 import Prog.Data
   ( Env(..) )
 import Sign.Data (LogLevel(..), Event (EventLog))

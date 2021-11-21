@@ -3,17 +3,13 @@ module Elem where
 -- main elem functions are found
 import Prelude()
 import UPrelude
-import Data.List.Split ( splitOn )
 import Elem.Data ( WinElem(..), ButtAction(..)
                  , Button(..), ButtFunc(..), TextButton(..)
                  , InputAct(..), LuaFunc(..) )
 import Load.Data ( DrawState(..), Tile(..), DSStatus(..) )
 import Luau.Data ( Page(..), Window(..) )
-import Prog.Data ( Env(..) )
 import Sign.Data ( LogLevel(..), SysAction(..) )
 import Sign.Log ( LogT(..), MonadLog(..), sendInpAct, log', sendSys, toggleFullScreen )
-import Sign.Var ( atomically )
-import Sign.Queue ( writeQueue )
 import Vulk.Font ( TTFData(..) )
 
 -- | finds tiles from a window

@@ -9,7 +9,6 @@ import UPrelude
 import Control.Monad.IO.Class
 import Control.Monad.Morph
 import Control.Monad.Reader
-import Data.Maybe ( fromMaybe )
 import System.Log.FastLogger
 import Elem.Data ( InputAct(..) )
 import Prog.Data ( Env(..) )

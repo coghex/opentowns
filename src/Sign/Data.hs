@@ -4,7 +4,6 @@ module Sign.Data where
 import Prelude()
 import UPrelude
 import Data ( PrintArg(..) )
-import Elem.Data ( Button(..) )
 import Load.Data ( Dyns(..) )
 import Vulk.Data ( Verts(..) )
 import qualified Vulk.GLFW as GLFW

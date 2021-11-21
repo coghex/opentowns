@@ -8,7 +8,7 @@ import Data ( FPS(..), Difficulty(..)
             , Key, KeyFunc, KeyMap )
 import Data.Time.Clock.System ( SystemTime )
 import qualified Foreign.Lua as Lua
-import Elem.Data ( Button(..), InputAct(..), InputElem(..), CapType(..) )
+import Elem.Data ( InputAct(..), InputElem(..), CapType(..) )
 import Load.Data ( LoadCmd(..), Dyns(..) )
 import Sign.Data ( Event, TState )
 import Sign.Except ( ProgExcept )

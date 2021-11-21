@@ -15,7 +15,6 @@ import Load.Data ( LoadCmd(..) )
 import Prog
     ( MonadIO(liftIO),
       MonadReader(ask),
-      MonadState(get),
       Prog,
       Prog' )
 import Prog.Data

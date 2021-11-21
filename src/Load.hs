@@ -11,7 +11,7 @@ import Prelude()
 import UPrelude
 import Data ( PrintArg(PrintNULL) )
 import Data.Maybe ( fromMaybe )
-import Elem ( initElem, currentPage, processButton, lengthAllElems )
+import Elem ( initElem, processButton, lengthAllElems )
 import Elem.Data ( InputAct(..) )
 import Load.Cmd
 import Load.Data
@@ -19,18 +19,14 @@ import Load.Data
       DrawState(dsStatus, dsTiles, dsBuff, dsWins),
       LoadCmd(..),
       LoadResult(..) )
-import Luau.Data ( Page(..) )
 import Luau.Window ( addPageToWin, addElemToPageInWin
-                   , currentWin, switchWin, resizeWins )
+                   , switchWin, resizeWins )
 import Prog.Buff ( genDynBuffs, loadDyns, initBuff )
 import Prog.Data ( Env(..) )
 import Sign.Data
     ( LoadData(LoadDyns, LoadVerts),
       LogLevel(..), SysAction(..), TState(..) )
 import Sign.Log
-import Sign.Var ( atomically, readTVar )
-import Sign.Queue
-    ( readChan, tryReadChan, tryReadQueue, writeQueue )
 import Prog.Init ( initDrawState )
 import Vulk.Calc ( calcVertices )
 import Vulk.Data ( Verts(Verts) )

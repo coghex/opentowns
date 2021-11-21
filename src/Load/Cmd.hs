@@ -6,7 +6,7 @@ import Prelude()
 import UPrelude
 import Elem.Data ( WinElem(..), Button(..), ButtFunc(..) )
 import Load.Data ( DrawState(..), DrawStateCmd(..)
-                 , LoadCmd(..), DSStatus(..) )
+                 , LoadCmd(..) )
 import Luau.Data ( Window(..), Page(..) )
 import Sign.Log ( MonadLog(..), LogT(..), sendLoadCmd )
 
