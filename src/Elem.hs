@@ -97,9 +97,8 @@ processButton ds (Button (ButtFuncLink ind) _ _ win page) = do
     return ds'
     where ds'  = ds { dsWins   = changePageInWins (dsWins ds) ind win page
                     , dsStatus = DSSReload }
-processButton ds (Button (ButtFuncFunc ind) _ _ win page) = do
-  execButtonFunc ds ind win page
-  return ds
+processButton ds (Button (ButtFuncFunc ind) _ _ win page)
+  = execButtonFunc ds ind win page
 processButton ds _ = return ds
 changePageInWins ∷ [Window] → Int → String → String → [Window]
 changePageInWins []     _    _   _    = []
@@ -145,14 +144,18 @@ lengthPageElems ∷ [Page] → Int
 lengthPageElems = foldr ((+) . length . pageElems) 0
 
 -- | executes the function atttached to a button
-execButtonFunc ∷ (MonadLog μ, MonadFail μ) ⇒ DrawState → Int → String → String → LogT μ ()
+execButtonFunc ∷ (MonadLog μ, MonadFail μ) ⇒ DrawState → Int → String → String → LogT μ DrawState
 execButtonFunc ds ind win page = do
   let func = findFunc wins ind win page
       wins = dsWins ds
   case func of
-    LuaFuncToggleFullScreen → toggleFullScreen (dsOldSize ds) ≫ return ()
-    LuaFuncUnknown str → log' LogWarn $ "unknown lua command: " ⧺ str
-    LuaFuncNULL → log' LogError "lua NULL function"
+    LuaFuncToggleFullScreen → do
+      oldSize ← toggleFullScreen (dsOldSize ds)
+      return ds { dsOldSize = oldSize }
+    LuaFuncUnknown str → do
+      log' LogWarn $ "unknown lua command: " ⧺ str
+      return ds
+    LuaFuncNULL → log' LogError "lua NULL function" ≫ return ds
 
 findFunc ∷ [Window] → Int → String → String → LuaFunc
 findFunc []      _   _   _    = LuaFuncNULL

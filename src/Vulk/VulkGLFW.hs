@@ -173,6 +173,7 @@ makeFullscreen ∷ Prog ε σ ()
 makeFullscreen = do
   win ← gets stWindow
   env ← ask
+  logInfo "making fullscreen"
   case win of
     Nothing → logError "no glfw window present"
     Just w0 → do
@@ -195,6 +196,7 @@ makeWindowed ∷ Int → Int → Int → Int → Prog ε σ ()
 makeWindowed w h x y = do
   win ← gets stWindow
   env ← ask
+  logInfo "making windowed"
   case win of
     Nothing → logError "no glfw window present"
     Just w0 → do
