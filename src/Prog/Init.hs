@@ -62,6 +62,8 @@ initEnv = do
   luaCh    ← newTChan
   -- font metrics var to hold the current fonts metrics
   fontM    ← atomically $ newTVar Nothing
+  -- a channel for the glfw window so the threads can get glfw info
+  win      ← atomically $ newTVar Nothing
   -- vert TVar keeps verticies in a cache so when we only
   -- recalculate if we explicitly ask for it
   verts    ← atomically $ newTVar Nothing
@@ -74,6 +76,7 @@ initEnv = do
                 , envLuaSt  = luaState
                 , envInpQ   = inpQ
                 , envInpCh  = inputCh
+                , envWindow = win
                 , envFontM  = fontM
                 , envVerts  = verts
                 , envDyns   = dyns }

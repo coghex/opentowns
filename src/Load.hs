@@ -21,7 +21,7 @@ import Load.Data
       LoadResult(..) )
 import Luau.Data ( Page(..) )
 import Luau.Window ( addPageToWin, addElemToPageInWin
-                   , currentWin, switchWin )
+                   , currentWin, switchWin, resizeWins )
 import Prog.Buff ( genDynBuffs, loadDyns, initBuff )
 import Prog.Data ( Env(..) )
 import Sign.Data
@@ -193,7 +193,10 @@ processCommand glfwwin ds cmd = case cmd of
     --atomically $ writeQueue (envInpQ  env) $ InputSwitchWin win
     return $ ResDrawState ds'
   -- sometimes you need to test something with a command
-  LoadCmdWindowSize _ → return ResSuccess
+  LoadCmdWindowSize size → do
+    sendLoadCmd LoadCmdDyns
+    return $ ResDrawState ds'
+    where ds' = ds { dsWins = resizeWins size (dsWins ds) }
   LoadCmdTest → do
     log' LogInfo $ show $ dsWins ds
     return ResSuccess

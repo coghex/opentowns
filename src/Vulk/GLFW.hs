@@ -3,7 +3,6 @@
 module Vulk.GLFW
   ( module Graphics.UI.GLFW
   , KeyLayout (..)
-  , GLFWCmd (..)
   , keyCheck
   , numCheck
   , calcInpKey
@@ -33,11 +32,6 @@ data KeyLayout = KeyLayout
   , klDwn ∷ String
   , klRgt ∷ String
   , klSh  ∷ String } deriving (Show, Eq)
-
--- | glfw commands are for threads to pass around
-data GLFWCmd = GLFWCmdSetFullScreen
-             | GLFWCmdSetWindowed Int Int Int Int
-             | GLFWCmdNULL deriving (Show, Eq)
 
 -- | mousebutton synonyms
 mousebutt1 ∷ MouseButton

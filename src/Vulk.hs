@@ -27,7 +27,7 @@ import Prog
       MonadError(catchError),
       MonadReader(ask) )
 import Prog.Data
-    ( Env(envLoadCh, envInpCh, envDyns, envVerts, envLoadQ),
+    ( Env(..),
       LoopControl(..),
       ReloadState(RSRecreate, RSNULL),
       State(stTick, stFPS, stReload, stWindow) )
@@ -138,6 +138,7 @@ runVulk = do
         texData ← loadVulkanTextures gqdata []
         -- child threads go here
         env ← ask
+        liftIO $ atomically $ writeTVar (envWindow env) $ Just window
         -- verticies and indicies loading thread
         _ ← liftIO $ forkIO $ loadThread env window
         liftIO $ atomically $ writeChan (envLoadCh env) TStart
@@ -304,6 +305,7 @@ vulkLoop (VulkanLoopData (GQData pdev dev commandPool _) queues scsd0
             (\err → if testEx err VK_ERROR_OUT_OF_DATE_KHR
               then do
                 _ ← logDebug "vulkan khr out of date"
+                modify $ \s → s { stReload = RSRecreate }
                 return True
               else logExcept VulkError ExVulk "unknown drawFrame error" )
         -- processEvents executes commands from the child threads

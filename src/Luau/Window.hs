@@ -51,3 +51,10 @@ addElemToPage name el (p:ps)
   | name ≡ pageTitle p = [p'] ⧺ addElemToPage name el ps
   | otherwise          = [p]  ⧺ addElemToPage name el ps
     where p'    = p { pageElems = pageElems p ⧺ [el] }
+
+-- | sets the size of all windows when GLFW is resized
+resizeWins ∷ (Int,Int) → [Window] → [Window]
+resizeWins _    []         = []
+resizeWins size (win:wins) = [win'] ⧺ resizeWins size wins
+  where win' = win { winSize = size }
+

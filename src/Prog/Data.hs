@@ -31,6 +31,8 @@ data Env = Env { envEventQ ∷ Queue Event
                , envLuaSt  ∷ Lua.State
                , envInpCh  ∷ TChan TState
                , envInpQ   ∷ Queue InputAct
+               -- this static glfw handle should only be used for reads
+               , envWindow ∷ TVar (Maybe GLFW.Window)
                , envFontM  ∷ TVar (Maybe [TTFData])
                , envVerts  ∷ TVar (Maybe Verts)
                , envDyns   ∷ TVar (Maybe Dyns) }

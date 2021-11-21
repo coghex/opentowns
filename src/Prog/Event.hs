@@ -26,6 +26,7 @@ import Sign.Data
 import Sign.Except ( ExType(ExVulk) )
 import Sign.Queue ( tryReadQueue )
 import Sign.Var ( atomically, modifyTVar' )
+import Vulk.VulkGLFW ( makeFullscreen, makeWindowed )
 
 -- | reads event channel, then exectutes events recursively
 processEvents ∷ Prog ε σ ()
@@ -69,7 +70,8 @@ processEvent event = case event of
     case stRel of
       RSRecreate → return ()
       _          → modify $ \s → s { stReload = RSReload }
-  (EventSys SysToggleFullScreen) → logInfo $ "toggle fullscreen event"
+  (EventSys SysFullScreen)         → makeFullscreen
+  (EventSys (SysWindowed w h x y)) → makeWindowed w h x y
   (EventSys cmd) → logInfo $ "no known sys command" ⧺ show cmd
   -- processing of input occurs in the input thread
   (EventInput (InputKey         win k _ ks mk))

@@ -51,7 +51,6 @@ data SettCmd = SettCmdNULL deriving (Show, Eq)
 
 -- | commands for functionality at the lowest level
 data SysAction = SysRecreate | SysReload
-               | SysToggleFullScreen
+               | SysFullScreen
+               | SysWindowed Int Int Int Int
                | SysExit | SysNULL deriving (Show, Eq)
-
-

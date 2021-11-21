@@ -25,6 +25,7 @@ import Prog.Util
       logDebug,
       logExcept,
       logInfo,
+      logError,
       occupyThreadAndFork )
 import Sign.Except ( ExType(ExVulk) )
 import Sign.Var ( atomically, writeTVar, TVar )
@@ -166,36 +167,37 @@ processInput = do
   --processMousePos inp
   return ()
 
--- | processes GLFW commands from child thread
--- TODO: replace returm () with errors
--- TODO: replace liftIO with args from queue
-processGLFWCommand ∷ GLFW.GLFWCmd → Prog ε σ ()
-processGLFWCommand GLFW.GLFWCmdSetFullScreen         = do
+-- some utility functions to help GLFW
+-- | makes glfw fullscreen in prog context
+makeFullscreen ∷ Prog ε σ ()
+makeFullscreen = do
   win ← gets stWindow
   env ← ask
   case win of
-    Nothing → return ()
+    Nothing → logError "no glfw window present"
     Just w0 → do
       m' ← liftIO GLFW.getPrimaryMonitor
       case m' of
-        Nothing → return ()
+        Nothing → logError "no primary monitor present"
         Just m0 → do
           vm' ← liftIO $ GLFW.getVideoMode m0
           case vm' of
-            Nothing  → return ()
-            Just _ → do
+            Nothing → logError "no video mode present"
+            Just _  →  do
               (_,_,w,h) ← liftIO $ GLFW.getMonitorWorkarea m0
               liftIO $ GLFW.setWindowSize w0 w h
               modify $ \s → s { stReload = RSRecreate }
               liftIO $ atomically $ writeQueue (envLoadQ env)
                 $ LoadCmdWindowSize (w,h)
-processGLFWCommand (GLFW.GLFWCmdSetWindowed w h x y) = do
+      
+-- | makes glfw windowed in prog context
+makeWindowed ∷ Int → Int → Int → Int → Prog ε σ ()
+makeWindowed w h x y = do
   win ← gets stWindow
   env ← ask
   case win of
-    Nothing → return ()
+    Nothing → logError "no glfw window present"
     Just w0 → do
       liftIO $ GLFW.setWindowed w0 w h x y
       liftIO $ atomically $ writeQueue (envLoadQ env)
         $ LoadCmdWindowSize (w,h)
-processGLFWCommand GLFW.GLFWCmdNULL                  = return ()

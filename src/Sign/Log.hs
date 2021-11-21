@@ -18,6 +18,7 @@ import Sign.Var ( atomically, readTVar )
 import Sign.Queue ( writeQueue, readChan, tryReadChan, tryReadQueue )
 import Load.Data (LoadCmd(..))
 import Vulk.Font (TTFData(..))
+import qualified Vulk.GLFW as GLFW
 
 -- | monadic boilerplate logger from simple-log package on hackage
 data Log = Log { logLevel  ∷ LogLevel
@@ -125,7 +126,25 @@ sendInpAct cmd = do
   (Log _   env _   _   _) ← askLog
   liftIO $ atomically $ writeQueue (envInpQ env) cmd
 -- | preforms necessary work to toggle fullscreen
-toggleFullScreen ∷ (MonadLog μ, MonadFail μ) ⇒ LogT μ ()
-toggleFullScreen = do
+toggleFullScreen ∷ (MonadLog μ, MonadFail μ) ⇒ Maybe (Int,Int) → LogT μ (Maybe (Int,Int))
+toggleFullScreen oldSize = do
   (Log _   env _   _   _) ← askLog
-  liftIO $ atomically $ writeQueue (envEventQ env) $ EventSys SysToggleFullScreen
+  m' ← liftIO GLFW.getPrimaryMonitor
+  w' ← liftIO $ atomically $ readTVar (envWindow env)
+  case w' of
+    Nothing → log' LogError "no glfw window present" ≫ return Nothing
+    Just w0 → do
+      case m' of
+        Nothing → log' LogError "no primary monitor" ≫ return Nothing
+        Just m0 → do
+          vm' ← liftIO $ GLFW.getVideoMode m0
+          case vm' of
+            Nothing → log' LogError "no primary video mode" ≫ return Nothing
+            Just _  → case oldSize of
+              Nothing → do
+                (ow,oh) ← liftIO $ GLFW.getWindowSize w0
+                liftIO $ atomically $ writeQueue (envEventQ env) $ EventSys SysFullScreen
+                return $ Just (ow,oh)
+              Just (w,h) → do
+                liftIO $ atomically $ writeQueue (envEventQ env) $ EventSys $ SysWindowed w h 10 10
+                return Nothing
