@@ -146,10 +146,12 @@ hsNewElem env name pname el = case head $ splitOn ":" el of
         text  = head (tail (tail args))
         color = sanitizeColor $ head (tail (tail (tail args)))
         pos   = sanitizeXY x' y'
+        val   = textButton text
+        text' = sanitizeText text
     ttfdat' ← Lua.liftIO $ atomically $ readTVar (envFontM env)
     let ttfdat = fromMaybe [] ttfdat'
-        (w,h)  = calcTextBoxSize text ttfdat
-        e      = WinElemButt pos color (w,h) w (ButtActionText (textButton text)) (-1) text False
+        (w,h)  = calcTextBoxSize (text' ⧺ valString val) ttfdat
+        e      = WinElemButt pos color (w,h) w (ButtActionText (textButton text)) (-1) text' False
     Lua.liftIO $ atomically $ writeQueue loadQ
       $ LoadCmdNewElem name pname e
 
@@ -163,11 +165,28 @@ textButton "Music-Volume" = TextMusicVolume 100
 textButton "FX"           = TextFX          True
 textButton "FX-Volume"    = TextFXVolume    100
 textButton str            = TextUnknown     str
+-- | finds the string of the default text button,
+--   just for measurement of the predefined width.
+--   these are the longest strings in possible values
+valString ∷ TextButton → String
+valString (TextMusic       _) = "OFF"
+valString (TextMusicVolume _) = "100%"
+valString (TextFX          _) = "OFF"
+valString (TextFXVolume    _) = "100%"
+valString (TextUnknown     _) = "UNK: "
+valString  TextNULL           = "NULL"
 
 -- | turns lua string reference into lua function ADT
 findLuaFunc ∷ String → LuaFunc
 findLuaFunc "toggleFullScreen" = LuaFuncToggleFullScreen
 findLuaFunc str                = LuaFuncUnknown str
+
+-- | some text buttons are identical, so we added hyphens,
+--   here we get rid of said hyphens
+sanitizeText ∷ String → String
+sanitizeText "Music-Volume" = "Volume"
+sanitizeText "FX-Volume"    = "Volume"
+sanitizeText str            = str
 
 -- | makes sure x,y pair strings are readable, if not, returns 0's
 sanitizeXY ∷ Maybe Double → Maybe Double → (Double,Double)

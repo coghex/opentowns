@@ -86,35 +86,35 @@ function initMod ()
 
     local options2 = page:new ()
     options2:newBit(text       (1.0,1.0,"Audio","0xFFFFFF"))
-    options2:newBit(textButton (1.0,2.0,"Music","0xFFFFFF","ON/OFF"))
-    options2:newBit(textButton (1.0,2.5,"Music-Volume","0xFFFFFF","0-100%"))
-    options2:newBit(textButton (1.0,3.0,"FX","0xFFFFFF","ON/OFF"))
-    options2:newBit(textButton (1.0,3.5,"FX-Volume","0xFFFFFF","0-100%"))
+    options2:newBit(textButton (1.0,2.0,"Music","0xFFFFFF","ON"))
+    options2:newBit(textButton (1.0,2.5,"Music-Volume","0xFFFFFF","100%"))
+    options2:newBit(textButton (1.0,3.0,"FX","0xFFFFFF","ON"))
+    options2:newBit(textButton (1.0,3.5,"FX-Volume","0xFFFFFF","100%"))
     options2:newBit(backButton (1.0,5.0))
     options2:initPage("options2")
     win1:addPage(options2)
 
     local options3 = page:new ()
     options3:newBit(text       (1.0,1.0,"Game","0xFFFFFF"))
-    options3:newBit(textButton (1.0,2.0,"Mouse scroll","0xFFFFFF","ON/OFF"))
+    options3:newBit(textButton (1.0,2.0,"Mouse scroll","0xFFFFFF","ON"))
     options3:newBit(textButton (1.0,2.5
-      ,"Allow mouse scroll while hovering the edge buttons","0xFFFFFF","ON/OFF"))
+      ,"Allow mouse scroll while hovering the edge buttons","0xFFFFFF","OFF"))
     options3:newBit(textButton (1.0,3.0
-      ,"Height cubes when 2D mouse is enabled","0xFFFFFF","ON/OFF"))
+      ,"Height cubes when 2D mouse is enabled","0xFFFFFF","ON"))
     options3:newBit(textButton (1.0,3.5
-      ,"Newly built stockpiles/containers have all items disabled by default","0xFFFFFF","ON/OFF"))
+      ,"Newly built stockpiles/containers have all items disabled by default","0xFFFFFF","OFF"))
     options3:newBit(textButton (1.0,4.0
-      ,"Pause the game when it starts","0xFFFFFF","ON/OFF"))
+      ,"Pause the game when it starts","0xFFFFFF","OFF"))
     options3:newBit(textButton (1.0,4.5
       ,"Autosave","0xFFFFFF","Disabled"))
     options3:newBit(textButton (1.0,5.0
       ,"Sieges","0xFFFFFF","Normal"))
     options3:newBit(textButton (1.0,5.5
-      ,"Pause the game when a siege starts","0xFFFFFF","ON/OFF"))
+      ,"Pause the game when a siege starts","0xFFFFFF","OFF"))
     options3:newBit(textButton (1.0,6.0
-      ,"Pause the game when a caravan comes","0xFFFFFF","ON/OFF"))
+      ,"Pause the game when a caravan comes","0xFFFFFF","OFF"))
     options3:newBit(textButton (1.0,6.5
-      ,"Allow bury system","0xFFFFFF","ON/OFF"))
+      ,"Allow bury system","0xFFFFFF","ON"))
     options3:newBit(backButton (1.0,7.5))
     options3:initPage("options3")
     win1:addPage(options3)
@@ -125,7 +125,7 @@ function initMod ()
     options4:newBit(text       (1.0,2.5,"Set it to 1 if you have a lower end computer","0xAAAAAA"))
     options4:newBit(text       (1.0,3.0,"Set it to 6 if you have a strong computer (Warning: It can produce lag)","0xAAAAAA"))
     options4:newBit(textButton (1.0,3.5
-      ,"CPU level usage for pathfinding","0xFFFFFF","1-6"))
+      ,"CPU level usage for pathfinding","0xFFFFFF","2"))
     options4:newBit(backButton (1.0,4.5))
     options4:initPage("options4")
     win1:addPage(options4)

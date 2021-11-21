@@ -119,17 +119,35 @@ findElemText ttfdat size ((WinElemText (x,y) c   str):wes) = dyns ⧺ findElemTe
         pos'  = ((2*x) - xNorm, (-2*y) + yNorm + 0.1)
         xNorm = fromIntegral(fst size)/64.0
         yNorm = fromIntegral(snd size)/64.0
-findElemText ttfdat size ((WinElemButt (x,y) c _ _ _ _ str _):wes) = dyns ⧺ findElemText ttfdat size wes
-  where dyns  = calcTextDD c ttfdat pos' str
+findElemText ttfdat size ((WinElemButt (x,y) c _ _ act _ str _):wes) = dyns ⧺ findElemText ttfdat size wes
+  where dyns  = calcTextDD c ttfdat pos' str'
         pos'  = ((2*x) - xNorm, (-2*y) + yNorm + 0.1)
         xNorm = fromIntegral(fst size)/64.0
         yNorm = fromIntegral(snd size)/64.0
+        str'  = calcButtString act str
 findElemText ttfdat size (_:wes) = findElemText ttfdat size wes
 
----- functions to convert winelems to dyn data
+-- | some buttons have context specific text
+calcButtString ∷ ButtAction → String → String
+calcButtString (ButtActionText tb) str = str ⧺ ": " ⧺ showTB tb
+calcButtString _                    str = str
+-- | takes a textbutton's value and makes it a string
+showTB ∷ TextButton → String
+showTB (TextMusic       b) = showBool b
+showTB (TextMusicVolume v) = show v ⧺ "%"
+showTB (TextFX          b) = showBool b
+showTB (TextFXVolume    v) = show v ⧺ "%"
+showTB (TextUnknown     v) = "UNK:" ⧺ show v
+showTB TextNULL            = "NULL"
+-- | represents bools as strings
+showBool ∷ Bool → String
+showBool True  = "ON"
+showBool False = "OFF"
+
+-- | functions to convert winelems to dyn data
 calcTextDD ∷ Color → [TTFData] → (Double,Double) → String → [DynData]
 calcTextDD col ttfdat pos = genStrDDs col ttfdat (fst pos) pos
----- dyns required for a string
+-- | dyns required for a string
 genStrDDs ∷ Color → [TTFData] → Double → (Double,Double) → String → [DynData]
 genStrDDs _   _       _  _   []         = []
 genStrDDs col ttfdat x0 (_,y) ('\n':str) = genStrDDs col ttfdat x0 (x0,y - 1)  str

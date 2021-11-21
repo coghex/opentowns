@@ -24,22 +24,7 @@ data WinElem
   | WinElemNULL deriving (Show, Eq)
 
 -- possible button actions and defaults
-data ButtAction = ButtActionMusic Bool
-                | ButtActionMusicVolume Int
-                | ButtActionFX Bool
-                | ButtActionFXVolume Int
-                | ButtActionMouseScroll Bool
-                | ButtActionEdgeMouseScroll Bool
-                | ButtActionHeightCube Bool
-                | ButtActionItemsDisabledDefault Bool
-                | ButtActionPauseGameStart Bool
-                | ButtActionAutosave Int
-                | ButtActionSieges Difficulty
-                | ButtActionSiegePause Bool
-                | ButtActionCaravanPause Bool
-                | ButtActionBurySystem Bool
-                | ButtActionCPUUsageLevel Int
-                | ButtActionKey KeyFunc [Key]
+data ButtAction = ButtActionKey KeyFunc [Key]
                 | ButtActionLink String
                 | ButtActionBack
                 | ButtActionExit
