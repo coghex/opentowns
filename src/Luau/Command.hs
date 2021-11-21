@@ -9,7 +9,8 @@ import Data.List.Split (splitOn)
 import Data.Maybe ( fromMaybe )
 import Numeric ( readHex )
 import Text.Read ( readMaybe )
-import Elem.Data ( WinElem(..), ButtAction(..), LuaFunc(..) )
+import Elem.Data ( WinElem(..), ButtAction(..)
+                 , LuaFunc(..), TextButton(..) )
 import Load.Data ( LoadCmd(..) )
 import Prog.Data ( Env(..) )
 import Sign.Data
@@ -137,9 +138,31 @@ hsNewElem env name pname el = case head $ splitOn ":" el of
         e      = WinElemButt pos color (w,h) w (ButtActionFunc (findLuaFunc func)) (-1) text False
     Lua.liftIO $ atomically $ writeQueue loadQ
       $ LoadCmdNewElem name pname e
-  "tBut" → return ()
+  "tBut" → do
+    let loadQ = envLoadQ env
+        args  = tail $ splitOn ":" el
+        x'    = readMaybe (head args)        ∷ Maybe Double
+        y'    = readMaybe (head (tail args)) ∷ Maybe Double
+        text  = head (tail (tail args))
+        color = sanitizeColor $ head (tail (tail (tail args)))
+        pos   = sanitizeXY x' y'
+    ttfdat' ← Lua.liftIO $ atomically $ readTVar (envFontM env)
+    let ttfdat = fromMaybe [] ttfdat'
+        (w,h)  = calcTextBoxSize text ttfdat
+        e      = WinElemButt pos color (w,h) w (ButtActionText (textButton text)) (-1) text False
+    Lua.liftIO $ atomically $ writeQueue loadQ
+      $ LoadCmdNewElem name pname e
+
   unk → Lua.liftIO $ atomically $ writeQueue (envEventQ env)
     $ EventLog LogWarn $ "unknown element: " ⧺ unk
+
+-- | turns lua string reference into ADT with default value
+textButton ∷ String → TextButton
+textButton "Music"        = TextMusic       True
+textButton "Music-Volume" = TextMusicVolume 100
+textButton "FX"           = TextFX          True
+textButton "FX-Volume"    = TextFXVolume    100
+textButton str            = TextUnknown     str
 
 -- | turns lua string reference into lua function ADT
 findLuaFunc ∷ String → LuaFunc

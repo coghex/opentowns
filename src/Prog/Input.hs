@@ -173,6 +173,11 @@ processLoadInput env win inpSt keymap inp = case inp of
             atomically $ writeQueue (envInpQ env) $ InpActButton $ head butts
             atomically $ writeQueue (envLoadQ env) $ LoadCmdInput $ InpActButton $ head butts
             return ResInpSuccess
+          Button (ButtFuncText _) _ _ _ _ → do
+            atomically $ writeQueue (envInpQ env) $ InpActButton $ head butts
+            atomically $ writeQueue (envLoadQ env) $ LoadCmdInput $ InpActButton $ head butts
+            return ResInpSuccess
+
           _ → return ResInpSuccess
      --   print $ show pos
     else return ResInpSuccess

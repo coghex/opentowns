@@ -5,7 +5,7 @@ import Prelude()
 import UPrelude
 import Data.List.Split ( splitOn )
 import Elem.Data ( WinElem(..), ButtAction(..)
-                 , Button(..), ButtFunc(..)
+                 , Button(..), ButtFunc(..), TextButton(..)
                  , InputAct(..), LuaFunc(..) )
 import Load.Data ( DrawState(..), Tile(..), DSStatus(..) )
 import Luau.Data ( Page(..), Window(..) )
@@ -82,6 +82,15 @@ initElem win page
                     , bPage = page }
   sendInpAct $ InpActSetLink butt
   return $ WinElemButt pos col box adv (ButtActionFunc func) ind args hov
+initElem win page
+  (WinElemButt pos col box adv (ButtActionText text) _ args hov) ind = do
+  let butt = Button { bFunc = ButtFuncText ind
+                    , bPos  = pos
+                    , bSize = box
+                    , bWin  = win
+                    , bPage = page }
+  sendInpAct $ InpActSetLink butt
+  return $ WinElemButt pos col box adv (ButtActionText text) ind args hov
 initElem _   _   we       _ = return we
 
 -- | handles individual button presses
@@ -99,6 +108,8 @@ processButton ds (Button (ButtFuncLink ind) _ _ win page) = do
                     , dsStatus = DSSReload }
 processButton ds (Button (ButtFuncFunc ind) _ _ win page)
   = execButtonFunc ds ind win page
+processButton ds (Button (ButtFuncText ind) _ _ win page)
+  = execButtonText ds ind win page
 processButton ds _ = return ds
 changePageInWins ∷ [Window] → Int → String → String → [Window]
 changePageInWins []     _    _   _    = []
@@ -175,3 +186,38 @@ findFuncInElems (we:wes) ind = case we of
   WinElemButt _ _ _ _ (ButtActionFunc func) i _ _ → if i ≡ ind then func
     else findFuncInElems wes ind
   _ → findFuncInElems wes ind
+
+-- | executes the text button action atttached to a button
+execButtonText ∷ (MonadLog μ, MonadFail μ) ⇒ DrawState → Int → String → String → LogT μ DrawState
+execButtonText ds ind win page = do
+  let text = findText wins ind win page
+      wins = dsWins ds
+  case text of
+    TextMusic       _ → log' LogInfo "textMusic button" ≫ return ds
+    TextMusicVolume _ → log' LogInfo "textMusicVolume button" ≫ return ds
+    TextFX          _ → log' LogInfo "textFX button" ≫ return ds
+    TextFXVolume    _ → log' LogInfo "textFXVolume button" ≫ return ds
+    TextUnknown   str → do
+      log' LogWarn $ "unknown text function: " ⧺ str
+      return ds
+    TextNULL          → log' LogError "textNULL function" ≫ return ds
+
+
+findText ∷ [Window] → Int → String → String → TextButton
+findText []      _   _   _    = TextNULL
+findText (w:wes) ind win page
+  | winTitle w ≡ win = findTextInPage (winPages w) ind page
+  | otherwise        = findText wes ind win page
+
+findTextInPage ∷ [Page] → Int → String → TextButton
+findTextInPage []     _   _    = TextNULL
+findTextInPage (p:ps) ind page
+  | pageTitle p ≡ page = findTextInElems (pageElems p) ind
+  | otherwise          = findTextInPage ps ind page
+
+findTextInElems ∷ [WinElem] → Int → TextButton
+findTextInElems []       _   = TextNULL
+findTextInElems (we:wes) ind = case we of
+  WinElemButt _ _ _ _ (ButtActionText text) i _ _ → if i ≡ ind then text
+    else findTextInElems wes ind
+  _ → findTextInElems wes ind

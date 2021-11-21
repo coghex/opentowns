@@ -44,12 +44,21 @@ data ButtAction = ButtActionMusic Bool
                 | ButtActionBack
                 | ButtActionExit
                 | ButtActionFunc LuaFunc
+                | ButtActionText TextButton
                 | ButtActionNULL deriving (Show, Eq)
 
 -- | commands accessable to lua, can be mapped onto buttons
 data LuaFunc = LuaFuncToggleFullScreen
              | LuaFuncUnknown String
              | LuaFuncNULL deriving (Show, Eq)
+
+-- | types of text buttons, used in setting state variables
+data TextButton = TextMusic Bool
+                | TextMusicVolume Int
+                | TextFX Bool
+                | TextFXVolume Int
+                | TextUnknown String
+                | TextNULL deriving (Show, Eq)
 
 -- buttons are like links but change their value when clicked
 data Button = Button { bFunc ∷ ButtFunc
@@ -66,6 +75,7 @@ data ButtFunc = ButtFuncOnOff Int
               | ButtFuncKey   Int
               | ButtFuncLink  Int
               | ButtFuncFunc  Int
+              | ButtFuncText  Int
               | ButtFuncNULL deriving (Show, Eq)
 
 -- | input state related to various winelems
