@@ -38,11 +38,21 @@ data LuaFunc = LuaFuncToggleFullScreen
              | LuaFuncNULL deriving (Show, Eq)
 
 -- | types of text buttons, used in setting state variables
-data TextButton = TextMusic Bool
-                | TextMusicVolume Int
-                | TextFX Bool
-                | TextFXVolume Int
-                | TextUnknown String
+data TextButton = TextMusic          Bool
+                | TextMusicVolume    Int
+                | TextFX             Bool
+                | TextFXVolume       Int
+                | TextMouseScroll    Bool
+                | TextScrollHover    Bool
+                | TextHeightCubes    Bool
+                | TextItemDisableDef Bool
+                | TextPauseOnStart   Bool
+                | TextAutosave       (Maybe Int)
+                | TextSieges         Difficulty
+                | TextPauseOnSiege   Bool
+                | TextPauseOnCaravan Bool
+                | TextAllowBury      Bool
+                | TextUnknown        String
                 | TextNULL deriving (Show, Eq)
 
 -- buttons are like links but change their value when clicked
@@ -52,12 +62,7 @@ data Button = Button { bFunc ∷ ButtFunc
                      , bWin  ∷ String
                      , bPage ∷ String
                      } deriving (Show, Eq)
-data ButtFunc = ButtFuncOnOff Int
-              | ButtFunc100   Int
-              | ButtFuncDays  Int
-              | ButtFuncDiff  Int
-              | ButtFuncCPU   Int
-              | ButtFuncKey   Int
+data ButtFunc = ButtFuncKey   Int
               | ButtFuncLink  Int
               | ButtFuncFunc  Int
               | ButtFuncText  Int

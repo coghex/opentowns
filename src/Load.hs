@@ -153,7 +153,7 @@ processCommand glfwwin ds cmd = case cmd of
   LoadCmdInitBuff tiles → do
     return $ ResDrawState $ ds { dsTiles = tiles
  --                              , dsBuff  = initBuff $ case currentWin (dsWins ds) of
-                               , dsBuff  = initBuff [64,64,256,64,256,256] }
+                               , dsBuff  = initBuff [64,64,512,64,256] }
         --                         Nothing → []
         --                         Just w0 → winBuffs w0 }
   LoadCmdNewWin win → do

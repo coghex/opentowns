@@ -4,7 +4,7 @@ module Prog.Buff where
 -- a buffer of invisibly dynamic tiles to manipulate
 import Prelude()
 import UPrelude
-import Data ( Color(..) )
+import Data ( Color(..), Difficulty(..) )
 import Elem.Data
 import Load.Data
     ( DrawState(dsTiles, dsWins, dsBuff),
@@ -94,7 +94,7 @@ findElemData size (_:wes) = findElemData size wes
 -- | turns text from a window's page into dynamic data
 genTextDyns ∷ [TTFData] → Window → [Dyns] → [Dyns]
 genTextDyns ttfdat win = setTileBuff 2 dyns
-  where dyns = Dyns $ newD ⧺ take (256 - length newD)
+  where dyns = Dyns $ newD ⧺ take (512 - length newD)
                  (repeat (DynData (0,0) (0,0) 0 (0,0) (Color 1 1 1 0)))
         newD = findPagesText ttfdat (winSize win) (winCurr win) (winPages win)
 
@@ -133,16 +133,39 @@ calcButtString (ButtActionText tb) str = str ⧺ ": " ⧺ showTB tb
 calcButtString _                    str = str
 -- | takes a textbutton's value and makes it a string
 showTB ∷ TextButton → String
-showTB (TextMusic       b) = showBool b
-showTB (TextMusicVolume v) = show v ⧺ "%"
-showTB (TextFX          b) = showBool b
-showTB (TextFXVolume    v) = show v ⧺ "%"
-showTB (TextUnknown     v) = "UNK:" ⧺ show v
-showTB TextNULL            = "NULL"
+showTB (TextMusic          b) = showBool b
+showTB (TextMusicVolume    v) = show v ⧺ "%"
+showTB (TextFX             b) = showBool b
+showTB (TextFXVolume       v) = show v ⧺ "%"
+showTB (TextMouseScroll    b) = showBool b
+showTB (TextScrollHover    b) = showBool b
+showTB (TextHeightCubes    b) = showBool b
+showTB (TextItemDisableDef b) = showBool b
+showTB (TextPauseOnStart   b) = showBool b
+showTB (TextAutosave       v) = showDay v
+showTB (TextSieges         v) = showDifficulty v
+showTB (TextPauseOnSiege   b) = showBool b
+showTB (TextPauseOnCaravan b) = showBool b
+showTB (TextAllowBury      b) = showBool b
+showTB (TextUnknown        v) = "UNK:" ⧺ show v
+showTB TextNULL               = "NULL"
 -- | represents bools as strings
 showBool ∷ Bool → String
 showBool True  = "ON"
 showBool False = "OFF"
+-- | specific to towns
+showDay ∷ Maybe Int → String
+showDay Nothing  = "Disabled"
+showDay (Just 1) = "1 Day"
+showDay (Just n) = show n ⧺ " Days"
+showDifficulty ∷ Difficulty → String
+showDifficulty DNormal   = "Normal"
+showDifficulty DHard     = "Hard"
+showDifficulty DHarder   = "Harder"
+showDifficulty DInsane   = "Insane"
+showDifficulty DDisabled = "Disabled"
+showDifficulty DEasy     = "Easy"
+showDifficulty DNULL     = "NULL"
 
 -- | functions to convert winelems to dyn data
 calcTextDD ∷ Color → [TTFData] → (Double,Double) → String → [DynData]

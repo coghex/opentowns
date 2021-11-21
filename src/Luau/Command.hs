@@ -4,7 +4,7 @@ module Luau.Command where
 import Prelude()
 import UPrelude
 import qualified Foreign.Lua as Lua
-import Data ( Color(..) )
+import Data ( Color(..), Difficulty(..) )
 import Data.List.Split (splitOn)
 import Data.Maybe ( fromMaybe )
 import Numeric ( readHex )
@@ -146,35 +146,83 @@ hsNewElem env name pname el = case head $ splitOn ":" el of
         text  = head (tail (tail args))
         color = sanitizeColor $ head (tail (tail (tail args)))
         pos   = sanitizeXY x' y'
-        val   = textButton text
+        def   = last args
+        val   = textButton text def
         text' = sanitizeText text
     ttfdat' ← Lua.liftIO $ atomically $ readTVar (envFontM env)
     let ttfdat = fromMaybe [] ttfdat'
         (w,h)  = calcTextBoxSize (text' ⧺ valString val) ttfdat
-        e      = WinElemButt pos color (w,h) w (ButtActionText (textButton text)) (-1) text' False
+        e      = WinElemButt pos color (w,h) w (ButtActionText val) (-1) text' False
     Lua.liftIO $ atomically $ writeQueue loadQ
       $ LoadCmdNewElem name pname e
 
   unk → Lua.liftIO $ atomically $ writeQueue (envEventQ env)
     $ EventLog LogWarn $ "unknown element: " ⧺ unk
 
--- | turns lua string reference into ADT with default value
-textButton ∷ String → TextButton
-textButton "Music"        = TextMusic       True
-textButton "Music-Volume" = TextMusicVolume 100
-textButton "FX"           = TextFX          True
-textButton "FX-Volume"    = TextFXVolume    100
-textButton str            = TextUnknown     str
+-- | turns lua string reference into ADT with default value, if
+--   the user supplied default is nonsense, we use our own
+textButton ∷ String → String → TextButton
+textButton "Music"        def = TextMusic       $ sanitizeBool True def
+textButton "Music-Volume" def = TextMusicVolume $ sanitize100  100  def
+textButton "FX"           def = TextFX          $ sanitizeBool True def
+textButton "FX-Volume"    def = TextFXVolume    $ sanitize100  100  def
+textButton "Mouse scroll" def = TextMouseScroll $ sanitizeBool True def
+textButton "Allow mouse scroll while hovering the edge buttons" def
+  = TextScrollHover $ sanitizeBool False def
+textButton "Height cubes when 2D mouse is enabled" def
+  = TextHeightCubes $ sanitizeBool True def
+textButton "Newly built stockpiles/containers have all items disabled by default" def
+  = TextItemDisableDef $ sanitizeBool False def
+textButton "Pause the game when it starts" def
+  = TextPauseOnStart $ sanitizeBool False def
+textButton "Autosave" def
+  = TextAutosave $ sanitizeDays Nothing def 
+textButton "Sieges" def
+  = TextSieges $ sanitizeDifficulty DNormal def
+textButton "Pause the game when a siege starts" def
+  = TextPauseOnSiege $ sanitizeBool False def
+textButton "Pause the game when a caravan comes" def
+  = TextPauseOnCaravan $ sanitizeBool False def
+textButton "Allow bury system" def
+  = TextAllowBury $ sanitizeBool True def
+textButton str            def = TextUnknown     $ str ⧺ ": " ⧺ def
 -- | finds the string of the default text button,
 --   just for measurement of the predefined width.
 --   these are the longest strings in possible values
 valString ∷ TextButton → String
-valString (TextMusic       _) = "OFF"
-valString (TextMusicVolume _) = "100%"
-valString (TextFX          _) = "OFF"
-valString (TextFXVolume    _) = "100%"
-valString (TextUnknown     _) = "UNK: "
-valString  TextNULL           = "NULL"
+valString (TextMusic          _) = "OFF"
+valString (TextMusicVolume    _) = "100%"
+valString (TextFX             _) = "OFF"
+valString (TextFXVolume       _) = "100%"
+valString (TextMouseScroll    _) = "OFF"
+valString (TextScrollHover    _) = "OFF"
+valString (TextHeightCubes    _) = "OFF"
+valString (TextItemDisableDef _) = "OFF"
+valString (TextPauseOnStart   _) = "OFF"
+valString (TextAutosave       _) = "Disabled"
+valString (TextSieges         _) = "Disabled"
+valString (TextPauseOnSiege   _) = "OFF"
+valString (TextPauseOnCaravan _) = "OFF"
+valString (TextAllowBury      _) = "OFF"
+valString (TextUnknown        _) = "UNK: "
+valString  TextNULL              = "NULL"
+
+-- | uses the default values if they sanitize
+sanitizeBool ∷ Bool → String → Bool
+sanitizeBool _   "ON"  = True
+sanitizeBool _   "OFF" = False
+sanitizeBool def _     = def
+sanitize100 ∷ Int → String → Int
+sanitize100 def str = fromMaybe def $ readMaybe str
+sanitizeDays ∷ Maybe Int → String → Maybe Int
+sanitizeDays _   "Disabled" = Nothing
+sanitizeDays def str        = maybe def Just (readMaybe [head str])
+--sanitizeDays def str        = case (readMaybe [head str]) of
+--  Nothing → def
+--  Just n0 → Just n0
+sanitizeDifficulty ∷ Difficulty → String → Difficulty
+sanitizeDifficulty _   "Normal" = DNormal
+sanitizeDifficulty def _        = def
 
 -- | turns lua string reference into lua function ADT
 findLuaFunc ∷ String → LuaFunc
