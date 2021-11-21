@@ -189,35 +189,81 @@ findFuncInElems (we:wes) ind = case we of
 
 -- | executes the text button action atttached to a button
 execButtonText ∷ (MonadLog μ, MonadFail μ) ⇒ DrawState → Int → String → String → LogT μ DrawState
-execButtonText ds ind win page = do
-  let text = findText wins ind win page
-      wins = dsWins ds
-  case text of
-    TextMusic       _ → log' LogInfo "textMusic button" ≫ return ds
-    TextMusicVolume _ → log' LogInfo "textMusicVolume button" ≫ return ds
-    TextFX          _ → log' LogInfo "textFX button" ≫ return ds
-    TextFXVolume    _ → log' LogInfo "textFXVolume button" ≫ return ds
-    TextUnknown   str → do
-      log' LogWarn $ "unknown text function: " ⧺ str
-      return ds
-    TextNULL          → log' LogError "textNULL function" ≫ return ds
+execButtonText ds ind win page
+  = return $ ds { dsWins   = findText (dsWins ds) ind win page
+                , dsStatus = DSSReload }
 
-
-findText ∷ [Window] → Int → String → String → TextButton
-findText []      _   _   _    = TextNULL
+findText ∷ [Window] → Int → String → String → [Window]
+findText []      _   _   _    = []
 findText (w:wes) ind win page
-  | winTitle w ≡ win = findTextInPage (winPages w) ind page
-  | otherwise        = findText wes ind win page
+  | winTitle w ≡ win = [w'] ⧺ findText wes ind win page
+  | otherwise        = [w]  ⧺ findText wes ind win page
+      where w' = w { winPages = findTextInPage (winPages w) ind page }
 
-findTextInPage ∷ [Page] → Int → String → TextButton
-findTextInPage []     _   _    = TextNULL
+findTextInPage ∷ [Page] → Int → String → [Page]
+findTextInPage []     _   _    = []
 findTextInPage (p:ps) ind page
-  | pageTitle p ≡ page = findTextInElems (pageElems p) ind
-  | otherwise          = findTextInPage ps ind page
+  | pageTitle p ≡ page = [p'] ⧺ findTextInPage ps ind page
+  | otherwise          = [p]  ⧺ findTextInPage ps ind page
+      where p' = p { pageElems = findTextInElems (pageElems p) ind }
 
-findTextInElems ∷ [WinElem] → Int → TextButton
-findTextInElems []       _   = TextNULL
-findTextInElems (we:wes) ind = case we of
-  WinElemButt _ _ _ _ (ButtActionText text) i _ _ → if i ≡ ind then text
-    else findTextInElems wes ind
-  _ → findTextInElems wes ind
+findTextInElems ∷ [WinElem] → Int → [WinElem]
+findTextInElems []       _   = []
+findTextInElems (we:wes) ind = [we'] ⧺ findTextInElems wes ind
+  where we' = case we of
+                WinElemButt a b c d act i e f → if i ≡ ind then
+                    WinElemButt a b c d (evalTextButtAction act) i e f
+                  else we
+                _                             → we
+-- | only need to update the values of text buttons atm
+evalTextButtAction ∷ ButtAction → ButtAction
+evalTextButtAction (ButtActionText tb) = ButtActionText $ findTextElem tb
+evalTextButtAction ba                  = ba
+-- | enumeration of what happens when a textButton is pressed
+findTextElem ∷ TextButton → TextButton
+findTextElem (TextMusic v)       = TextMusic       $ not v
+findTextElem (TextMusicVolume v) = TextMusicVolume $ inc100 v
+findTextElem (TextFX    v)       = TextFX          $ not v
+findTextElem (TextFXVolume    v) = TextFXVolume    $ inc100 v
+findTextElem tb                  = tb
+-- | increments a 0-100% scale in 10's
+inc100 ∷ Int → Int
+inc100 100 = 0
+inc100 n   = n + 10
+
+--case we of
+--  WinElemButt _ _ _ _ (ButtActionText text) i _ _ → if i ≡ ind then text
+--    else findTextInElems wes ind
+--  _ → findTextInElems wes ind
+
+--  let text = findText wins ind win page
+--      wins = dsWins ds
+--  case text of
+--    TextMusic       _ → log' LogInfo "textMusic button" ≫ return ds
+--    TextMusicVolume _ → log' LogInfo "textMusicVolume button" ≫ return ds
+--    TextFX          _ → log' LogInfo "textFX button" ≫ return ds
+--    TextFXVolume    _ → log' LogInfo "textFXVolume button" ≫ return ds
+--    TextUnknown   str → do
+--      log' LogWarn $ "unknown text function: " ⧺ str
+--      return ds
+--    TextNULL          → log' LogError "textNULL function" ≫ return ds
+--
+--
+--findText ∷ [Window] → Int → String → String → TextButton
+--findText []      _   _   _    = TextNULL
+--findText (w:wes) ind win page
+--  | winTitle w ≡ win = findTextInPage (winPages w) ind page
+--  | otherwise        = findText wes ind win page
+--
+--findTextInPage ∷ [Page] → Int → String → TextButton
+--findTextInPage []     _   _    = TextNULL
+--findTextInPage (p:ps) ind page
+--  | pageTitle p ≡ page = findTextInElems (pageElems p) ind
+--  | otherwise          = findTextInPage ps ind page
+--
+--findTextInElems ∷ [WinElem] → Int → TextButton
+--findTextInElems []       _   = TextNULL
+--findTextInElems (we:wes) ind = case we of
+--  WinElemButt _ _ _ _ (ButtActionText text) i _ _ → if i ≡ ind then text
+--    else findTextInElems wes ind
+--  _ → findTextInElems wes ind
