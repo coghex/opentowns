@@ -3,6 +3,7 @@ module Elem where
 -- main elem functions are found
 import Prelude()
 import UPrelude
+import Data ( Difficulty (..) )
 import Elem.Data ( WinElem(..), ButtAction(..)
                  , Button(..), ButtFunc(..), TextButton(..)
                  , InputAct(..), LuaFunc(..) )
@@ -217,12 +218,47 @@ evalTextButtAction (ButtActionText tb) = ButtActionText $ findTextElem tb
 evalTextButtAction ba                  = ba
 -- | enumeration of what happens when a textButton is pressed
 findTextElem ∷ TextButton → TextButton
-findTextElem (TextMusic v)       = TextMusic       $ not v
-findTextElem (TextMusicVolume v) = TextMusicVolume $ inc100 v
-findTextElem (TextFX    v)       = TextFX          $ not v
-findTextElem (TextFXVolume    v) = TextFXVolume    $ inc100 v
-findTextElem tb                  = tb
+findTextElem (TextMusic          b) = TextMusic          $ not b
+findTextElem (TextMusicVolume    v) = TextMusicVolume    $ inc100 v
+findTextElem (TextFX             b) = TextFX             $ not b
+findTextElem (TextFXVolume       v) = TextFXVolume       $ inc100 v
+findTextElem (TextMouseScroll    b) = TextMouseScroll    $ not b
+findTextElem (TextScrollHover    b) = TextScrollHover    $ not b 
+findTextElem (TextHeightCubes    b) = TextHeightCubes    $ not b
+findTextElem (TextItemDisableDef b) = TextItemDisableDef $ not b
+findTextElem (TextPauseOnStart   b) = TextPauseOnStart   $ not b
+findTextElem (TextAutosave       v) = TextAutosave       $ incAutoSave v
+findTextElem (TextSieges         v) = TextSieges         $ incDifficulty v
+findTextElem (TextPauseOnSiege   b) = TextPauseOnSiege   $ not b
+findTextElem (TextPauseOnCaravan b) = TextPauseOnCaravan $ not b
+findTextElem (TextAllowBury      b) = TextAllowBury      $ not b
+findTextElem (TextCPULevel       v) = TextCPULevel       $ incCPU v
+findTextElem (TextKeyMap         v) = TextKeyMap           v
+findTextElem tb                     = tb
 -- | increments a 0-100% scale in 10's
 inc100 ∷ Int → Int
 inc100 100 = 0
 inc100 n   = n + 10
+-- | increments maybe 1-9
+incAutoSave ∷ Maybe Int → Maybe Int
+incAutoSave (Just 10) = Nothing
+incAutoSave Nothing   = Just 1
+incAutoSave (Just n)  = Just (n + 1)
+-- | increments difficulty values
+incDifficulty ∷ Difficulty → Difficulty
+incDifficulty DNormal   = DHard
+incDifficulty DHard     = DHarder
+incDifficulty DHarder   = DInsane
+incDifficulty DInsane   = DDisabled
+incDifficulty DDisabled = DEasy
+incDifficulty DEasy     = DNormal
+incDifficulty _         = DNULL
+-- | increments 1-6
+incCPU ∷ Int → Int
+incCPU 1 = 2
+incCPU 2 = 3
+incCPU 3 = 4
+incCPU 4 = 5
+incCPU 5 = 6
+incCPU 6 = 1
+incCPU _ = -1
