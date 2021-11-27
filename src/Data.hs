@@ -169,6 +169,7 @@ data Key = KeyA
          | KeyPrtSc
          | KeyPause
          | KeyMenu
+         | KeyUnknown String
          | KeyNULL deriving (Show, Eq, Ord)
 
 -- | a mapping from key functionality to none or more

@@ -4,7 +4,7 @@ module Luau.Command where
 import Prelude()
 import UPrelude
 import qualified Foreign.Lua as Lua
-import Data ( Color(..), Difficulty(..) )
+import Data ( Color(..), Difficulty(..), Key(..), KeyFunc(..) )
 import Data.List.Split (splitOn)
 import Data.Maybe ( fromMaybe )
 import Numeric ( readHex )
@@ -200,6 +200,10 @@ textButton "Pause the game when a caravan comes" def
   = TextPauseOnCaravan $ sanitizeBool False def
 textButton "Allow bury system" def
   = TextAllowBury $ sanitizeBool True def
+textButton "CPU level usage for pathfinding" def
+  = TextCPULevel $ sanitizeCPU 2 def
+textButton "Scroll up" def
+  = TextKeyMap $ sanitizeKeys (KFScrollUp, [KeyW,KeyUp]) def
 textButton str            def = TextUnknown     $ str ⧺ ": " ⧺ def
 -- | finds the string of the default text button,
 --   just for measurement of the predefined width.
@@ -219,6 +223,8 @@ valString (TextSieges         _) = "Disabled"
 valString (TextPauseOnSiege   _) = "OFF"
 valString (TextPauseOnCaravan _) = "OFF"
 valString (TextAllowBury      _) = "OFF"
+valString (TextCPULevel       _) = "0"
+valString (TextKeyMap         _) = "Key: KeyFunc: "
 valString (TextUnknown        _) = "UNK: "
 valString  TextNULL              = "NULL"
 
@@ -238,6 +244,54 @@ sanitizeDays def str        = maybe def Just (readMaybe [head str])
 sanitizeDifficulty ∷ Difficulty → String → Difficulty
 sanitizeDifficulty _   "Normal" = DNormal
 sanitizeDifficulty def _        = def
+-- | quicker to just enumerate
+sanitizeCPU ∷ Int → String → Int
+sanitizeCPU _   "1" = 1
+sanitizeCPU _   "2" = 2
+sanitizeCPU _   "3" = 3
+sanitizeCPU _   "4" = 4
+sanitizeCPU _   "5" = 5
+sanitizeCPU _   "6" = 6
+sanitizeCPU def _   = def
+sanitizeKeys ∷ (KeyFunc,[Key]) → String → (KeyFunc,[Key])
+sanitizeKeys (kf,keys) str = (kf,sanitizeKeyStr str keys)
+sanitizeKeyStr ∷ String → [Key] → [Key]
+sanitizeKeyStr str keys = case splitOn "," str of
+  [a,b] → [sanitizeKey a,sanitizeKey b]
+  _     → keys
+sanitizeKey ∷ String → Key
+sanitizeKey "A"      = KeyA
+sanitizeKey "B"      = KeyB
+sanitizeKey "C"      = KeyC
+sanitizeKey "D"      = KeyD
+sanitizeKey "E"      = KeyE
+sanitizeKey "F"      = KeyF
+sanitizeKey "G"      = KeyG
+sanitizeKey "H"      = KeyH
+sanitizeKey "I"      = KeyI
+sanitizeKey "J"      = KeyJ
+sanitizeKey "K"      = KeyK
+sanitizeKey "L"      = KeyL
+sanitizeKey "M"      = KeyM
+sanitizeKey "N"      = KeyN
+sanitizeKey "O"      = KeyO
+sanitizeKey "P"      = KeyP
+sanitizeKey "Q"      = KeyQ
+sanitizeKey "R"      = KeyR
+sanitizeKey "S"      = KeyS
+sanitizeKey "T"      = KeyT
+sanitizeKey "U"      = KeyU
+sanitizeKey "V"      = KeyV
+sanitizeKey "W"      = KeyW
+sanitizeKey "X"      = KeyX
+sanitizeKey "Y"      = KeyY
+sanitizeKey "Z"      = KeyZ
+sanitizeKey "Up"     = KeyUp
+sanitizeKey "Down"   = KeyDown
+sanitizeKey "Right"  = KeyRight
+sanitizeKey "Left"   = KeyLeft
+sanitizeKey unk = KeyUnknown unk
+
 
 -- | turns lua string reference into lua function ADT
 findLuaFunc ∷ String → LuaFunc

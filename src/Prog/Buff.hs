@@ -4,7 +4,7 @@ module Prog.Buff where
 -- a buffer of invisibly dynamic tiles to manipulate
 import Prelude()
 import UPrelude
-import Data ( Color(..), Difficulty(..) )
+import Data ( Color(..), Difficulty(..), KeyFunc(..), Key(..) )
 import Elem.Data
 import Load.Data
     ( DrawState(dsTiles, dsWins, dsBuff),
@@ -150,12 +150,22 @@ showTB (TextSieges         v) = showDifficulty v
 showTB (TextPauseOnSiege   b) = showBool b
 showTB (TextPauseOnCaravan b) = showBool b
 showTB (TextAllowBury      b) = showBool b
+showTB (TextCPULevel       v) = show v
+showTB (TextKeyMap        km) = showKeyMap km
 showTB (TextUnknown        v) = "UNK:" ⧺ show v
 showTB TextNULL               = "NULL"
 -- | represents bools as strings
 showBool ∷ Bool → String
 showBool True  = "ON"
 showBool False = "OFF"
+-- | string representation of a key mapping
+showKeyMap ∷ (KeyFunc,[Key]) → String
+showKeyMap (_,keys) = "(" ⧺ showKeys keys
+showKeys ∷ [Key] → String
+showKeys []     = "(None)"
+showKeys [k]    = show k ⧺ ")"
+showKeys (k:ks) = show k ⧺ "," ⧺ showKeys ks
+--showKeys = foldr (\ k -> (⧺) (show k ⧺ ",")) "]"
 -- | specific to towns
 showDay ∷ Maybe Int → String
 showDay Nothing  = "Disabled"

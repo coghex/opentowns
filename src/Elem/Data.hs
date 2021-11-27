@@ -52,6 +52,8 @@ data TextButton = TextMusic          Bool
                 | TextPauseOnSiege   Bool
                 | TextPauseOnCaravan Bool
                 | TextAllowBury      Bool
+                | TextCPULevel       Int
+                | TextKeyMap         (KeyFunc,[Key])
                 | TextUnknown        String
                 | TextNULL deriving (Show, Eq)
 
