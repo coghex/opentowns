@@ -141,11 +141,16 @@ processCommand glfwwin ds cmd = case cmd of
   LoadCmdDyns → do
     log' (LogDebug 3) "LoadCmdDyns"
     ttfdat' ← readFontMapM
-    let newDyns = loadDyns ds'
-        ds'     = ds { dsBuff = genDynBuffs ttfdat ds }
-        ttfdat  = fromMaybe [] ttfdat'
-    sendLoad $ LoadDyns newDyns
-    return $ ResDrawState ds'
+    -- TODO: find out why this gets called with empty buffer sometimes
+    --       not that important wince we can just check here
+    if dsBuff ds ≡ [] then return ResSuccess
+                      --return $ ResError "empty draw state buffer"
+    else do
+      let newDyns = loadDyns ds'
+          ds'     = ds { dsBuff = genDynBuffs ttfdat ds }
+          ttfdat  = fromMaybe [] ttfdat'
+      sendLoad $ LoadDyns newDyns
+      return $ ResDrawState ds'
   LoadCmdInitBuff tiles → do
     return $ ResDrawState $ ds { dsTiles = tiles
  --                              , dsBuff  = initBuff $ case currentWin (dsWins ds) of

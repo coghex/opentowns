@@ -36,6 +36,9 @@ cradle:
     - path: "src/Luau/Window.hs"
       component: "opentowns:exe:opentowns"
 
+    - path: "src/Luau/Util.hs"
+      component: "opentowns:exe:opentowns"
+
     - path: "src/Prog.hs"
       component: "opentowns:exe:opentowns"
 

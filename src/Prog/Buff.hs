@@ -67,6 +67,7 @@ setTileBuff n dyns buff = take n buff ⧺ [dyns] ⧺ tail (drop n buff)
 
 -- generate dynamic data for a button
 genButtDyns ∷ [Dyns] → Window → [Dyns]
+genButtDyns []   _   = []
 genButtDyns buff win = setTileBuff 1 dyns buff
   where dyns = Dyns $ newD ⧺ take (64 - length newD) (repeat (DynData (0,0) (0,0) 0 (0,0) (Color 1 1 1 0)))
         newD = findPageElemData (winSize win) (winCurr win) (winPages win)
@@ -93,7 +94,9 @@ findElemData size (_:wes) = findElemData size wes
 
 -- | turns text from a window's page into dynamic data
 genTextDyns ∷ [TTFData] → Window → [Dyns] → [Dyns]
-genTextDyns ttfdat win = setTileBuff 2 dyns
+genTextDyns _      _   [] = []
+  -- there should be a haskell extension to allow currying here
+genTextDyns ttfdat win a  = setTileBuff 2 dyns a
   where dyns = Dyns $ newD ⧺ take (512 - length newD)
                  (repeat (DynData (0,0) (0,0) 0 (0,0) (Color 1 1 1 0)))
         newD = findPagesText ttfdat (winSize win) (winCurr win) (winPages win)

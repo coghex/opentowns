@@ -151,3 +151,17 @@ logDebugs ∷ String → Prog ε σ ()
 logDebugs  = logDebug
 logInfos ∷ String → Prog ε σ ()
 logInfos = logInfo
+
+-- | custom head so we can have errors
+vhead ∷ HasCallStack ⇒ [α] → Prog ε σ (Maybe α)
+vhead a = if length a > 0 then return $ Just $ head a
+  else do
+    logWarn "head on empty string"
+    return Nothing
+-- | custom tail so we can have errors
+vtail ∷ HasCallStack ⇒ [α] → Prog ε σ [α]
+vtail a = if length a > 0 then return $ tail a
+  else do
+    logWarn "tail on empty string"
+    return []
+

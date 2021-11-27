@@ -19,6 +19,7 @@ import Sign.Data
 import Sign.Queue ( writeQueue )
 import Sign.Var ( atomically, readTVar )
 import Luau.Data ( Window(..), Page(..) )
+import Luau.Util ( vtail, vhead )
 import Vulk.Draw ( calcTextBoxSize )
 
 -- | quits everything using glfw
@@ -72,25 +73,31 @@ hsNewPage env name pname = do
 hsNewElem ∷ Env → String → String → String → Lua.Lua()
 hsNewElem env name pname el = case head $ splitOn ":" el of
   "text" → do
+    args         ← vtail $ splitOn ":" el
+    tailargs     ← vtail args
+    tailtailargs ← vtail tailargs
+    tttargs      ← vtail tailtailargs
     let loadQ  = envLoadQ env
         e      = WinElemText pos color text
-        args   = tail $ splitOn ":" el
         text   = head args
-        x'     = readMaybe (head (tail args))        ∷ Maybe Double
-        y'     = readMaybe (head (tail (tail args))) ∷ Maybe Double
+        x'     = readMaybe (head tailargs)        ∷ Maybe Double
+        y'     = readMaybe (head tailtailargs) ∷ Maybe Double
         pos    = sanitizeXY x' y'
-        color  = sanitizeColor $ head $ tail $ tail $ tail args
+        color  = sanitizeColor $ head  tttargs
         -- TODO: get arguments going
      --   ellink = last args
     Lua.liftIO $ atomically $ writeQueue loadQ $ LoadCmdNewElem name pname e
   "butt" → do
+    args         ← vtail $ splitOn ":" el
+    tailargs     ← vtail args
+    tailtailargs ← vtail tailargs
+    tttargs      ← vtail tailtailargs
     let loadQ  = envLoadQ env
-        args   = tail $ splitOn ":" el
         text   = head args
-        x'     = readMaybe (head (tail args))        ∷ Maybe Double
-        y'     = readMaybe (head (tail (tail args))) ∷ Maybe Double
+        x'     = readMaybe (head tailargs)        ∷ Maybe Double
+        y'     = readMaybe (head tailtailargs) ∷ Maybe Double
         pos    = sanitizeXY x' y'
-        color  = sanitizeColor $ head $ tail $ tail $ tail args
+        color  = sanitizeColor $ head tttargs
         -- TODO: get arguments going
         ellink = last args
     ttfdat' ← Lua.liftIO $ atomically $ readTVar (envFontM env)
@@ -100,10 +107,11 @@ hsNewElem env name pname el = case head $ splitOn ":" el of
     Lua.liftIO $ atomically $ writeQueue loadQ
       $ LoadCmdNewElem name pname e
   "back" → do
+    args         ← vtail $ splitOn ":" el
+    tailargs     ← vtail args
     let loadQ = envLoadQ env
-        args  = tail $ splitOn ":" el
         x'    = readMaybe (head args)        ∷ Maybe Double
-        y'    = readMaybe (head (tail args)) ∷ Maybe Double
+        y'    = readMaybe (head tailargs) ∷ Maybe Double
         pos   = sanitizeXY x' y'
     ttfdat' ← Lua.liftIO $ atomically $ readTVar (envFontM env)
     let ttfdat = fromMaybe [] ttfdat'
@@ -112,10 +120,11 @@ hsNewElem env name pname el = case head $ splitOn ":" el of
     Lua.liftIO $ atomically $ writeQueue loadQ
       $ LoadCmdNewElem name pname e
   "exit" → do
+    args         ← vtail $ splitOn ":" el
+    tailargs     ← vtail args
     let loadQ = envLoadQ env
-        args  = tail $ splitOn ":" el
         x'    = readMaybe (head args)        ∷ Maybe Double
-        y'    = readMaybe (head (tail args)) ∷ Maybe Double
+        y'    = readMaybe (head (tailargs)) ∷ Maybe Double
         pos   = sanitizeXY x' y'
     ttfdat' ← Lua.liftIO $ atomically $ readTVar (envFontM env)
     let ttfdat = fromMaybe [] ttfdat'
@@ -124,12 +133,15 @@ hsNewElem env name pname el = case head $ splitOn ":" el of
     Lua.liftIO $ atomically $ writeQueue loadQ
       $ LoadCmdNewElem name pname e
   "func" → do
+    args         ← vtail $ splitOn ":" el
+    tailargs     ← vtail args
+    tailtailargs ← vtail tailargs
+    tttargs      ← vtail tailtailargs
     let loadQ = envLoadQ env
-        args  = tail $ splitOn ":" el
         x'    = readMaybe (head args)        ∷ Maybe Double
-        y'    = readMaybe (head (tail args)) ∷ Maybe Double
-        text  = head (tail (tail args))
-        color = sanitizeColor $ head (tail (tail (tail args)))
+        y'    = readMaybe (head tailargs) ∷ Maybe Double
+        text  = head tailtailargs
+        color = sanitizeColor $ head tttargs
         func  = last args
         pos   = sanitizeXY x' y'
     ttfdat' ← Lua.liftIO $ atomically $ readTVar (envFontM env)
@@ -139,12 +151,15 @@ hsNewElem env name pname el = case head $ splitOn ":" el of
     Lua.liftIO $ atomically $ writeQueue loadQ
       $ LoadCmdNewElem name pname e
   "tBut" → do
+    args         ← vtail $ splitOn ":" el
+    tailargs     ← vtail args
+    tailtailargs ← vtail tailargs
+    tttargs      ← vtail tailtailargs
     let loadQ = envLoadQ env
-        args  = tail $ splitOn ":" el
         x'    = readMaybe (head args)        ∷ Maybe Double
-        y'    = readMaybe (head (tail args)) ∷ Maybe Double
-        text  = head (tail (tail args))
-        color = sanitizeColor $ head (tail (tail (tail args)))
+        y'    = readMaybe (head tailargs) ∷ Maybe Double
+        text  = head tailtailargs
+        color = sanitizeColor $ head tttargs
         pos   = sanitizeXY x' y'
         def   = last args
         val   = textButton text def
@@ -243,8 +258,10 @@ sanitizeXY (Just x) Nothing  = (x,0)
 sanitizeXY Nothing  (Just y) = (0,y)
 sanitizeXY (Just x) (Just y) = (x,y)
 -- | makes sure the hex color values are legible, if not, returns
--- | (1,1,1,0). accepts formats "0xRRGGBB" "RRGGBB", with optional "AA"
+--   (1,1,1,0). accepts formats "0xRRGGBB" "RRGGBB", with optional "AA"
 sanitizeColor ∷ String → Color
+sanitizeColor ""  = Color 1 1 1 1
+sanitizeColor [_] = Color 1 1 1 1
 sanitizeColor str = if (head str ≡ '0') ∧ (head (tail str) ≡ 'x') then
   sanitizeColorF (tail (tail str)) else sanitizeColorF str
 -- | sanitizes hex values after "0x" is stripped
