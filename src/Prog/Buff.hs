@@ -76,10 +76,76 @@ genPopupDynsF = foldr ((⧺) . genEachPopupDyns) []
 --genPopupDynsF (pu:pus) = genEachPopupDyns pu ⧺ genPopupDynsF pus
 genEachPopupDyns ∷ Popup → [DynData]
 genEachPopupDyns (Popup (x,y) (w,h) PopupSetKey {}) = dd
-  where dd      = topleft
-        topleft = [DynData (x',y'+(2*h')) (0.5,0.5) 107 (0,29) (Color 255 255 255 255)]
+  where dd          = topleft ⧺ toprightbk ⧺ topright ⧺ bottomleft
+                    ⧺ bottomright ⧺ top ⧺ bottom ⧺ right ⧺ left
+                    ⧺ fill ⧺ textBoxTL ⧺ textBoxTR ⧺ textBoxBL
+                    ⧺ textBoxBR ⧺ textBoxTop ⧺ textBoxBot ⧺ textBoxR
+                    ⧺ textBoxL ⧺ textBoxFill
+        topleft
+          = [DynData (x',y'+(2*h')) (0.5,0.5) 107 (0,29)
+              (Color 255 255 255 255)]
+        -- lol, you can see why they overwrote this tile, it does not tile right
+        toprightbk   = [DynData
+          (x' + (2*w'),  y' + (2*h'))   (0.5,       0.5)       107 (2,29)
+          $ Color 255 255 255 255]
+        topright     = [DynData
+          (x' + (2*w'),  y' + (2*h'))   (0.5,       0.5)       107 (26,25)
+          $ Color 255 255 255 255]
+        bottomleft   = [DynData
+          (x',           y')            (0.5,       0.5)       107 (0,30)
+          $ Color 255 255 255 255]
+        bottomright  = [DynData
+          (x' + (2*w'),  y')            (0.5,       0.5)       107 (2,30)
+          $ Color 255 255 255 255]
+        top          = [DynData
+          (x' + w',      y' + (2*h'))   (w' - 0.5,  0.5)       107 (4,29)
+          $ Color 255 255 255 255]
+        bottom       = [DynData
+          (x' + w',      y')            (w' - 0.5,  0.5)       107 (4,30)
+          $ Color 255 255 255 255]
+        right        = [DynData
+          (x' + (2*w'),  y' + h')       (0.5,       h' - 0.5)  107 (8,29)
+          $ Color 255 255 255 255]
+        left         = [DynData
+          (x',           y' + h')       (0.5,       h' - 0.5)  107 (6,29)
+          $ Color 255 255 255 255]
+        fill         = [DynData
+          (x' + w',      y' + h')       (w' - 0.5,  h' - 0.5)  107 (10,29)
+          $ Color 255 255 255 255]
+        textBoxTL    = [DynData
+          (x'',          y'' + (2*h'')) (0.5,       0.5)       108 (8,2)
+          $ Color 255 255 255 255]
+        textBoxTR    = [DynData
+          (x'' + (2*w''),y'' + (2*h'')) (0.5,       0.5)       108 (12,2)
+          $ Color 255 255 255 255]
+        textBoxBL    = [DynData
+          (x'',          y'')           (0.5,       0.5)       108 (8,4)
+          $ Color 255 255 255 255]
+        textBoxBR    = [DynData
+          (x'' + (2*w''),y'')           (0.5,       0.5)       108 (12,4)
+          $ Color 255 255 255 255]
+        textBoxTop   = [DynData
+          (x'' + w'',    y'' + (2*h'')) (w'' - 0.5, 0.5)       108 (10,2)
+          $ Color 255 255 255 255]
+        textBoxBot   = [DynData
+          (x'' + w'',    y'')           (w'' - 0.5, 0.5)       108 (10,4)
+          $ Color 255 255 255 255]
+        textBoxR     = [DynData
+          (x'' + (2*w''),y'' + h'')     (0.5,       h'' - 0.5) 108 (12,3)
+          $ Color 255 255 255 255]
+        textBoxL     = [DynData
+          (x'',          y'' + h'')     (0.5,       h'' - 0.5) 108 (8,3)
+          $ Color 255 255 255 255]
+        textBoxFill  = [DynData
+          (x'' + w'',    y'' + h'')     (w'' - 0.5, h'' - 0.5) 108 (14,2)
+          $ Color 255 255 255 255]
+        -- prime values locate the outer box
         (x',y') = (2*realToFrac x - w',-2*realToFrac y - h')
         (w',h') = (0.5*realToFrac w, 0.5*realToFrac h)
+        -- double prime is the location of the inner box
+        (x'',y'') = (x' + 1.0, y' + 3.0)
+        (w'',h'') = (w' - 1.0, 1.0)
+        
 genEachPopupDyns _ = []
 
 -- | generates dynamic data for the text of a popup.  in a seperate
