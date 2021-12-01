@@ -20,7 +20,7 @@ import Vulk.Font ( TTFData(..), GlyphMetrics(..), indexTTFData )
 initBuff ∷ [Int] → [Dyns]
 initBuff []     = []
 initBuff (n:ns) = dyns : initBuff ns
-  where dyns = Dyns $ take n $ repeat $ DynData (0,0) (1,1) 0 (0,0) (Color 1 1 1 0)
+  where dyns = Dyns $ take n $ repeat $ DynData (0,0) (1,1) 0 (0,0) (Color 0 0 0 0)
 
 -- | b is the buffer index, n is the buffer
 --   size, move is movability, atl is the atlas size
@@ -41,7 +41,7 @@ loadDynData ds ((DTile (DMBuff b n) _ _ _ _ _ _):ts)
   = [buff !! n] ⧺ loadDynData ds ts
     where Dyns buff = dsBuff ds !! b
 loadDynData ds ((DTile DMNULL _ _ _ _ _ _):ts)
-  = [DynData (0,0) (1,1) 0 (0,0) (Color 1 1 1 0)] ⧺ loadDynData ds ts
+  = [DynData (0,0) (1,1) 0 (0,0) (Color 0 0 0 0)] ⧺ loadDynData ds ts
 
 -- | generates buffs from drawstate
 genDynBuffs ∷ [TTFData] → DrawState → [Dyns]
@@ -68,7 +68,7 @@ genDynBuffs ttfdat ds = dynsRes
 genPopupDyns ∷ [Popup] → [Dyns] → [Dyns]
 genPopupDyns popups = setTileBuff 3 dyns
   where dyns = Dyns $ newD ⧺ take (64 - length newD)
-                 (repeat (DynData (0,0) (0,0) 0 (0,0) (Color 1 1 1 0)))
+                 (repeat (DynData (0,0) (0,0) 0 (0,0) (Color 0 0 0 0)))
         newD = genPopupDynsF popups
 genPopupDynsF ∷ [Popup] → [DynData]
 genPopupDynsF = foldr ((⧺) . genEachPopupDyns) []
@@ -86,7 +86,7 @@ genEachPopupDyns _ = []
 --   buffer since the atlas format is different
 genPUTextDyns ∷ [TTFData] → [Popup] → [Dyns] → [Dyns]
 genPUTextDyns ttfdat popups = setTileBuff 4 dyns
-  where dyns = Dyns $ newD ⧺ take (256 - length newD) (repeat (DynData (0,0) (0,0) 0 (0,0) (Color 1 1 1 0)))
+  where dyns = Dyns $ newD ⧺ take (256 - length newD) (repeat (DynData (0,0) (0,0) 0 (0,0) (Color 0 0 0 0)))
         newD = genPUTextDynsF ttfdat popups
 genPUTextDynsF ∷ [TTFData] → [Popup] → [DynData]
 genPUTextDynsF _      []       = []
@@ -120,7 +120,7 @@ genButtDyns ∷ [Dyns] → Window → [Dyns]
 genButtDyns []   _   = []
 genButtDyns buff win = setTileBuff 1 dyns buff
   where dyns = Dyns $ newD ⧺ take (64 - length newD)
-                 (repeat (DynData (0,0) (0,0) 0 (0,0) (Color 1 1 1 0)))
+                 (repeat (DynData (0,0) (0,0) 0 (0,0) (Color 0 0 0 0)))
         newD = findPageElemData (winSize win) (winCurr win) (winPages win)
 
 findPageElemData ∷ (Int,Int) → String → [Page] → [DynData]
@@ -149,7 +149,7 @@ genTextDyns _      _   [] = []
   -- there should be a haskell extension to allow currying here
 genTextDyns ttfdat win a  = setTileBuff 2 dyns a
   where dyns = Dyns $ newD ⧺ take (512 - length newD)
-                 (repeat (DynData (0,0) (0,0) 0 (0,0) (Color 1 1 1 0)))
+                 (repeat (DynData (0,0) (0,0) 0 (0,0) (Color 0 0 0 0)))
         newD = findPagesText ttfdat (winSize win) (winCurr win) (winPages win)
 
 -- | text data requires a buffer set to a 1x1 texture atlas

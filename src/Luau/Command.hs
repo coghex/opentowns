@@ -350,16 +350,16 @@ sanitizeXY (Just x) (Just y) = (x,y)
 -- | makes sure the hex color values are legible, if not, returns
 --   (1,1,1,0). accepts formats "0xRRGGBB" "RRGGBB", with optional "AA"
 sanitizeColor ∷ String → Color
-sanitizeColor ""  = Color 1 1 1 1
-sanitizeColor [_] = Color 1 1 1 1
+sanitizeColor ""  = Color 255 255 255 255
+sanitizeColor [_] = Color 255 255 255 255
 sanitizeColor str = if (head str ≡ '0') ∧ (head (tail str) ≡ 'x') then
   sanitizeColorF (tail (tail str)) else sanitizeColorF str
 -- | sanitizes hex values after "0x" is stripped
 sanitizeColorF ∷ String → Color
 sanitizeColorF str
-  | length str ≡ 6  = Color r g b 1
-  | length str ≡ 8  = Color r g b a
-  | otherwise       = Color 1 1 1 1
+  | length str ≡ 6  = Color r   g   b   255
+  | length str ≡ 8  = Color r   g   b   a
+  | otherwise       = Color 255 255 255 255
   where (r,_) = head $ readHex r'
         (g,_) = head $ readHex g'
         (b,_) = head $ readHex b'
