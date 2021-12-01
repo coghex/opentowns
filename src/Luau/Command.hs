@@ -170,9 +170,45 @@ hsNewElem env name pname el = case head $ splitOn ":" el of
         e      = WinElemButt pos color (w,h) w (ButtActionText val) (-1) text' False
     Lua.liftIO $ atomically $ writeQueue loadQ
       $ LoadCmdNewElem name pname e
-
+  "keys" → do
+    args         ← vtail $ splitOn ":" el
+    tailargs     ← vtail args
+    tailtailargs ← vtail tailargs
+    tttargs      ← vtail tailtailargs
+    let loadQ = envLoadQ env
+        x'    = readMaybe (head args)        ∷ Maybe Double
+        y'    = readMaybe (head tailargs) ∷ Maybe Double
+        text  = head tailtailargs
+        color = sanitizeColor $ head tttargs
+        pos   = sanitizeXY x' y'
+        def   = last args
+        val   = textButton text def
+        text' = sanitizeText text
+    ttfdat' ← Lua.liftIO $ atomically $ readTVar (envFontM env)
+    let ttfdat = fromMaybe [] ttfdat'
+        (w,h)  = calcTextBoxSize (text' ⧺ valString val) ttfdat
+        e      = WinElemButt pos color (w,h) w
+                 (ButtActionKey kf keys) (-1) text' False
+        keys   = sanitizeKeys def
+        kf     = sanitizeKeyFunc text
+    Lua.liftIO $ atomically $ writeQueue loadQ
+      $ LoadCmdNewElem name pname e
   unk → Lua.liftIO $ atomically $ writeQueue (envEventQ env)
     $ EventLog LogWarn $ "unknown element: " ⧺ unk
+
+-- | sanitize default key function
+sanitizeKeyFunc ∷ String → KeyFunc
+sanitizeKeyFunc "Scroll up"     = KFUp
+sanitizeKeyFunc "Scroll down"   = KFDown
+sanitizeKeyFunc "Scroll left"   = KFLeft
+sanitizeKeyFunc "Scroll right"  = KFRight
+sanitizeKeyFunc "Level up"      = KFLvlUp
+sanitizeKeyFunc "Level down"    = KFLvlDown
+sanitizeKeyFunc unk         = KFUnknown unk
+-- | sanitizes default keys
+sanitizeKeys ∷ String → [Key]
+sanitizeKeys str = map sanitizeKey list
+  where list = splitOn "," str
 
 -- | turns lua string reference into ADT with default value, if
 --   the user supplied default is nonsense, we use our own
@@ -202,8 +238,6 @@ textButton "Allow bury system" def
   = TextAllowBury $ sanitizeBool True def
 textButton "CPU level usage for pathfinding" def
   = TextCPULevel $ sanitizeCPU 2 def
-textButton "Scroll up" def
-  = TextKeyMap $ sanitizeKeys (KFScrollUp, [KeyW,KeyUp]) def
 textButton str            def = TextUnknown     $ str ⧺ ": " ⧺ def
 -- | finds the string of the default text button,
 --   just for measurement of the predefined width.
@@ -253,12 +287,12 @@ sanitizeCPU _   "4" = 4
 sanitizeCPU _   "5" = 5
 sanitizeCPU _   "6" = 6
 sanitizeCPU def _   = def
-sanitizeKeys ∷ (KeyFunc,[Key]) → String → (KeyFunc,[Key])
-sanitizeKeys (kf,keys) str = (kf,sanitizeKeyStr str keys)
-sanitizeKeyStr ∷ String → [Key] → [Key]
-sanitizeKeyStr str keys = case splitOn "," str of
-  [a,b] → [sanitizeKey a,sanitizeKey b]
-  _     → keys
+--sanitizeKeys ∷ (KeyFunc,[Key]) → String → (KeyFunc,[Key])
+--sanitizeKeys (kf,keys) str = (kf,sanitizeKeyStr str keys)
+--sanitizeKeyStr ∷ String → [Key] → [Key]
+--sanitizeKeyStr str keys = case splitOn "," str of
+--  [a,b] → [sanitizeKey a,sanitizeKey b]
+--  _     → keys
 sanitizeKey ∷ String → Key
 sanitizeKey "A"      = KeyA
 sanitizeKey "B"      = KeyB
@@ -290,6 +324,8 @@ sanitizeKey "Up"     = KeyUp
 sanitizeKey "Down"   = KeyDown
 sanitizeKey "Right"  = KeyRight
 sanitizeKey "Left"   = KeyLeft
+sanitizeKey "<"      = KeyComma
+sanitizeKey ">"      = KeyPeriod
 sanitizeKey unk = KeyUnknown unk
 
 

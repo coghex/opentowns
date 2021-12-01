@@ -31,5 +31,9 @@ end
 function textButton (mx,my,text,color,args)
     return ("tBut:"..(tostring(mx))..":"..(tostring(my))..":"..text..":"..color..":"..args)
 end
+-- keys buttons popup a screen to change a key
+function keysButton (mx,my,text,color,args)
+    return ("keys:"..(tostring(mx))..":"..(tostring(my))..":"..text..":"..color..":"..args)
+end
 
 return bit

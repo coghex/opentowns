@@ -4,10 +4,10 @@ module Prog.Buff where
 -- a buffer of invisibly dynamic tiles to manipulate
 import Prelude()
 import UPrelude
-import Data ( Color(..), Difficulty(..), KeyFunc(..), Key(..) )
+import Data ( Color(..), Difficulty(..), KeyFunc(..), Key(..), Popup(..), PopupType(..) )
 import Elem.Data
 import Load.Data
-    ( DrawState(dsTiles, dsWins, dsBuff),
+    ( DrawState(..),
       DynData(DynData, ddTex),
       DynMap(DMNULL, DMBuff),
       Dyns(..),
@@ -52,8 +52,10 @@ genDynBuffs ttfdat ds = dynsRes
           Nothing → dyns0
           -- Just _ → dyns0
           -- TODO: generate dynamic buffers
-          Just w → dyns2
-            where dyns2 = genButtDyns dyns1 w
+          Just w → dyns4
+            where dyns4 = genPUTextDyns ttfdat (dsPopup ds) dyns3
+                  dyns3 = genPopupDyns (dsPopup ds) dyns2
+                  dyns2 = genButtDyns dyns1 w
                   dyns1 = genTextDyns ttfdat w dyns0
           --Just w  → genPUTextDyns ttfdat popups
           --            (genPopupDyns popups
@@ -61,15 +63,64 @@ genDynBuffs ttfdat ds = dynsRes
           --            (genButtDyns (genLinkDyns dyns0 w) w) w) w) w
 --        popups = dsPopup ds
 
+-- | generates dynamic data for any number of popups, popups
+--   index to the center of the screen, still in openGL-style
+genPopupDyns ∷ [Popup] → [Dyns] → [Dyns]
+genPopupDyns popups = setTileBuff 3 dyns
+  where dyns = Dyns $ newD ⧺ take (64 - length newD)
+                 (repeat (DynData (0,0) (0,0) 0 (0,0) (Color 1 1 1 0)))
+        newD = genPopupDynsF popups
+genPopupDynsF ∷ [Popup] → [DynData]
+genPopupDynsF = foldr ((⧺) . genEachPopupDyns) []
+--genPopupDynsF []       = []
+--genPopupDynsF (pu:pus) = genEachPopupDyns pu ⧺ genPopupDynsF pus
+genEachPopupDyns ∷ Popup → [DynData]
+genEachPopupDyns (Popup (x,y) (w,h) PopupSetKey {}) = dd
+  where dd      = topleft
+        topleft = [DynData (x',y'+(2*h')) (0.5,0.5) 107 (0,29) (Color 255 255 255 255)]
+        (x',y') = (2*realToFrac x - w',-2*realToFrac y - h')
+        (w',h') = (0.5*realToFrac w, 0.5*realToFrac h)
+genEachPopupDyns _ = []
+
+-- | generates dynamic data for the text of a popup.  in a seperate
+--   buffer since the atlas format is different
+genPUTextDyns ∷ [TTFData] → [Popup] → [Dyns] → [Dyns]
+genPUTextDyns ttfdat popups = setTileBuff 4 dyns
+  where dyns = Dyns $ newD ⧺ take (256 - length newD) (repeat (DynData (0,0) (0,0) 0 (0,0) (Color 1 1 1 0)))
+        newD = genPUTextDynsF ttfdat popups
+genPUTextDynsF ∷ [TTFData] → [Popup] → [DynData]
+genPUTextDynsF _      []       = []
+genPUTextDynsF ttfdat (pu:pus) = genEachPUTextDyns ttfdat pu ⧺ genPUTextDynsF ttfdat pus
+
+genEachPUTextDyns ∷ [TTFData] → Popup → [DynData]
+genEachPUTextDyns ttfdat (Popup (x,y) _ (PopupSetKey keyInd keyFunc key))
+  = dd ⧺ undersc
+    where dd = calcTextDD (Color 255 255 255 255) ttfdat (x - 6.0,y + 3.0) $ "Set " ⧺ printKeyInd keyInd ⧺ " hotkey for " ⧺ printKeyFunc keyFunc ⧺ " (Current: " ⧺ printKeys key ⧺ ")"
+          undersc = calcTextDD (Color 255 255 255 255) ttfdat (x,y) "_"
+genEachPUTextDyns _      _ = []
+printKeyInd ∷ Int → String
+printKeyInd 1 = "1st"
+printKeyInd 2 = "2nd"
+printKeyInd _ = "NULL"
+printKeyFunc ∷ KeyFunc → String
+printKeyFunc keyFunc = tail $ tail $ show keyFunc
+printKeys ∷ [Key] → String
+printKeys []     = []
+printKeys [k]    = printKey k
+printKeys (k:ks) = printKey k ⧺ ", " ⧺ printKeys ks
+printKey ∷ Key → String
+printKey key = tail $ tail $ tail $ show key
+
 -- | set dyns in buff
 setTileBuff ∷ Int → Dyns → [Dyns] → [Dyns]
 setTileBuff n dyns buff = take n buff ⧺ [dyns] ⧺ tail (drop n buff)
 
--- generate dynamic data for a button
+-- | generate dynamic data for a button
 genButtDyns ∷ [Dyns] → Window → [Dyns]
 genButtDyns []   _   = []
 genButtDyns buff win = setTileBuff 1 dyns buff
-  where dyns = Dyns $ newD ⧺ take (64 - length newD) (repeat (DynData (0,0) (0,0) 0 (0,0) (Color 1 1 1 0)))
+  where dyns = Dyns $ newD ⧺ take (64 - length newD)
+                 (repeat (DynData (0,0) (0,0) 0 (0,0) (Color 1 1 1 0)))
         newD = findPageElemData (winSize win) (winCurr win) (winPages win)
 
 findPageElemData ∷ (Int,Int) → String → [Page] → [DynData]

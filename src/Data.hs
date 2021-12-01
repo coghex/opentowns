@@ -47,8 +47,15 @@ data Shell = Shell { shPrompt ∷ String
                    , shHistI  ∷ Int
                    , shHist   ∷ [String] } deriving (Show, Eq)
 
--- | TODO: this is just a placeholder
-data Popup = Popup deriving (Show,Eq)
+-- abstract popup, independent of window
+data Popup = Popup { puPos  ∷ (Double,Double)
+                   , puSize ∷ (Double,Double)
+                   , puType ∷ PopupType } deriving (Show, Eq)
+
+-- different pop ups have different functionality
+data PopupType = PopupSetKey Int KeyFunc [Key]
+               | PopupNULL deriving (Show, Eq)
+
 
 -- | possible keys, so we dont have to use the GLFW one everywhere
 data Key = KeyA
@@ -195,4 +202,5 @@ data KeyFunc = KFUp
              | KFShell
              | KFTest
              | KFTest2
+             | KFUnknown String
              | KFNULL deriving (Show, Eq, Ord)

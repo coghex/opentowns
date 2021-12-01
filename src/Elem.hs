@@ -3,7 +3,7 @@ module Elem where
 -- main elem functions are found
 import Prelude()
 import UPrelude
-import Data ( Difficulty (..) )
+import Data ( Difficulty (..), Popup(..), PopupType(..) )
 import Elem.Data ( WinElem(..), ButtAction(..)
                  , Button(..), ButtFunc(..), TextButton(..)
                  , InputAct(..), LuaFunc(..) )
@@ -88,6 +88,15 @@ initElem win page
                     , bPage = page }
   sendInpAct $ InpActSetLink butt
   return $ WinElemButt pos col box adv (ButtActionText text) ind args hov
+initElem win page
+  (WinElemButt pos col box adv (ButtActionKey k1 k2) _ args hov) ind = do
+  let butt = Button { bFunc = ButtFuncText ind
+                    , bPos  = pos
+                    , bSize = box
+                    , bWin  = win
+                    , bPage = page }
+  sendInpAct $ InpActSetLink butt
+  return $ WinElemButt pos col box adv (ButtActionKey k1 k2) ind args hov
 initElem _   _   we       _ = return we
 
 -- | handles individual button presses
@@ -152,7 +161,8 @@ lengthPageElems ∷ [Page] → Int
 lengthPageElems = foldr ((+) . length . pageElems) 0
 
 -- | executes the function atttached to a button
-execButtonFunc ∷ (MonadLog μ, MonadFail μ) ⇒ DrawState → Int → String → String → LogT μ DrawState
+execButtonFunc ∷ (MonadLog μ, MonadFail μ)
+  ⇒ DrawState → Int → String → String → LogT μ DrawState
 execButtonFunc ds ind win page = do
   let func = findFunc wins ind win page
       wins = dsWins ds
@@ -188,6 +198,7 @@ findFuncInElems (we:wes) ind = case we of
 execButtonText ∷ (MonadLog μ, MonadFail μ) ⇒ DrawState → Int → String → String → LogT μ DrawState
 execButtonText ds ind win page
   = return $ ds { dsWins   = findText (dsWins ds) ind win page
+                , dsPopup  = addNewPopup (dsPopup ds) (dsWins ds) ind win page
                 , dsStatus = DSSReload }
 
 findText ∷ [Window] → Int → String → String → [Window]
@@ -212,6 +223,28 @@ findTextInElems (we:wes) ind = [we'] ⧺ findTextInElems wes ind
                     WinElemButt a b c d (evalTextButtAction act) i e f
                   else we
                 _                             → we
+
+-- | new popups can be created by text buttons
+addNewPopup ∷ [Popup] → [Window] → Int → String → String → [Popup]
+addNewPopup pus []      _   _   _    = pus
+addNewPopup pus (w:wes) ind win page
+  | winTitle w ≡ win = pus ⧺ winPopup (winPages w) ind page
+  | otherwise        = addNewPopup pus wes ind win page
+
+winPopup ∷ [Page] → Int → String → [Popup]
+winPopup []     _   _  = []
+winPopup (p:ps) ind page
+  | pageTitle p ≡ page = elemPopup (pageElems p) ind
+  | otherwise          = winPopup ps ind page
+
+elemPopup ∷ [WinElem] → Int → [Popup]
+elemPopup []       _   = []
+elemPopup (we:wes) ind = case we of
+  WinElemButt _ _ _ _ (ButtActionKey k1 k2) i _ _ → if i ≡ ind then [pu]
+    else elemPopup wes ind
+    where pu = Popup (0,0) (20,8) $ PopupSetKey 1 k1 k2
+  _                             → elemPopup wes ind
+
 -- | only need to update the values of text buttons atm
 evalTextButtAction ∷ ButtAction → ButtAction
 evalTextButtAction (ButtActionText tb) = ButtActionText $ findTextElem tb

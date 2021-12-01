@@ -16,7 +16,7 @@ import Elem.Data ( InputAct(..) )
 import Load.Cmd
 import Load.Data
     ( DSStatus(..),
-      DrawState(dsStatus, dsTiles, dsBuff, dsWins),
+      DrawState(..),
       LoadCmd(..),
       LoadResult(..) )
 import Luau.Window ( addPageToWin, addElemToPageInWin
@@ -199,7 +199,7 @@ processCommand glfwwin ds cmd = case cmd of
     return $ ResDrawState ds'
     where ds' = ds { dsWins = resizeWins size (dsWins ds) }
   LoadCmdTest → do
-    log' LogInfo $ show $ dsWins ds
+    log' LogInfo $ show $ dsPopup ds
     return ResSuccess
   LoadCmdTest2 → do
     sendInpAct InpActTest
