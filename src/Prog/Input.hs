@@ -21,10 +21,8 @@ import Prog.Init ( initKeyMap, initInpState )
 import Prog.Mouse ( processLoadMouse, findAllButtsUnder, findButts )
 import Prog.Util ()
 import Sign.Data
-    ( Event(EventLog, EventSys),
-      LogLevel(LogDebug, LogInfo),
-      SysAction(SysExit),
-      TState(..) )
+    ( Event(..), LogLevel(..),
+      SysAction(..), TState(..) )
 import Sign.Var ( atomically )
 import Sign.Queue
     ( readChan, tryReadChan, tryReadQueue, writeQueue )
@@ -136,7 +134,17 @@ processLoadInput env win inpSt keymap inp = case inp of
   --        $ LoadCmdChangeKey n keyFunc $ if (n ≡ 1)
   --          then [(findKey k),last k0]
   --          else [head k0,(findKey k)]
-        return $ ResInpChangeKey keyFunc (findKey k) n
+        print $ "captured: " ⧺ show k
+        -- test keys still work for now
+        if lookupKey keymap (findKey k) ≡ KFTest
+          then do
+            atomically $ writeQueue (envLoadQ env) LoadCmdTest
+            return ResInpSuccess
+        else if lookupKey keymap (findKey k) ≡ KFTest2
+          then do
+            atomically $ writeQueue (envLoadQ env) LoadCmdTest2
+            return ResInpSuccess
+        else return $ ResInpChangeKey keyFunc (findKey k) n
       else return ResInpSuccess
     -- if no input capture, case on each key function
     CapNULL → if ks ≡ GLFW.KeyState'Pressed then case lookupKey keymap (findKey k) of
@@ -148,6 +156,9 @@ processLoadInput env win inpSt keymap inp = case inp of
           return ResInpSuccess
         KFTest2 → do
           atomically $ writeQueue (envLoadQ env) LoadCmdTest2
+          return ResInpSuccess
+        KFUnknown str → do
+          atomically $ writeQueue (envEventQ env) $ EventLog LogWarn $ "key " ⧺ str ⧺ " not set in key map"
           return ResInpSuccess
         keyfunc → do
           atomically $ writeQueue (envEventQ env)
@@ -181,7 +192,9 @@ processLoadInput env win inpSt keymap inp = case inp of
           _ → return ResInpSuccess
      --   print $ show pos
     else return ResInpSuccess
-  InpActSetCap cap → return $ ResInpState inpSt'
+  InpActSetCap cap → do
+    atomically $ writeQueue (envEventQ env) $ EventLog (LogDebug 2) $ "capture set: " ⧺ show cap
+    return $ ResInpState inpSt'
     where inpSt' = inpSt { inpCap = cap }
   InpActSwitchWin w0  → return $ ResInpState inpSt'
     where inpSt' = inpSt { isWin = w0 }

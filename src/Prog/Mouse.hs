@@ -99,7 +99,8 @@ processLoadMouse env win inpSt = do
   else return inpSt'
   --else return inpSt'
 
--- | returns a bool true if a halt is active
+-- | returns a bool true if a halt is active, halting allows
+--   only one dyn update, instead of every frame
 halting ∷ InputState → Int
 halting inpSt = case isHalt inpSt of
   HaltButton b → b

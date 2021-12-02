@@ -20,7 +20,7 @@ import Load.Data
       LoadCmd(..),
       LoadResult(..) )
 import Luau.Window ( addPageToWin, addElemToPageInWin
-                   , switchWin, resizeWins )
+                   , switchWin, resizeWins, currentWin )
 import Prog.Buff ( genDynBuffs, loadDyns, initBuff )
 import Prog.Data ( Env(..) )
 import Sign.Data

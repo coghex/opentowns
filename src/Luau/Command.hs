@@ -124,7 +124,7 @@ hsNewElem env name pname el = case head $ splitOn ":" el of
     tailargs     ← vtail args
     let loadQ = envLoadQ env
         x'    = readMaybe (head args)        ∷ Maybe Double
-        y'    = readMaybe (head (tailargs)) ∷ Maybe Double
+        y'    = readMaybe (head tailargs) ∷ Maybe Double
         pos   = sanitizeXY x' y'
     ttfdat' ← Lua.liftIO $ atomically $ readTVar (envFontM env)
     let ttfdat = fromMaybe [] ttfdat'
@@ -182,15 +182,16 @@ hsNewElem env name pname el = case head $ splitOn ":" el of
         color = sanitizeColor $ head tttargs
         pos   = sanitizeXY x' y'
         def   = last args
-        val   = textButton text def
+        val   = keysButton text def
         text' = sanitizeText text
     ttfdat' ← Lua.liftIO $ atomically $ readTVar (envFontM env)
     let ttfdat = fromMaybe [] ttfdat'
         (w,h)  = calcTextBoxSize (text' ⧺ valString val) ttfdat
         e      = WinElemButt pos color (w,h) w
-                 (ButtActionKey kf keys) (-1) text' False
+                 (ButtActionKey 0 kf keys) (-1) text'' False
         keys   = sanitizeKeys def
         kf     = sanitizeKeyFunc text
+        text'' = text' ⧺ " (Key: " ⧺ def ⧺ ")"
     Lua.liftIO $ atomically $ writeQueue loadQ
       $ LoadCmdNewElem name pname e
   unk → Lua.liftIO $ atomically $ writeQueue (envEventQ env)
@@ -261,6 +262,11 @@ valString (TextCPULevel       _) = "0"
 valString (TextKeyMap         _) = "Key: KeyFunc: "
 valString (TextUnknown        _) = "UNK: "
 valString  TextNULL              = "NULL"
+-- | keys have a similar behavior
+keysButton ∷ String → String → TextButton
+keysButton str def = TextKeyMap (kf,keys)
+  where kf   = sanitizeKeyFunc str
+        keys = sanitizeKeys    def
 
 -- | uses the default values if they sanitize
 sanitizeBool ∷ Bool → String → Bool

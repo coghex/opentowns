@@ -250,7 +250,7 @@ findElemText ttfdat size (_:wes) = findElemText ttfdat size wes
 -- | some buttons have context specific text
 calcButtString ∷ ButtAction → String → String
 calcButtString (ButtActionText tb) str = str ⧺ ": " ⧺ showTB tb
-calcButtString _                    str = str
+calcButtString _                   str = str
 -- | takes a textbutton's value and makes it a string
 showTB ∷ TextButton → String
 showTB (TextMusic          b) = showBool b

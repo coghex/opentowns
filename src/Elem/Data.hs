@@ -24,7 +24,7 @@ data WinElem
   | WinElemNULL deriving (Show, Eq)
 
 -- possible button actions and defaults
-data ButtAction = ButtActionKey KeyFunc [Key]
+data ButtAction = ButtActionKey Int KeyFunc [Key]
                 | ButtActionLink String
                 | ButtActionBack
                 | ButtActionExit

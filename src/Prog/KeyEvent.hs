@@ -5,7 +5,7 @@ module Prog.KeyEvent where
 import Prelude()
 import UPrelude
 import qualified Data.Map as Map
-import Data ( Key(..), KeyFunc, KeyMap(..) )
+import Data ( Key(..), KeyFunc(..), KeyMap(..) )
 import Elem.Data ( InputAct(..) )
 import Prog
     ( MonadIO(liftIO), Prog, MonadReader(ask) )
@@ -28,8 +28,11 @@ evalKey _      k ks mk = do
 
 -- | returns the first key function with this key assigned
 lookupKey ∷ KeyMap → Key → KeyFunc
-lookupKey (KeyMap keymap) key = fst $ Map.elemAt 0
-  $ Map.filterWithKey (lookupInKeyMap key) keymap
+lookupKey (KeyMap keymap) key = if Map.size list > 0
+  then fst $ Map.elemAt 0 list
+  else KFUnknown $ show key
+  where list = Map.filterWithKey (lookupInKeyMap key) keymap
+
 -- original function before hlint)
 --lookupKey (KeyMap keymap) key = fst $ Map.elemAt 0
 --  $ Map.filterWithKey (\kf ks → (lookupInKeyMap key) kf ks) keymap
