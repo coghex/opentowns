@@ -80,7 +80,7 @@ hsNewElem env name pname el = case head $ splitOn ":" el of
     let loadQ  = envLoadQ env
         e      = WinElemText pos color text
         text   = head args
-        x'     = readMaybe (head tailargs)        ∷ Maybe Double
+        x'     = readMaybe (head tailargs)     ∷ Maybe Double
         y'     = readMaybe (head tailtailargs) ∷ Maybe Double
         pos    = sanitizeXY x' y'
         color  = sanitizeColor $ head  tttargs
@@ -94,7 +94,7 @@ hsNewElem env name pname el = case head $ splitOn ":" el of
     tttargs      ← vtail tailtailargs
     let loadQ  = envLoadQ env
         text   = head args
-        x'     = readMaybe (head tailargs)        ∷ Maybe Double
+        x'     = readMaybe (head tailargs)     ∷ Maybe Double
         y'     = readMaybe (head tailtailargs) ∷ Maybe Double
         pos    = sanitizeXY x' y'
         color  = sanitizeColor $ head tttargs
@@ -106,11 +106,31 @@ hsNewElem env name pname el = case head $ splitOn ":" el of
         e      = WinElemButt pos color (w,h) w (ButtActionLink ellink) (-1) text False
     Lua.liftIO $ atomically $ writeQueue loadQ
       $ LoadCmdNewElem name pname e
+  "load" → do
+    args         ← vtail $ splitOn ":" el
+    tailargs     ← vtail args
+    tailtailargs ← vtail tailargs
+    tttargs      ← vtail tailtailargs
+    ttttargs     ← vtail tttargs
+    let loadQ  = envLoadQ env
+        text   = head args
+        x'     = readMaybe (head tailargs)     ∷ Maybe Double
+        y'     = readMaybe (head tailtailargs) ∷ Maybe Double
+        pos    = sanitizeXY x' y'
+        color  = sanitizeColor $ head tttargs
+        win    = head ttttargs
+        argv   = last args
+    ttfdat' ← Lua.liftIO $ atomically $ readTVar (envFontM env)
+    let ttfdat = fromMaybe [] ttfdat'
+        (w,h)  = calcTextBoxSize text ttfdat
+        e      = WinElemButt pos color (w,h) w (ButtActionLoad win argv) (-1) text False
+    Lua.liftIO $ atomically $ writeQueue loadQ
+      $ LoadCmdNewElem name pname e
   "back" → do
     args         ← vtail $ splitOn ":" el
     tailargs     ← vtail args
     let loadQ = envLoadQ env
-        x'    = readMaybe (head args)        ∷ Maybe Double
+        x'    = readMaybe (head args)     ∷ Maybe Double
         y'    = readMaybe (head tailargs) ∷ Maybe Double
         pos   = sanitizeXY x' y'
     ttfdat' ← Lua.liftIO $ atomically $ readTVar (envFontM env)
@@ -123,7 +143,7 @@ hsNewElem env name pname el = case head $ splitOn ":" el of
     args         ← vtail $ splitOn ":" el
     tailargs     ← vtail args
     let loadQ = envLoadQ env
-        x'    = readMaybe (head args)        ∷ Maybe Double
+        x'    = readMaybe (head args)     ∷ Maybe Double
         y'    = readMaybe (head tailargs) ∷ Maybe Double
         pos   = sanitizeXY x' y'
     ttfdat' ← Lua.liftIO $ atomically $ readTVar (envFontM env)
@@ -138,7 +158,7 @@ hsNewElem env name pname el = case head $ splitOn ":" el of
     tailtailargs ← vtail tailargs
     tttargs      ← vtail tailtailargs
     let loadQ = envLoadQ env
-        x'    = readMaybe (head args)        ∷ Maybe Double
+        x'    = readMaybe (head args)     ∷ Maybe Double
         y'    = readMaybe (head tailargs) ∷ Maybe Double
         text  = head tailtailargs
         color = sanitizeColor $ head tttargs
@@ -156,7 +176,7 @@ hsNewElem env name pname el = case head $ splitOn ":" el of
     tailtailargs ← vtail tailargs
     tttargs      ← vtail tailtailargs
     let loadQ = envLoadQ env
-        x'    = readMaybe (head args)        ∷ Maybe Double
+        x'    = readMaybe (head args)     ∷ Maybe Double
         y'    = readMaybe (head tailargs) ∷ Maybe Double
         text  = head tailtailargs
         color = sanitizeColor $ head tttargs
@@ -176,7 +196,7 @@ hsNewElem env name pname el = case head $ splitOn ":" el of
     tailtailargs ← vtail tailargs
     tttargs      ← vtail tailtailargs
     let loadQ = envLoadQ env
-        x'    = readMaybe (head args)        ∷ Maybe Double
+        x'    = readMaybe (head args)     ∷ Maybe Double
         y'    = readMaybe (head tailargs) ∷ Maybe Double
         text  = head tailtailargs
         color = sanitizeColor $ head tttargs

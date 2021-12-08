@@ -12,6 +12,10 @@ end
 function linkButton (mx,my,text,color,name)
     return ("butt:"..text..":"..(tostring(mx))..":"..(tostring(my))..":"..color..":".."link:"..name)
 end
+-- loads follow on to windows
+function loadButton (mx,my,text,color,name,args)
+    return ("load:"..text..":"..(tostring(mx))..":"..(tostring(my))..":"..color..":"..name..":"..args)
+end
 -- special buttons handled in haskell for easier lua
 
 -- back goes to the last page

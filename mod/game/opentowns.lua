@@ -6,20 +6,28 @@ require "mod/base/game"
 -- this runs once at the beginning
 function initMod ()
     -- basic UI elements
+    -- win1 is the collection of menus
     local win1 = window:new ()
     win1:initWindow("win1")
+    -- win2 is the game window
+    --local win2 = window:new ()
+    --win2:initWindow("win2")
+    -- menu1 is the start menu
     local menu1 = page:new ()
+    -- links go to new pages
     menu1:newBit(linkButton (1.0,1.0,"Tutorial", "0xFFFF00","menu2"))
     menu1:newBit(linkButton (1.0,1.5,"New game", "0xFFFF00","menu3"))
     menu1:newBit(linkButton (1.0,2.0,"Mods",     "0xFFFF00","menu4"))
     menu1:newBit(linkButton (1.0,2.5,"Servers",  "0xFFFF00","menu5"))
     menu1:newBit(linkButton (1.0,3.0,"Options",  "0xFFFF00","menu6"))
     menu1:newBit(linkButton (1.0,3.5,"Credits",  "0xFFFF00","menu7"))
+    -- exit quits everything
     menu1:newBit(exitButton (1.0,4.5))
     menu1:initPage("menu1")
     win1:addPage(menu1)
 
     local menu2 = page:new ()
+    -- text is just text
     menu2:newBit(text       (1.0,1.0,"Tutorial","0xFFFFFF"))
     menu2:newBit(linkButton (1.0,2.0,"The basics","0xFFFFFF","tut1"))
     menu2:newBit(linkButton (1.0,2.5,"Food and auto-production","0xFFFFFF","tut2"))
@@ -31,12 +39,13 @@ function initMod ()
 
     local menu3 = page:new ()
     menu3:newBit(text       (1.0,1.0,"New Game","0xFFFFFF"))
-    menu3:newBit(linkButton (1.0,2.0,"Normal Map","0xFFFF00","normalmap"))
-    menu3:newBit(linkButton (1.0,2.5,"Desert","0xFFFF00","desertmap"))
-    menu3:newBit(linkButton (1.0,3.0,"Jungle","0xFFFF00","junglemap"))
-    menu3:newBit(linkButton (1.0,3.5,"Mixed","0xFFFF00","mixedmap"))
-    menu3:newBit(linkButton (1.0,4.0,"Snow","0xFFFF00","snowmap"))
-    menu3:newBit(linkButton (1.0,4.5,"Mountains","0xFFFF00","mountainsmap"))
+    -- loads switch to a new window
+    menu3:newBit(loadButton (1.0,2.0,"Normal Map","0xFFFF00","win2","normalmap"))
+    menu3:newBit(loadButton (1.0,2.5,"Desert","0xFFFF00","win2","desertmap"))
+    menu3:newBit(loadButton (1.0,3.0,"Jungle","0xFFFF00","win2","junglemap"))
+    menu3:newBit(loadButton (1.0,3.5,"Mixed","0xFFFF00","win2","mixedmap"))
+    menu3:newBit(loadButton (1.0,4.0,"Snow","0xFFFF00","win2","snowmap"))
+    menu3:newBit(loadButton (1.0,4.5,"Mountains","0xFFFF00","win2","mountainsmap"))
     menu3:newBit(backButton (1.0,5.5))
     menu3:initPage("menu3")
     win1:addPage(menu3)

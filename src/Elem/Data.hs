@@ -26,6 +26,7 @@ data WinElem
 -- possible button actions and defaults
 data ButtAction = ButtActionKey Int KeyFunc [Key]
                 | ButtActionLink String
+                | ButtActionLoad String String
                 | ButtActionBack
                 | ButtActionExit
                 | ButtActionFunc LuaFunc
