@@ -9,6 +9,7 @@ import Elem.Data ( WinElem(..), ButtAction(..)
                  , InputAct(..), LuaFunc(..), CapType(..) )
 import Load.Data ( DrawState(..), Tile(..), DSStatus(..), LoadCmd(..) )
 import Luau.Data ( Page(..), Window(..) )
+import Luau.Window ( currentWin )
 import Sign.Data ( LogLevel(..), SysAction(..) )
 import Sign.Log ( LogT(..), MonadLog(..), sendInpAct, log', sendSys, toggleFullScreen )
 import Vulk.Font ( TTFData(..) )
@@ -120,7 +121,9 @@ processButton ds (Button (ButtFuncLink ind) _ _ win page) = do
     log' (LogDebug 1) new
     return ds'
     where ds'  = ds { dsWins   = changePageInWins (dsWins ds) ind win page
+                    , dsWinsState = newWinsState
                     , dsStatus = DSSReload }
+          newWinsState = changePageInWinsState (dsWinsState ds) (dsWins ds) ind win page
 processButton ds (Button (ButtFuncFunc ind) _ _ win page)
   = execButtonFunc ds ind win page
 processButton ds (Button (ButtFuncLoad ind) _ _ win page)
@@ -128,6 +131,22 @@ processButton ds (Button (ButtFuncLoad ind) _ _ win page)
 processButton ds (Button (ButtFuncText ind) _ _ win page)
   = execButtonText ds ind win page
 processButton ds _ = return ds
+
+
+-- | we go though all that work again just to find the names
+changePageInWinsState ∷ ((String,String),(String,String))
+  → [Window] → Int → String → String
+  → ((String,String),(String,String))
+changePageInWinsState oldwinsstate []     _    _   _    = oldwinsstate
+changePageInWinsState oldwinsstate (w:ws) dest win page
+ | winTitle w ≡ win = ((cwin,fst (fst oldwinsstate))
+                      ,(cpage,fst (snd oldwinsstate)))
+ | otherwise        = changePageInWinsState oldwinsstate ws dest win page
+   where cpage
+           = findButtonDestByInd dest page (winLast w) (winPages w)
+        -- since we are only changing pages, we can assume the same win
+         cwin = winTitle w
+-- | changes the current page in the list of windows
 changePageInWins ∷ [Window] → Int → String → String → [Window]
 changePageInWins []     _    _   _    = []
 changePageInWins (w:ws) dest win page
