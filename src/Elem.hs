@@ -3,6 +3,7 @@ module Elem where
 -- main elem functions are found
 import Prelude()
 import UPrelude
+import Data.List.Split (splitOn)
 import Data ( Difficulty (..), Popup(..), PopupType(..) )
 import Elem.Data ( WinElem(..), ButtAction(..)
                  , Button(..), ButtFunc(..), TextButton(..)
@@ -120,9 +121,10 @@ processButton ds (Button (ButtFuncLink ind) _ _ win page) = do
     sendInpAct $ InpActSetPage win new
     log' (LogDebug 1) new
     return ds'
-    where ds'  = ds { dsWins   = changePageInWins (dsWins ds) ind win page
+    where ds'  = ds { dsWins
+                        = changePageInWins (dsWins ds) ind win page
                     , dsWinsState = newWinsState
-                    , dsStatus = DSSReload }
+                    , dsStatus    = DSSReload }
           newWinsState = changePageInWinsState (dsWinsState ds) (dsWins ds) ind win page
 processButton ds (Button (ButtFuncFunc ind) _ _ win page)
   = execButtonFunc ds ind win page
@@ -158,13 +160,22 @@ changePage ∷ Window → String → Window
 changePage win page = win { 
                             winCurr = page
                           , winLast = winCurr win }
+-- | finds page referenced by button ind
 findNewPageInWins ∷ [Window] → Int → String → String → String
 findNewPageInWins [] _ _ _ = []
 findNewPageInWins (w:ws) dest win page
   | winTitle w ≡ win = findButtonDestByInd dest page (winLast w) (winPages w)
   | otherwise        = findNewPageInWins ws dest win page
 
--- this only works if names are unique
+-- | finds win and page referenced by button ind
+findNewWin ∷ [Window] → Int → String → (String,String)
+findNewWin [] _ _ = ([],[])
+findNewWin (w:ws) dest win
+  | winTitle w ≡ win = (head list, last list)
+  | otherwise        = findNewWin ws dest win
+      where list = splitOn ":" $ findButtonDestByInd dest (winCurr w) (winLast w) (winPages w)
+
+-- this only works if names are unique, returns win or page names
 findButtonDestByInd ∷ Int → String → String → [Page] → String
 findButtonDestByInd _ _    _    []     = []
 findButtonDestByInd n page lt (p:ps)
@@ -177,6 +188,9 @@ findButtonDestByIndElem n lt ((WinElemButt _ _ _ _ (ButtActionLink dest) ind _ _
   | otherwise = findButtonDestByIndElem n lt wes
 findButtonDestByIndElem n lt ((WinElemButt _ _ _ _ ButtActionBack ind _ _):wes)
   | ind ≡ n   = lt
+  | otherwise = findButtonDestByIndElem n lt wes
+findButtonDestByIndElem n lt ((WinElemButt _ _ _ _ (ButtActionLoad newwin newpage) ind _ _):wes)
+  | ind ≡ n   = newwin ⧺ ":" ⧺ newpage
   | otherwise = findButtonDestByIndElem n lt wes
 findButtonDestByIndElem n lt ((WinElemButt _ _ _ _ ButtActionExit ind _ _):wes)
   | ind ≡ n   = "EXIT"
@@ -226,9 +240,15 @@ findFuncInElems (we:wes) ind = case we of
 
 -- | executes the load button action atttached to a button
 execButtonLoad ∷ (MonadLog μ, MonadFail μ) ⇒ DrawState → Int → String → String → LogT μ DrawState
-execButtonLoad ds ind win page = do
-  log' LogInfo "blop"
-  return ds
+execButtonLoad ds ind win _ = do
+    sendInpAct $ InpActSetPage new p
+    log' (LogDebug 1) new
+    return ds'
+    where ds'     = ds { dsWinsState = newWinsState
+                       , dsStatus    = DSSReload }
+          (new,p) = findNewWin (dsWins ds) ind win
+          newWinsState = ((new,lwin),(p,lpage))
+          ((lwin,_),(lpage,_)) = dsWinsState ds
 
 -- | executes the text button action atttached to a button
 execButtonText ∷ (MonadLog μ, MonadFail μ) ⇒ DrawState → Int → String → String → LogT μ DrawState

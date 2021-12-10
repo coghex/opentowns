@@ -158,6 +158,7 @@ function initMod ()
     options6:initPage("options6")
     win1:addPage(options6)
 
+
     win1:goToPage("menu1")
     return 0
 end
