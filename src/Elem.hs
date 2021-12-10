@@ -89,6 +89,15 @@ initElem win page
   sendInpAct $ InpActSetLink butt
   return $ WinElemButt pos col box adv (ButtActionText text) ind args hov
 initElem win page
+  (WinElemButt pos col box adv (ButtActionLoad dest argv) _ args hov) ind = do
+  let butt = Button { bFunc = ButtFuncLoad ind
+                    , bPos  = pos
+                    , bSize = box
+                    , bWin  = win
+                    , bPage = page }
+  sendInpAct $ InpActSetLink butt
+  return $ WinElemButt pos col box adv (ButtActionLoad dest argv) ind args hov
+initElem win page
   (WinElemButt pos col box adv (ButtActionKey n k1 k2) _ args hov) ind = do
   let butt = Button { bFunc = ButtFuncText ind
                     , bPos  = pos
@@ -114,6 +123,8 @@ processButton ds (Button (ButtFuncLink ind) _ _ win page) = do
                     , dsStatus = DSSReload }
 processButton ds (Button (ButtFuncFunc ind) _ _ win page)
   = execButtonFunc ds ind win page
+processButton ds (Button (ButtFuncLoad ind) _ _ win page)
+  = execButtonLoad ds ind win page
 processButton ds (Button (ButtFuncText ind) _ _ win page)
   = execButtonText ds ind win page
 processButton ds _ = return ds
@@ -193,6 +204,12 @@ findFuncInElems (we:wes) ind = case we of
   WinElemButt _ _ _ _ (ButtActionFunc func) i _ _ → if i ≡ ind then func
     else findFuncInElems wes ind
   _ → findFuncInElems wes ind
+
+-- | executes the load button action atttached to a button
+execButtonLoad ∷ (MonadLog μ, MonadFail μ) ⇒ DrawState → Int → String → String → LogT μ DrawState
+execButtonLoad ds ind win page = do
+  log' LogInfo "blop"
+  return ds
 
 -- | executes the text button action atttached to a button
 execButtonText ∷ (MonadLog μ, MonadFail μ) ⇒ DrawState → Int → String → String → LogT μ DrawState

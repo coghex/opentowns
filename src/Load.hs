@@ -183,9 +183,10 @@ processCommand glfwwin ds cmd = case cmd of
     el' ← initElem win page el (lengthAllElems (dsWins ds))
     let ds' = ds { dsWins = addElemToPageInWin win page el' (dsWins ds) }
     return $ ResDrawState ds'
-  LoadCmdSwitchWin win → do
+  LoadCmdSwitchWin win page → do
     log' (LogDebug 3) "LoadCmdSwitchWin"
-    let ds'  = ds { dsWins      = switchWin win (dsWins ds) }
+    let ds'  = ds { dsWinsState = ((win,lastwin),(page,lastpage)) }
+        ((lastwin,_),(lastpage,_)) = dsWinsState ds
     --    buffSizes = case (findWin win (dsWins ds)) of
     --                  Nothing → []
     --                  Just w  → winBuffs w
@@ -199,7 +200,7 @@ processCommand glfwwin ds cmd = case cmd of
     return $ ResDrawState ds'
     where ds' = ds { dsWins = resizeWins size (dsWins ds) }
   LoadCmdTest → do
-    log' LogInfo $ show $ dsPopup ds
+    log' LogInfo $ "(curr,last) win: " ⧺ show (dsWinsState ds)
     return ResSuccess
   LoadCmdTest2 → do
     sendInpAct InpActTest

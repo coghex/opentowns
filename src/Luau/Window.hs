@@ -11,10 +11,17 @@ import Luau.Data ( Window(..), Page(..) )
 
 
 -- | returns maybe the head window
-currentWin ∷ [Window] → Maybe Window
-currentWin wins
+currentWin ∷ [Window] → ((String,String),(String,String)) → Maybe Window
+currentWin wins ((current,_),_)
   | length wins ≤ 0 = Nothing
-  | otherwise       = Just $ head wins
+  | otherwise       = findWin current wins
+
+-- | search wins by name
+findWin ∷ String → [Window] → Maybe Window
+findWin _    [] = Nothing
+findWin name (win:wins)
+  | winTitle win ≡ name = Just win
+  | otherwise = findWin name wins
 
 -- | switchs to the specified window
 switchWin ∷ String → [Window] → [Window]

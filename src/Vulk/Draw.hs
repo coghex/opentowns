@@ -20,7 +20,7 @@ loadTiles ds winSize ttfdat
   = [GTile (0,0) (w,h) (0,0) (1,1) 105 (Color 255 255 255 255)
   ,  GTile (0,0) (8,3) (0,0) (1,1) 106 (Color 255 255 255 255)]
   ⧺ winTiles
-  where winTiles   = case currentWin (dsWins ds) of
+  where winTiles   = case currentWin (dsWins ds) (dsWinsState ds) of
           Just win → linkbuff ⧺ buttbuff ⧺ popupbuff ⧺ putextbuff
                      ⧺ textbuff ⧺ loadWindow nDefTex win ttfdat
           Nothing  → []

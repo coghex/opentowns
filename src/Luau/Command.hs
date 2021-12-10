@@ -396,6 +396,9 @@ sanitizeColorF str
         a'    = [str ‼ 6,str ‼ 7]
 -- | switches to page by name
 hsGoToPage ∷ Env → String → Lua.Lua()
-hsGoToPage env name = do
-  let loadQ = envLoadQ env
-  Lua.liftIO $ atomically $ writeQueue loadQ $ LoadCmdSwitchWin name
+hsGoToPage env name = case splitOn ":" name of
+  [n1,n2] → do
+    let loadQ = envLoadQ env
+    Lua.liftIO $ atomically $ writeQueue loadQ $ LoadCmdSwitchWin n1 n2
+  _ → do
+    Lua.liftIO $ atomically $ writeQueue (envEventQ env) $ EventLog LogError "go to page requires win and page"

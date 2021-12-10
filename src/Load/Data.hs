@@ -19,7 +19,7 @@ data LoadCmd = LoadCmdPrint !PrintArg
              | LoadCmdNewWin !Window
              | LoadCmdNewPage !String !Page
              | LoadCmdNewElem !String !String !WinElem
-             | LoadCmdSwitchWin !String
+             | LoadCmdSwitchWin !String !String
              | LoadCmdWindowSize !(Int,Int)
              | LoadCmdDS !DrawStateCmd
              | LoadCmdInput InputAct
@@ -40,6 +40,8 @@ data DrawState = DrawState
   , dsFPS       ∷ FPS
   -- | windows are abstract seperate sets of verticies
   , dsWins      ∷ [Window]
+  -- | current and last window are saved, along with current and last page
+  , dsWinsState ∷ ((String,String),(String,String))
   -- | popups are abstract verticies that are seperate from windows
   , dsPopup     ∷ [Popup]
   -- | the shell is completely seperate from all windowing

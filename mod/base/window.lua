@@ -19,7 +19,7 @@ function window:initWindow (n)
 end
 
 function window:goToPage (n)
-    rawGoToPage (n)
+    rawGoToPage (self.lwName..":"..n)
 end
 
 function window:addPage (page)

@@ -124,7 +124,7 @@ initSettings = return $ Settings initKeyMap True 100 True 100 True
 -- | creates a drawstate with empty values
 initDrawState ∷ DrawState
 initDrawState = DrawState DSSNULL [] [] (FPS 60.0 60 True)
-  [] [] initShell Nothing
+  [] (("NULL","NULL"),("NULL","NULL")) [] initShell Nothing
 
 -- | creates a shell with empty values
 initShell ∷ Shell

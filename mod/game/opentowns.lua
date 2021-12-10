@@ -10,8 +10,8 @@ function initMod ()
     local win1 = window:new ()
     win1:initWindow("win1")
     -- win2 is the game window
-    --local win2 = window:new ()
-    --win2:initWindow("win2")
+    local win2 = window:new ()
+    win2:initWindow("win2")
     -- menu1 is the start menu
     local menu1 = page:new ()
     -- links go to new pages

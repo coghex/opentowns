@@ -48,7 +48,7 @@ genDynBuffs ∷ [TTFData] → DrawState → [Dyns]
 --genDynBuffs ttfdat ds = dynsRes
 genDynBuffs ttfdat ds = dynsRes
   where dyns0   = dsBuff ds
-        dynsRes = case currentWin (dsWins ds) of
+        dynsRes = case currentWin (dsWins ds) (dsWinsState ds) of
           Nothing → dyns0
           -- Just _ → dyns0
           -- TODO: generate dynamic buffers

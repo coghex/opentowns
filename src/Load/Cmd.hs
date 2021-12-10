@@ -55,6 +55,10 @@ toggleWinElemButt b (Button (ButtFuncText i) _ _ _ _)
   (WinElemButt pos col box adv act ind val _)
     | i ≡ ind   = WinElemButt pos col box adv act ind val b
     | otherwise = WinElemButt pos col box adv act ind val False
+toggleWinElemButt b (Button (ButtFuncLoad i) _ _ _ _)
+  (WinElemButt pos col box adv act ind val _)
+    | i ≡ ind   = WinElemButt pos col box adv act ind val b
+    | otherwise = WinElemButt pos col box adv act ind val False
 toggleWinElemButt _ _    we = we
 
 -- | sets all buttons off when there are no butts under the mouse
