@@ -44,7 +44,7 @@ data MapType = MapNormal
              | MapNULL deriving (Show, Eq)
 
 -- map data is held as an array with corresponding size
-data MapTiles = MapTiles (Int,Int) [[MapTile]] deriving (Show, Eq)
+data MapTiles = MapTiles (Int,Int) [[[MapTile]]] deriving (Show, Eq)
 
 -- a map tile contains the tile number and index state
 data MapTile = MapTile Int Int deriving (Show, Eq)
