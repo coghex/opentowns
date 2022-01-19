@@ -4,7 +4,8 @@ module Luau.Command where
 import Prelude()
 import UPrelude
 import qualified Foreign.Lua as Lua
-import Data ( Color(..), Difficulty(..), Key(..), KeyFunc(..), MapType(..) )
+import Data ( Color(..), Difficulty(..), Key(..)
+            , KeyFunc(..), MapType(..), MapTiles(..) )
 import Data.List.Split (splitOn)
 import Data.Maybe ( fromMaybe )
 import Numeric ( readHex )
@@ -217,7 +218,9 @@ hsNewElem env name pname el = case head $ splitOn ":" el of
   "worldMap" → do
     Lua.liftIO $ atomically $ writeQueue (envLoadQ env)
       $ LoadCmdNewElem name pname e
-        where e = WinElemMap $ parseMapType $ last $ splitOn ":" el
+        where e     = WinElemMap mtype tiles
+              mtype = parseMapType $ last $ splitOn ":" el
+              tiles = MapTiles (0,0) [[]]
   unk → Lua.liftIO $ atomically $ writeQueue (envEventQ env)
     $ EventLog LogWarn $ "unknown element: " ⧺ unk
 

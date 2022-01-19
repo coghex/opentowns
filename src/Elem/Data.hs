@@ -3,7 +3,8 @@ module Elem.Data where
 -- high level structures for different types of UI elements
 import Prelude()
 import UPrelude
-import Data ( Color(..), Difficulty(..), Key(..), KeyFunc(..), MapType(..) )
+import Data ( Color(..), Difficulty(..), Key(..)
+            , KeyFunc(..), MapType(..), MapTiles(..) )
 import qualified Vulk.GLFW as GLFW
 
 -- |  various win elements and their associated data
@@ -21,7 +22,7 @@ data WinElem
                                   --   of all buttons
                 , buttVal   ∷ String -- ^ string displayed on button
                 , buttOver  ∷ Bool } -- ^ bool of mouse over button
-  | WinElemMap MapType
+  | WinElemMap MapType MapTiles 
   | WinElemNULL deriving (Show, Eq)
 
 -- possible button actions and defaults

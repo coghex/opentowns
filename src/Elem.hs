@@ -8,6 +8,7 @@ import Data ( Difficulty (..), Popup(..), PopupType(..) )
 import Elem.Data ( WinElem(..), ButtAction(..)
                  , Button(..), ButtFunc(..), TextButton(..)
                  , InputAct(..), LuaFunc(..), CapType(..) )
+import Elem.World ( genMapTiles )
 import Load.Data ( DrawState(..), Tile(..), DSStatus(..), LoadCmd(..) )
 import Luau.Data ( Page(..), Window(..) )
 import Luau.Window ( currentWin )
@@ -41,7 +42,8 @@ findCurrentPage p0 (p:ps) curr
   | pageTitle p ≡ curr = p
   | otherwise          = findCurrentPage p0 ps curr
 
--- | sets up element input mapping
+-- | sets up element input mapping for buttons, calls world generation
+--   for map elem
 initElem ∷ (MonadLog μ, MonadFail μ)
   ⇒ String → String → WinElem → Int → LogT μ WinElem
 initElem win page
@@ -108,6 +110,8 @@ initElem win page
                     , bPage = page }
   sendInpAct $ InpActSetLink butt
   return $ WinElemButt pos col box adv (ButtActionKey n k1 k2) ind args hov
+initElem win page (WinElemMap maptype maptiles) _ = return newMap
+  where newMap = WinElemMap maptype $ genMapTiles maptype
 initElem _   _   we       _ = return we
 
 -- | handles individual button presses

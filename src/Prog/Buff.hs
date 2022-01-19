@@ -163,8 +163,8 @@ genElemMapDyns ∷ [WinElem] → [DynData]
 genElemMapDyns []       = []
 genElemMapDyns (we:wes) = pe0 ⧺ genElemMapDyns wes
   where pe0 = case we of
-                WinElemMap mtype → genWorldDyns we
-                _                → []
+                WinElemMap mtype tiles → genWorldDyns we
+                _                      → []
 
 -- | generates dynamic data for the text of a popup.  in a seperate
 --   buffer since the atlas format is different

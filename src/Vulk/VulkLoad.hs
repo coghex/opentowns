@@ -42,6 +42,8 @@ loadVulkanTextures (GQData pdev dev cmdPool cmdQueue) fps = do
       loadPath     = "data/graphics/loading.png"
       fontPath     = "dat/font/asdf.ttf"
       texBoxPath   = "dat/tex/box"
+      terrainPath  = "data/graphics/terrainslopes.png"
+      terrain2Path = "data/graphics/terrainslopes2.png"
   -- tex zero is just 32x32 alpha
   (textureView0, mipLevels0)
     ← createTextureImageView pdev dev cmdPool cmdQueue tex0Path
@@ -76,17 +78,26 @@ loadVulkanTextures (GQData pdev dev cmdPool cmdQueue) fps = do
   env ← ask
   liftIO $ atomically $ modifyTVar' (envFontM env) $ \_ → Just fontMetrics
   fontSamplers ← createTextureSamplers dev fmipLvls
+  -- extra graphics from towns
+  (textureViewT, mipLevelsT)
+    ← createTextureImageView pdev dev cmdPool cmdQueue terrainPath
+  textureSamplerT ← createTextureSampler dev mipLevelsT
+  (textureViewT2, mipLevelsT2)
+    ← createTextureImageView pdev dev cmdPool cmdQueue terrain2Path
+  textureSamplerT2 ← createTextureSampler dev mipLevelsT2
   -- mod texs are textures included by the lua files
   modTexViews ← createTextureImageViews pdev dev cmdPool cmdQueue fps
   texSamplersMod ← createTextureSamplers dev $ snd . unzip $ modTexViews
   let defaultTexs = [textureView0, textureView1] ⧺ ftexs ⧺ btexs
                   ⧺ [textureViewM,textureViewL,textureViewU
-                    ,textureViewU2,textureViewLd]
+                    ,textureViewU2,textureViewLd
+                    ,textureViewT,textureViewT2]
       texViews = defaultTexs ⧺ fst (unzip modTexViews)
       texSamps = [textureSampler0, textureSampler1]
                ⧺ fontSamplers ⧺ bsamps ⧺ [textureSamplerM
                  ,textureSamplerL,textureSamplerU,textureSamplerU2
-                 ,textureSamplerLd] ⧺ texSamplersMod
+                 ,textureSamplerLd,textureSamplerT
+                 ,textureSamplerT2] ⧺ texSamplersMod
   modify $ \s → s { stNDefTex = length defaultTexs }
   descriptorTextureInfo ← textureImageInfos texViews texSamps
   depthFormat ← findDepthFormat pdev
