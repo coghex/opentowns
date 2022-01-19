@@ -15,6 +15,9 @@ cradle:
     - path: "src/Elem/Data.hs"
       component: "opentowns:exe:opentowns"
 
+    - path: "src/Elem/World.hs"
+      component: "opentowns:exe:opentowns"
+
     - path: "src/Load.hs"
       component: "opentowns:exe:opentowns"
 

@@ -6,6 +6,7 @@ import Prelude()
 import UPrelude
 import Data ( Color(..), Difficulty(..), KeyFunc(..), Key(..), Popup(..), PopupType(..) )
 import Elem.Data
+import Elem.World ( genWorldDyns )
 import Load.Data
     ( DrawState(..),
       DynData(DynData, ddTex),
@@ -162,7 +163,7 @@ genElemMapDyns ∷ [WinElem] → [DynData]
 genElemMapDyns []       = []
 genElemMapDyns (we:wes) = pe0 ⧺ genElemMapDyns wes
   where pe0 = case we of
-                WinElemMap mtype → [DynData (0,0) (10,4) 107 (4,2) (Color 1 1 1 1)]
+                WinElemMap mtype → genWorldDyns we
                 _                → []
 
 -- | generates dynamic data for the text of a popup.  in a seperate
