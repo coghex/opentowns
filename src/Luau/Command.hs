@@ -4,7 +4,7 @@ module Luau.Command where
 import Prelude()
 import UPrelude
 import qualified Foreign.Lua as Lua
-import Data ( Color(..), Difficulty(..), Key(..), KeyFunc(..) )
+import Data ( Color(..), Difficulty(..), Key(..), KeyFunc(..), MapType(..) )
 import Data.List.Split (splitOn)
 import Data.Maybe ( fromMaybe )
 import Numeric ( readHex )
@@ -214,8 +214,22 @@ hsNewElem env name pname el = case head $ splitOn ":" el of
         text'' = text' ⧺ " (Key: " ⧺ def ⧺ ")"
     Lua.liftIO $ atomically $ writeQueue loadQ
       $ LoadCmdNewElem name pname e
+  "worldMap" → do
+    Lua.liftIO $ atomically $ writeQueue (envLoadQ env)
+      $ LoadCmdNewElem name pname e
+        where e = WinElemMap $ parseMapType $ last $ splitOn ":" el
   unk → Lua.liftIO $ atomically $ writeQueue (envEventQ env)
     $ EventLog LogWarn $ "unknown element: " ⧺ unk
+
+-- | sanitize map type
+parseMapType ∷ String → MapType
+parseMapType "normalmap"    = MapNormal
+parseMapType "desertmap"    = MapDesert
+parseMapType "junglemap"    = MapJungle
+parseMapType "mixedmap"     = MapMixed
+parseMapType "snowmap"      = MapSnow
+parseMapType "mountainsmap" = MapMountains
+parseMapType _              = MapNULL
 
 -- | sanitize default key function
 sanitizeKeyFunc ∷ String → KeyFunc

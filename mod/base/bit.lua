@@ -40,4 +40,9 @@ function keysButton (mx,my,text,color,args)
     return ("keys:"..(tostring(mx))..":"..(tostring(my))..":"..text..":"..color..":"..args)
 end
 
+-- game elements are bits just like menu items
+function worldMap (args)
+    return ("worldMap:"..args)
+end
+
 return bit

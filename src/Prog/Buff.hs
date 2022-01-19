@@ -52,8 +52,9 @@ genDynBuffs ttfdat ds = dynsRes
           Nothing → dyns0
           -- Just _ → dyns0
           -- TODO: generate dynamic buffers
-          Just w → dyns4
-            where dyns4 = genPUTextDyns ttfdat (dsPopup ds) dyns3
+          Just w → dyns5
+            where dyns5 = genMapDyns dyns4 w
+                  dyns4 = genPUTextDyns ttfdat (dsPopup ds) dyns3
                   dyns3 = genPopupDyns (dsPopup ds) dyns2
                   dyns2 = genButtDyns dyns1 w
                   dyns1 = genTextDyns ttfdat w dyns0
@@ -147,6 +148,22 @@ genEachPopupDyns (Popup (x,y) (w,h) PopupSetKey {}) = dd
         (w'',h'') = (w' - 1.0, 1.0)
         
 genEachPopupDyns _ = []
+
+-- | generates dynamic buffer for a map
+genMapDyns ∷ [Dyns] → Window → [Dyns]
+genMapDyns buff w = setTileBuff 5 dyns buff
+  where dyns = Dyns $ newD ⧺ take (256 - length newD) (repeat (DynData (0,0) (0,0) 0 (0,0) (Color 0 0 0 0)))
+        newD = genPageMapDyns (winPages w)
+genPageMapDyns ∷ [Page] → [DynData]
+genPageMapDyns []           = []
+genPageMapDyns (page:pages) = pe0 ⧺ genPageMapDyns pages
+  where pe0 = genElemMapDyns (pageElems page)
+genElemMapDyns ∷ [WinElem] → [DynData]
+genElemMapDyns []       = []
+genElemMapDyns (we:wes) = pe0 ⧺ genElemMapDyns wes
+  where pe0 = case we of
+                WinElemMap mtype → [DynData (0,0) (10,4) 107 (4,2) (Color 1 1 1 1)]
+                _                → []
 
 -- | generates dynamic data for the text of a popup.  in a seperate
 --   buffer since the atlas format is different

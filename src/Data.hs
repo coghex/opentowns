@@ -34,6 +34,14 @@ data Difficulty = DNormal
                 | DEasy
                 | DNULL deriving (Show, Eq)
 
+-- towns has a few base maps
+data MapType = MapNormal
+             | MapDesert
+             | MapJungle
+             | MapMixed
+             | MapSnow
+             | MapMountains
+             | MapNULL deriving (Show, Eq)
 -- TODO: move this to a better place
 -- | lua shell executes commands in global state
 data Shell = Shell { shPrompt ∷ String

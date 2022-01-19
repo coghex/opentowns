@@ -158,6 +158,11 @@ function initMod ()
     options6:initPage("options6")
     win1:addPage(options6)
 
+    local normalmap = page:new ()
+    normalmap:newBit(text      (1.0,1.0,"Normal Map","0xFFFFFF"))
+    normalmap:newBit(worldMap ("normalmap"))
+    normalmap:initPage("normalmap")
+    win2:addPage(normalmap)
 
     win1:goToPage("menu1")
     return 0

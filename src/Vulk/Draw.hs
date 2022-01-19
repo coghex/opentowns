@@ -22,7 +22,8 @@ loadTiles ds winSize ttfdat
   ⧺ winTiles
   where winTiles   = case currentWin (dsWins ds) (dsWinsState ds) of
           Just win → linkbuff ⧺ buttbuff ⧺ popupbuff ⧺ putextbuff
-                     ⧺ textbuff ⧺ loadWindow nDefTex win ttfdat
+                     ⧺ textbuff ⧺ mapbuff
+                     ⧺ loadWindow nDefTex win ttfdat
           Nothing  → []
         nDefTex    = 0 -- dsNDefTex ds
         (w,h)      = winSize
@@ -31,6 +32,7 @@ loadTiles ds winSize ttfdat
         textbuff   = makeBufferTiles 2 512  True (1,1)
         popupbuff  = makeBufferTiles 3 64   True (32,32)
         putextbuff = makeBufferTiles 4 256  True (1,1)
+        mapbuff    = makeBufferTiles 5 256  True (32,32)
 
 -- | this is an empty list n long for a texture b, what i use for buff
 makeTileBuff ∷ Int → Int → [Tile]
