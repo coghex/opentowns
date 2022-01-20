@@ -209,7 +209,7 @@ hsNewElem env name pname el = case head $ splitOn ":" el of
     let ttfdat = fromMaybe [] ttfdat'
         (w,h)  = calcTextBoxSize (text' ⧺ valString val) ttfdat
         e      = WinElemButt pos color (w,h) w
-                 (ButtActionKey 0 kf keys) (-1) text'' False
+                 (ButtActionKey 1 kf keys) (-1) text'' False
         keys   = sanitizeKeys def
         kf     = sanitizeKeyFunc text
         text'' = text' ⧺ " (Key: " ⧺ def ⧺ ")"
@@ -236,17 +236,35 @@ parseMapType _              = MapNULL
 
 -- | sanitize default key function
 sanitizeKeyFunc ∷ String → KeyFunc
-sanitizeKeyFunc "Scroll up"     = KFUp
-sanitizeKeyFunc "Scroll down"   = KFDown
-sanitizeKeyFunc "Scroll left"   = KFLeft
-sanitizeKeyFunc "Scroll right"  = KFRight
+sanitizeKeyFunc "Scroll up"     = KFScrollUp
+sanitizeKeyFunc "Scroll down"   = KFScrollDown
+sanitizeKeyFunc "Scroll left"   = KFScrollLeft
+sanitizeKeyFunc "Scroll right"  = KFScrollRight
 sanitizeKeyFunc "Level up"      = KFLvlUp
 sanitizeKeyFunc "Level down"    = KFLvlDown
 sanitizeKeyFunc unk         = KFUnknown unk
+-- | reverse operation
+unsanitizeKeyFunc ∷ KeyFunc → String
+unsanitizeKeyFunc KFScrollUp      = "Scroll up"
+unsanitizeKeyFunc KFScrollDown    = "Scroll down"
+unsanitizeKeyFunc KFScrollLeft    = "Scroll left"
+unsanitizeKeyFunc KFScrollRight   = "Scroll right"
+unsanitizeKeyFunc KFLvlUp         = "Level up"
+unsanitizeKeyFunc KFLvlDown       = "Level down"
+unsanitizeKeyFunc (KFUnknown unk) = unk
+unsanitizeKeyFunc KFNULL          = "NULL"
+
 -- | sanitizes default keys
 sanitizeKeys ∷ String → [Key]
 sanitizeKeys str = map sanitizeKey list
   where list = splitOn "," str
+-- | reverse operation
+unsanitizeKeys ∷ [Key] → String
+unsanitizeKeys ks = " (Key: " ⧺ unsanitizeKeysF ks
+unsanitizeKeysF ∷ [Key] → String
+unsanitizeKeysF []     = "()"
+unsanitizeKeysF [k]    = unsanitizeKey k ⧺ ")"
+unsanitizeKeysF (k:ks) = unsanitizeKey k ⧺ "," ⧺ unsanitizeKeysF ks
 
 -- | turns lua string reference into ADT with default value, if
 --   the user supplied default is nonsense, we use our own
@@ -370,6 +388,40 @@ sanitizeKey "Left"   = KeyLeft
 sanitizeKey "<"      = KeyComma
 sanitizeKey ">"      = KeyPeriod
 sanitizeKey unk = KeyUnknown unk
+unsanitizeKey ∷ Key → String
+unsanitizeKey KeyA      = "A"      
+unsanitizeKey KeyB      = "B"      
+unsanitizeKey KeyC      = "C"      
+unsanitizeKey KeyD      = "D"      
+unsanitizeKey KeyE      = "E"      
+unsanitizeKey KeyF      = "F"      
+unsanitizeKey KeyG      = "G"      
+unsanitizeKey KeyH      = "H"      
+unsanitizeKey KeyI      = "I"      
+unsanitizeKey KeyJ      = "J"      
+unsanitizeKey KeyK      = "K"      
+unsanitizeKey KeyL      = "L"      
+unsanitizeKey KeyM      = "M"      
+unsanitizeKey KeyN      = "N"      
+unsanitizeKey KeyO      = "O"      
+unsanitizeKey KeyP      = "P"      
+unsanitizeKey KeyQ      = "Q"      
+unsanitizeKey KeyR      = "R"      
+unsanitizeKey KeyS      = "S"      
+unsanitizeKey KeyT      = "T"      
+unsanitizeKey KeyU      = "U"      
+unsanitizeKey KeyV      = "V"      
+unsanitizeKey KeyW      = "W"      
+unsanitizeKey KeyX      = "X"      
+unsanitizeKey KeyY      = "Y"      
+unsanitizeKey KeyZ      = "Z"      
+unsanitizeKey KeyUp     = "Up"
+unsanitizeKey KeyDown   = "Down"
+unsanitizeKey KeyRight  = "Right"
+unsanitizeKey KeyLeft   = "Left"
+unsanitizeKey KeyComma  = "<"
+unsanitizeKey KeyPeriod = ">"
+unsanitizeKey (KeyUnknown unk) = unk
 
 
 -- | turns lua string reference into lua function ADT

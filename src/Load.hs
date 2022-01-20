@@ -19,6 +19,7 @@ import Load.Data
       DrawState(..),
       LoadCmd(..),
       LoadResult(..) )
+import Luau.Data ( Window(..), Page(..) )
 import Luau.Window ( addPageToWin, addElemToPageInWin
                    , switchWin, resizeWins, currentWin )
 import Prog.Buff ( genDynBuffs, loadDyns, initBuff )
@@ -200,7 +201,11 @@ processCommand glfwwin ds cmd = case cmd of
     return $ ResDrawState ds'
     where ds' = ds { dsWins = resizeWins size (dsWins ds) }
   LoadCmdTest → do
-    log' LogInfo $ "(curr,last) win: " ⧺ show (dsWinsState ds)
+    --log' LogInfo $ "(curr,last) win: " ⧺ show (dsWinsState ds)
+    --log' LogInfo $ "popups: " ⧺ show (dsPopup ds)
+    case currentWin (dsWins ds) (dsWinsState ds) of
+      Nothing → log' LogInfo "no current window"
+      Just w0 → log' LogInfo $ "elems: " ⧺ show (winPages w0)
     return ResSuccess
   LoadCmdTest2 → do
     sendInpAct InpActTest

@@ -6,6 +6,7 @@ import Prelude()
 import UPrelude
 import qualified Data.Map as Map
 import Data ( Key(..), KeyFunc(..), KeyMap(..) )
+import Data.Maybe ( fromMaybe )
 import Elem.Data ( InputAct(..) )
 import Prog
     ( MonadIO(liftIO), Prog, MonadReader(ask) )
@@ -41,6 +42,9 @@ lookupInKeyMap _  _   []     = False
 lookupInKeyMap k0 kf0 (k:ks)
   | k ≡ k0    = True
   | otherwise = lookupInKeyMap k0 kf0 ks
+
+indexKeyMap ∷ KeyMap → KeyFunc → [Key]
+indexKeyMap (KeyMap km) kf = fromMaybe [] (Map.lookup kf km)
 
 -- | changes a key mapping in the key map
 changeKeyMap ∷ KeyFunc → Key → Int → KeyMap → KeyMap

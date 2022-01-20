@@ -5,24 +5,25 @@ module Prog.Input where
 -- a thread to handle input
 import Prelude()
 import UPrelude
-import Data ( KeyFunc(..), KeyMap(..) )
+import Data ( KeyFunc(..), KeyMap(..), PopupType(..) )
 import Elem.Data
     ( CapType(CapNULL, CapKeyChange),
       Button(..), ButtFunc(..),
       InputAct(..), InputElem(..) )
-import Load.Data ( LoadCmd(..) )
+import Load.Data ( LoadCmd(..), DrawStateCmd(..) )
 import Prog.Data
     ( Env(..),
       ISStatus(ISSNULL, ISSLogDebug),
       InpResult(..),
       InputState(..) )
-import Prog.KeyEvent ( changeKeyMap, findKey, lookupKey )
+import Prog.KeyEvent ( changeKeyMap, findKey, lookupKey, indexKeyMap )
 import Prog.Init ( initKeyMap, initInpState )
 import Prog.Mouse ( processLoadMouse, findAllButtsUnder, findButts )
 import Prog.Util ()
 import Sign.Data
     ( Event(..), LogLevel(..),
-      SysAction(..), TState(..) )
+      SysAction(..), TState(..)
+    , SettingsChange(..) )
 import Sign.Var ( atomically )
 import Sign.Queue
     ( readChan, tryReadChan, tryReadQueue, writeQueue )
@@ -88,18 +89,28 @@ processLoadInputs env win inpSt keymap = do
               where is'' = is' { inpStatus = ISSNULL }
         -- for the ingame changing of the keymap
         ResInpChangeKey keyFunc key 1 → do
-          atomically $ writeQueue (envEventQ env)
-            $ EventLog (LogDebug 1) $ "new keys: " ⧺ show keymap'
+--          atomically $ writeQueue (envEventQ env)
+--            $ EventLog (LogDebug 1) $ "new keys: " ⧺ show keymap'
+          atomically $ writeQueue (envLoadQ env)
+            $ LoadCmdDS $ DSCUpdatePopup $ PopupSetKey 2 keyFunc [secondkey]
           processLoadInputs env win inpSt' keymap'
             where keymap' = changeKeyMap keyFunc key 1 keymap
                   inpSt'  = inpSt { inpCap = CapKeyChange 2 keyFunc }
+                  secondkey = last $ indexKeyMap keymap' keyFunc
         ResInpChangeKey keyFunc key 2 → do
+--          atomically $ writeQueue (envEventQ env)
+--            $ EventLog (LogDebug 1) $ "new keys: " ⧺ show keymap'
           atomically $ writeQueue (envEventQ env)
-            $ EventLog (LogDebug 1) $ "new keys: " ⧺ show keymap'
+            $ EventSettings $ SettingsChangeKeyMap keymap'
+          atomically $ writeQueue (envLoadQ env)
+            $ LoadCmdDS $ DSCClearPopup $ PopupSetKey 1 keyFunc []
+          atomically $ writeQueue (envLoadQ env)
+            $ LoadCmdDS $ DSCUpdateKeyButton keyFunc $ indexKeyMap keymap' keyFunc
           processLoadInputs env win inpSt' keymap'
             where keymap' = changeKeyMap keyFunc key 2 keymap
                   inpSt'  = inpSt { inpCap = CapNULL }
         ResInpChangeKey keyFunc key n → do
+        -- code should never reach here
           processLoadInputs env win inpSt keymap'
             where keymap' = changeKeyMap keyFunc key n keymap
         -- if we run across an error, we can return it here, print
@@ -134,7 +145,7 @@ processLoadInput env win inpSt keymap inp = case inp of
   --        $ LoadCmdChangeKey n keyFunc $ if (n ≡ 1)
   --          then [(findKey k),last k0]
   --          else [head k0,(findKey k)]
-        print $ "captured: " ⧺ show k
+        print $ "captured: " ⧺ show k ⧺ " for key func: " ⧺ show keyFunc
         -- test keys still work for now
         if lookupKey keymap (findKey k) ≡ KFTest
           then do
@@ -208,6 +219,7 @@ processLoadInput env win inpSt keymap inp = case inp of
   -- InpActButton butt → do
     --print $ "button press: " ⧺ show butt
   InpActButton _         → return ResInpSuccess
+  InpActClearPopup → return ResInpSuccess
   InpActSetPage w page → return $ ResInpState $ inpSt { isWin  = w
                                                       , isPage = page }
   InpActTest → do

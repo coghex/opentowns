@@ -10,6 +10,7 @@ import Elem.Data ( WinElem(..), ButtAction(..)
                  , InputAct(..), LuaFunc(..), CapType(..) )
 import Elem.World ( genMapTiles )
 import Load.Data ( DrawState(..), Tile(..), DSStatus(..), LoadCmd(..) )
+import Load.Popup ( addToPopups )
 import Luau.Data ( Page(..), Window(..) )
 import Luau.Window ( currentWin )
 import Sign.Data ( LogLevel(..), SysAction(..) )
@@ -259,35 +260,31 @@ execButtonText ∷ (MonadLog μ, MonadFail μ) ⇒ DrawState → Int → String 
 execButtonText ds ind win page = do
     -- first we do any pure changes to the state
     let ds' = ds { dsWins   = findText (dsWins ds) ind win page
-                 , dsPopup  = addNewPopup (dsPopup ds) (dsWins ds) ind win page
+                 , dsPopup  = addNewPopup (dsPopup ds) (dsWins ds)
+                                          ind win page
                  , dsStatus = DSSReload }
-    case buttonChanges (dsWins ds') of
+    case buttonChanges ind (dsWins ds') of
       Just ia → sendInpAct ia ≫ return ds'
       Nothing → return ds'
 
 -- | checks for any non pure side effects that we need to change
-buttonChanges ∷ [Window] → Maybe InputAct
-buttonChanges []     = Nothing
-buttonChanges (w:ws) = case pageButtonChanges (winPages w) of
-  Nothing → buttonChanges ws
+buttonChanges ∷ Int → [Window] → Maybe InputAct
+buttonChanges _   []     = Nothing
+buttonChanges ind (w:ws) = case pageButtonChanges ind (winPages w) of
+  Nothing → buttonChanges ind ws
   Just ia → Just ia
-pageButtonChanges ∷ [Page] → Maybe InputAct
-pageButtonChanges []     = Nothing
-pageButtonChanges (p:ps) = case elemButtonChanges (pageElems p) of
-  Nothing → pageButtonChanges ps
+pageButtonChanges ∷ Int → [Page] → Maybe InputAct
+pageButtonChanges _   []     = Nothing
+pageButtonChanges ind (p:ps) = case elemButtonChanges ind (pageElems p) of
+  Nothing → pageButtonChanges ind ps
   Just ia → Just ia
-elemButtonChanges ∷ [WinElem] → Maybe InputAct
-elemButtonChanges []       = Nothing
-elemButtonChanges (we:wes) = case we of
-  -- TODO: sort out why there are two of these
-  WinElemButt _ _ _ _ (ButtActionText tb) _ _ _ → case buttonChange tb of
-    Nothing → elemButtonChanges wes
-    Just ia → Just ia
-  WinElemButt _ _ _ _ (ButtActionKey 0 kf _) _ _ _ → Just $ InpActSetCap $ CapKeyChange 1 kf
-  _                             → elemButtonChanges wes
-buttonChange ∷ TextButton → Maybe InputAct
-buttonChange (TextKeyMap (kf,_)) = Just $ InpActSetCap $ CapKeyChange 1 kf
-buttonChange _ = Nothing
+elemButtonChanges ∷ Int → [WinElem] → Maybe InputAct
+elemButtonChanges _   []       = Nothing
+elemButtonChanges ind (we:wes) = case we of
+  WinElemButt _ _ _ _ (ButtActionKey _ kf _) i _ _ → if i ≡ ind then
+    Just $ InpActSetCap $ CapKeyChange 1 kf
+    else elemButtonChanges ind wes
+  _                             → elemButtonChanges ind wes
 
 findText ∷ [Window] → Int → String → String → [Window]
 findText []      _   _   _    = []
@@ -329,16 +326,17 @@ winPopup popup (p:ps) ind page
 elemPopup ∷ [Popup] → [WinElem] → Int → [Popup]
 elemPopup popup []       _   = popup
 elemPopup popup (we:wes) ind = case we of
-  WinElemButt _ _ _ _ (ButtActionKey _ k1 k2) i _ _ → if i ≡ ind then pu
+  WinElemButt _ _ _ _ (ButtActionKey a b c) i _ _ → if i ≡ ind then pu
     else elemPopup popup wes ind
-    -- TODO: this only supports one or two popups at a time,
-    --       create a popup tracking and sorting system
-    where pu = if length popup > 0 then case head popup of
-                 Popup pos size (PopupSetKey 1 _  _ ) → [Popup pos size $ PopupSetKey 2 k1 k2]
-                 Popup _ _ (PopupSetKey 2 _  _ ) → []
-                 _ → [Popup (0,0) (20,8) $ PopupSetKey 1 k1 k2]
-               else [Popup (0,0) (20,8) $ PopupSetKey 1 k1 k2]
-  _                             → elemPopup popup wes ind
+    where pu = addToPopups popup $ PopupSetKey 1 b [head c]
+  _ → elemPopup popup wes ind
+
+--    where pu = if length popup > 0 then case head popup of
+--                 Popup _ _ (PopupSetKey 1 _  _ ) → [Popup (0,0) (10,8) $ PopupSetKey 2 k1 k2]
+--                 Popup _ _ (PopupSetKey 2 _  _ ) → []
+--                 _ → [Popup (0,0) (20,8) $ PopupSetKey 1 k1 k2]
+--               else [Popup (0,0) (20,8) $ PopupSetKey 1 k1 k2]
+--  _                             → elemPopup popup wes ind
 
 -- | only need to update the values of text buttons atm
 evalTextButtAction ∷ ButtAction → ButtAction

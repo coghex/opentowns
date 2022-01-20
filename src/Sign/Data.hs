@@ -3,7 +3,7 @@ module Sign.Data where
 -- data for the main event queue is defined
 import Prelude()
 import UPrelude
-import Data ( PrintArg(..) )
+import Data ( PrintArg(..), KeyMap(..) )
 import Load.Data ( Dyns(..) )
 import Vulk.Data ( Verts(..) )
 import qualified Vulk.GLFW as GLFW
@@ -19,8 +19,8 @@ data Event = EventError !GLFW.Error !String -- GLFW specific
            | EventInput !InputEvent
            -- | verticies, indicies, and dynamic data from the load thread
            | EventLoad !LoadData
-           -- dynamic changes to state act as settings
-     --      | EventSettings !SettCmd
+           -- | changes to the settings
+           | EventSettings !SettingsChange
            -- | lowest level actions go here
            | EventSys !SysAction
 
@@ -44,12 +44,13 @@ data InputEvent
 data LoadData = LoadVerts !Verts
               | LoadDyns !Dyns
 
--- | settings are changes to the state, some require
---   the parent thread, so those go here...
-data SettCmd = SettCmdNULL deriving (Show, Eq)
-
 -- | commands for functionality at the lowest level
 data SysAction = SysRecreate | SysReload
                | SysFullScreen
                | SysWindowed Int Int Int Int
                | SysExit | SysNULL deriving (Show, Eq)
+
+-- | possible changes to make to the settings
+data SettingsChange = SettingsChangeKeyMap KeyMap
+                    | SettingsChangeNULL deriving (Show, Eq)
+

@@ -37,6 +37,7 @@ data ButtAction = ButtActionKey Int KeyFunc [Key]
 
 -- | commands accessable to lua, can be mapped onto buttons
 data LuaFunc = LuaFuncToggleFullScreen
+             | LuaFuncNewGame MapType
              | LuaFuncUnknown String
              | LuaFuncNULL deriving (Show, Eq)
 
@@ -85,6 +86,7 @@ data InputAct = InpActKey GLFW.Key GLFW.KeyState GLFW.ModifierKeys
               | InpActSetLink Button
               | InpActButton Button
               | InpActSetPage String String
+              | InpActClearPopup
               | InpActTest
               | InpActNULL deriving (Show, Eq)
 

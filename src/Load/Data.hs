@@ -3,7 +3,8 @@ module Load.Data where
 -- data for the loading thread is found
 import Prelude()
 import UPrelude
-import Data ( Color (..), PrintArg(..), FPS(..), Shell(..), Popup(..) )
+import Data ( Color (..), PrintArg(..), FPS(..)
+            , Shell(..), Popup(..), PopupType(..), KeyFunc(..), Key(..) )
 import Elem.Data ( WinElem(..), Button(..), InputAct(..) )
 import Luau.Data ( Window(..), Page(..) )
 
@@ -73,6 +74,9 @@ data DSStatus = DSSLogDebug Int String
 --   the draw state, if these were enumerated as LoadCmds, the Load.hs
 --   file would be huge, so we process them seperately in Load.Cmd
 data DrawStateCmd = DSCToggleButts [Button] Bool
+                  | DSCUpdatePopup PopupType
+                  | DSCClearPopup PopupType
+                  | DSCUpdateKeyButton KeyFunc [Key]
                   | DSCNULL deriving (Show, Eq)
 
 -- | gtiles represent abstract tiles
@@ -108,3 +112,5 @@ data DynData = DynData { ddPos     ∷ (Float,Float)
 --   level but right now its just for generic buffers
 data DynMap = DMBuff Int Int
             | DMNULL deriving (Show, Eq)
+
+

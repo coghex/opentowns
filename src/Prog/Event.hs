@@ -21,7 +21,7 @@ import Sign.Data
     ( Event(..),
       InputEvent(InputMouseScroll, InputKey, InputMouseButton),
       LoadData(LoadVerts, LoadDyns),
-      LogLevel(..),
+      LogLevel(..), SettingsChange(..),
       SysAction(..) )
 import Sign.Except ( ExType(ExVulk) )
 import Sign.Queue ( tryReadQueue )
@@ -97,4 +97,7 @@ processEvent event = case event of
                       $ \_ → Just verts
           modify $ \s → s { stReload = RSRecreate }
   --(EventGLFW cmd) → processGLFWCommand cmd
-  --(EventSettings cmd) → processSettCmd cmd
+  (EventSettings cmd) → processSettingsChange cmd
+
+processSettingsChange ∷ SettingsChange → Prog ε σ ()
+processSettingsChange change = logInfo $ show change

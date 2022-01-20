@@ -4,9 +4,12 @@ module Load.Cmd where
 -- up the main loading thread.
 import Prelude()
 import UPrelude
-import Elem.Data ( WinElem(..), Button(..), ButtFunc(..) )
+import Data ( Key(..), KeyFunc(..) )
+import Elem.Data ( WinElem(..), Button(..), ButtFunc(..), ButtAction(..) )
 import Load.Data ( DrawState(..), DrawStateCmd(..)
-                 , LoadCmd(..) )
+                 , LoadCmd(..), DSStatus(..) )
+import Load.Popup ( findAndClearPopup, findAndUpdatePopup )
+import Luau.Command ( unsanitizeKeyFunc, unsanitizeKeys )
 import Luau.Data ( Window(..), Page(..) )
 import Sign.Log ( MonadLog(..), LogT(..), sendLoadCmd )
 
@@ -19,7 +22,39 @@ processDrawStateCommand ds (DSCToggleButts butts b) = do
     return $ ds { dsWins = allButtsOff (dsWins ds) }
   else
     return $ ds { dsWins = toggleButts b butts (dsWins ds) }
+processDrawStateCommand ds (DSCUpdatePopup pu) = return ds'
+  where ds' = ds { dsPopup  = findAndUpdatePopup (dsPopup ds) pu
+                 , dsStatus = DSSReload }
+processDrawStateCommand ds (DSCClearPopup pu)  = return ds'
+  where ds' = ds { dsPopup  = findAndClearPopup (dsPopup ds) pu
+                 , dsStatus = DSSReload }
+processDrawStateCommand ds (DSCUpdateKeyButton kf ks) = return ds'
+  where ds' = ds { dsWins = updateKeyButton
+                              (dsWins ds) (dsWinsState ds) kf ks }
 processDrawStateCommand ds _                  = return ds
+
+-- | updates the keys listed for a change key button
+updateKeyButton ∷ [Window] → ((String,String),(String,String)) → KeyFunc → [Key] → [Window]
+updateKeyButton []     _               _  _  = []
+updateKeyButton (w:ws) ((current,a),b) kf ks
+  | winTitle w ≡ current = [w'] ⧺ updateKeyButton ws ((current,a),b) kf ks
+  | otherwise            = [w]  ⧺ updateKeyButton ws ((current,a),b) kf ks
+    where w' = w { winPages = updateKeyButtonInWin (winPages w) kf ks }
+updateKeyButtonInWin ∷ [Page] → KeyFunc → [Key] → [Page]
+updateKeyButtonInWin []     _  _  = []
+updateKeyButtonInWin (p:ps) kf ks = [p'] ⧺ updateKeyButtonInWin ps kf ks
+  where p' = p { pageElems = updateKeyButtonInPage (pageElems p) kf ks }
+updateKeyButtonInPage ∷ [WinElem] → KeyFunc → [Key] → [WinElem]
+updateKeyButtonInPage []       _  _  = []
+updateKeyButtonInPage (we:wes) kf ks = [we'] ⧺ updateKeyButtonInPage wes kf ks
+  where we' = updateKeyButtonInElem we kf ks
+updateKeyButtonInElem ∷ WinElem → KeyFunc → [Key] → WinElem
+updateKeyButtonInElem
+  (WinElemButt a b c d (ButtActionKey n0 kf0 ks0) e f g) kf ks
+    = if kf0 ≡ kf then WinElemButt a b c d (ButtActionKey 0 kf ks) e s g
+      else WinElemButt a b c d (ButtActionKey n0 kf0 ks0) e f g
+        where s = unsanitizeKeyFunc kf ⧺ unsanitizeKeys ks
+updateKeyButtonInElem we _  _  = we
 
 -- | toggles the desired buttons in the list of windows
 toggleButts ∷ Bool → [Button] → [Window] → [Window]
