@@ -10,7 +10,7 @@ import Elem.Data ( WinElem(..), ButtAction(..)
                  , InputAct(..), LuaFunc(..), CapType(..) )
 import Elem.World ( genMapTiles )
 import Load.Data ( DrawState(..), Tile(..), DSStatus(..), LoadCmd(..) )
-import Load.Popup ( addToPopups )
+import Load.Popup ( addToPopups, saveGamePopup )
 import Luau.Data ( Page(..), Window(..) )
 import Luau.Window ( currentWin )
 import Sign.Data ( LogLevel(..), SysAction(..) )
@@ -219,6 +219,12 @@ execButtonFunc ds ind win page = do
     LuaFuncToggleFullScreen → do
       oldSize ← toggleFullScreen (dsOldSize ds)
       return ds { dsOldSize = oldSize }
+    LuaFuncNewGame _ → do
+      case buttonChanges ind (dsWins ds') of
+        Just ia → sendInpAct ia ≫ return ds'
+        Nothing → return ds'
+      where ds' = ds { dsPopup  = dsPopup ds ⧺ [saveGamePopup]
+                     , dsStatus = DSSReload }
     LuaFuncUnknown str → do
       log' LogWarn $ "unknown lua command: " ⧺ str
       return ds
@@ -284,6 +290,10 @@ elemButtonChanges ind (we:wes) = case we of
   WinElemButt _ _ _ _ (ButtActionKey _ kf _) i _ _ → if i ≡ ind then
     Just $ InpActSetCap $ CapKeyChange 1 kf
     else elemButtonChanges ind wes
+  WinElemButt _ _ _ _ (ButtActionFunc (LuaFuncNewGame _)) i _ _
+    → if i ≡ ind then
+      Just $ InpActSetCap $ CapTextInput []
+      else elemButtonChanges ind wes
   _                             → elemButtonChanges ind wes
 
 findText ∷ [Window] → Int → String → String → [Window]

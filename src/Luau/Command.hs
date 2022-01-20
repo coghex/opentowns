@@ -4,8 +4,8 @@ module Luau.Command where
 import Prelude()
 import UPrelude
 import qualified Foreign.Lua as Lua
-import Data ( Color(..), Difficulty(..), Key(..)
-            , KeyFunc(..), MapType(..), MapTiles(..) )
+import Data ( Color(..), Difficulty(..), Key(..), BuriedStatus(..)
+            , KeyFunc(..), MapType(..), MapTiles(..), MapSettings(..) )
 import Data.List.Split (splitOn)
 import Data.Maybe ( fromMaybe )
 import Numeric ( readHex )
@@ -234,6 +234,7 @@ parseMapType "snowmap"      = MapSnow
 parseMapType "mountainsmap" = MapMountains
 parseMapType _              = MapNULL
 
+-- TODO: move these functions to key file
 -- | sanitize default key function
 sanitizeKeyFunc ∷ String → KeyFunc
 sanitizeKeyFunc "Scroll up"     = KFScrollUp
@@ -427,6 +428,18 @@ unsanitizeKey (KeyUnknown unk) = unk
 -- | turns lua string reference into lua function ADT
 findLuaFunc ∷ String → LuaFunc
 findLuaFunc "toggleFullScreen" = LuaFuncToggleFullScreen
+findLuaFunc "genMapNormalNoBuried" = LuaFuncNewGame mapSettings
+  where mapSettings = MapSettings { msBuried = NoBuried
+                                  , msType   = MapNormal
+                                  , msSize   = (10,10) }
+findLuaFunc "genMapNormalLoadBuried" = LuaFuncNewGame mapSettings
+  where mapSettings = MapSettings { msBuried = LoadBuried "NULL"
+                                  , msType   = MapNormal
+                                  , msSize   = (10,10) }
+findLuaFunc "genMapNormalLocalBuried" = LuaFuncNewGame mapSettings
+  where mapSettings = MapSettings { msBuried = LocalBuried
+                                  , msType   = MapNormal
+                                  , msSize   = (10,10) }
 findLuaFunc str                = LuaFuncUnknown str
 
 -- | some text buttons are identical, so we added hyphens,

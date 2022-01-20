@@ -6,8 +6,9 @@ module Prog.Input where
 import Prelude()
 import UPrelude
 import Data ( KeyFunc(..), KeyMap(..), PopupType(..) )
+import Data.Maybe ( fromMaybe )
 import Elem.Data
-    ( CapType(CapNULL, CapKeyChange),
+    ( CapType(..),
       Button(..), ButtFunc(..),
       InputAct(..), InputElem(..) )
 import Load.Data ( LoadCmd(..), DrawStateCmd(..) )
@@ -139,13 +140,7 @@ processLoadInput env win inpSt keymap inp = case inp of
   InpActKey k ks _  → case inpCap inpSt of
     -- input captured by key change pop up window
     CapKeyChange n keyFunc → if ks ≡ GLFW.KeyState'Pressed then do
-      --  let k0 = km Map.! keyFunc
-      --      (KeyMap km) = keymap
-  --      atomically $ writeQueue (envLoadQ env)
-  --        $ LoadCmdChangeKey n keyFunc $ if (n ≡ 1)
-  --          then [(findKey k),last k0]
-  --          else [head k0,(findKey k)]
-        print $ "captured: " ⧺ show k ⧺ " for key func: " ⧺ show keyFunc
+        --print $ "captured: " ⧺ show k ⧺ " for key func: " ⧺ show keyFunc
         -- test keys still work for now
         if lookupKey keymap (findKey k) ≡ KFTest
           then do
@@ -156,6 +151,20 @@ processLoadInput env win inpSt keymap inp = case inp of
             atomically $ writeQueue (envLoadQ env) LoadCmdTest2
             return ResInpSuccess
         else return $ ResInpChangeKey keyFunc (findKey k) n
+      else return ResInpSuccess
+    -- for when text is being input
+    CapTextInput str → if ks ≡ GLFW.KeyState'Pressed then do
+        --print $ "captured: " ⧺ show k ⧺ " for text input"
+        if lookupKey keymap (findKey k) ≡ KFReturn
+          then do
+            atomically $ writeQueue (envLoadQ env) $ LoadCmdDS $ DSCClearPopup $ PopupSavename str
+            return $ ResInpState inpSt { inpCap = CapNULL }
+          else do
+            sc ← GLFW.getKeyScancode k
+            k' ← GLFW.getKeyName k sc
+            let newstr = str ⧺ fromMaybe [] k'
+            atomically $ writeQueue (envLoadQ env) $ LoadCmdDS $ DSCUpdatePopup $ PopupSavename newstr
+            return $ ResInpState inpSt { inpCap = CapTextInput newstr }
       else return ResInpSuccess
     -- if no input capture, case on each key function
     CapNULL → if ks ≡ GLFW.KeyState'Pressed then case lookupKey keymap (findKey k) of

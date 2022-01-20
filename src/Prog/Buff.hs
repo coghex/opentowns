@@ -77,13 +77,18 @@ genPopupDynsF = foldr ((⧺) . genEachPopupDyns) []
 --genPopupDynsF []       = []
 --genPopupDynsF (pu:pus) = genEachPopupDyns pu ⧺ genPopupDynsF pus
 genEachPopupDyns ∷ Popup → [DynData]
+genEachPopupDyns (Popup (x,y) (w,h) (PopupSavename _)) = dd
+  where dd = genericPopup x y w h
 genEachPopupDyns (Popup (x,y) (w,h) PopupSetKey {}) = dd
-  where dd          = topleft ⧺ toprightbk ⧺ topright ⧺ bottomleft
+  where dd = genericPopup x y w h
+genEachPopupDyns _ = []
+genericPopup ∷ Double → Double → Double → Double → [DynData]
+genericPopup x y w h = topleft ⧺ toprightbk ⧺ topright ⧺ bottomleft
                     ⧺ bottomright ⧺ top ⧺ bottom ⧺ right ⧺ left
                     ⧺ fill ⧺ textBoxTL ⧺ textBoxTR ⧺ textBoxBL
                     ⧺ textBoxBR ⧺ textBoxTop ⧺ textBoxBot ⧺ textBoxR
-                    ⧺ textBoxL ⧺ textBoxFill
-        topleft
+                    ⧺ textBoxL ⧺ textBoxFill ⧺ checkbox
+  where topleft
           = [DynData (x',y'+(2*h')) (0.5,0.5) 107 (0,29)
               (Color 255 255 255 255)]
         -- lol, you can see why they overwrote this tile, it does not tile right
@@ -141,14 +146,23 @@ genEachPopupDyns (Popup (x,y) (w,h) PopupSetKey {}) = dd
         textBoxFill  = [DynData
           (x'' + w'',    y'' + h'')     (w'' - 0.5, h'' - 0.5) 108 (14,2)
           $ Color 255 255 255 255]
+        checkbox = [DynData (x0 - 0.25,y0 - 2) (0.25,0.25) 108 (10,11)
+                            (Color 255 255 255 255)
+                   ,DynData (x0 + 0.25,y0 - 2) (0.25,0.25) 108 (11,11)
+                            (Color 255 255 255 255)
+                   ,DynData (x0 - 0.25,y0 - 2.5) (0.25,0.25) 108 (10,12)
+                            (Color 255 255 255 255)
+                   ,DynData (x0 + 0.25,y0 - 2.5) (0.25,0.25) 108 (11,12)
+                            (Color 255 255 255 255)]
+        -- 0 values are a basic cast
+        (x0,y0) = (realToFrac x, realToFrac y)
         -- prime values locate the outer box
-        (x',y') = (2*realToFrac x - w',-2*realToFrac y - h')
+        (x',y') = (2*x0 - w',-2*y0 - h')
         (w',h') = (0.5*realToFrac w, 0.5*realToFrac h)
         -- double prime is the location of the inner box
         (x'',y'') = (x' + 1.0, y' + 3.0)
         (w'',h'') = (w' - 1.0, 1.0)
         
-genEachPopupDyns _ = []
 
 -- | generates dynamic buffer for a map
 genMapDyns ∷ [Dyns] → Window → [Dyns]
@@ -177,9 +191,13 @@ genPUTextDynsF _      []       = []
 genPUTextDynsF ttfdat (pu:pus) = genEachPUTextDyns ttfdat pu ⧺ genPUTextDynsF ttfdat pus
 
 genEachPUTextDyns ∷ [TTFData] → Popup → [DynData]
+genEachPUTextDyns ttfdat (Popup (x,y) _ (PopupSavename str))
+  = dd ⧺ undersc
+    where dd       = calcTextDD (Color 255 255 255 255) ttfdat (x,y + 3.0) "Set a savegame name"
+          undersc  = calcTextDD (Color 255 255 255 255) ttfdat (x,y) $ "_" ⧺ str
 genEachPUTextDyns ttfdat (Popup (x,y) _ (PopupSetKey keyInd keyFunc key))
   = dd ⧺ undersc
-    where dd = calcTextDD (Color 255 255 255 255) ttfdat (x - 6.0,y + 3.0) $ "Set " ⧺ printKeyInd keyInd ⧺ " hotkey for " ⧺ printKeyFunc keyFunc ⧺ " (Current: " ⧺ printKeys key ⧺ ")"
+    where dd      = calcTextDD (Color 255 255 255 255) ttfdat (x - 6.0,y + 3.0) $ "Set " ⧺ printKeyInd keyInd ⧺ " hotkey for " ⧺ printKeyFunc keyFunc ⧺ " (Current: " ⧺ printKeys key ⧺ ")"
           undersc = calcTextDD (Color 255 255 255 255) ttfdat (x,y) "_"
 genEachPUTextDyns _      _ = []
 printKeyInd ∷ Int → String

@@ -5,6 +5,7 @@ import Prelude()
 import UPrelude
 import Data ( Popup(..), PopupType(..) )
 
+
 -- | checks to make sure we dont already have a popup for set key
 addToPopups ∷ [Popup] → PopupType → [Popup]
 addToPopups []             pu = [Popup (0,0) (20,8) pu]
@@ -19,8 +20,9 @@ findAndClearPopup (popup:popups) pu = if comparePT (puType popup) pu
   then popups
   else [popup] ⧺ findAndClearPopup popups pu
 comparePT ∷ PopupType → PopupType → Bool
-comparePT PopupSetKey {} PopupSetKey {} = True
-comparePT _              _              = False
+comparePT PopupSetKey {}   PopupSetKey {}   = True
+comparePT PopupSavename {} PopupSavename {} = True
+comparePT _                _                = False
 
 -- | updates first popup of type with new data
 findAndUpdatePopup ∷ [Popup] → PopupType → [Popup]
@@ -31,3 +33,7 @@ findAndUpdatePopup (popup:popups) pu = if comparePT (puType popup) pu
   where popup' = updatePopup popup pu
 updatePopup ∷ Popup → PopupType → Popup
 updatePopup popup pu = popup { puType = pu }
+
+-- | a popup to ask for the name of a save
+saveGamePopup ∷ Popup
+saveGamePopup = Popup (0,0) (20,8) $ PopupSavename []

@@ -155,6 +155,7 @@ initInpState = InputState { inpStatus = ISSNULL
 initKeyMap ∷ KeyMap
 initKeyMap = KeyMap $ Map.fromList
   [(KFEscape,[KeyEscape])
+  ,(KFReturn,[KeyReturn])
   ,(KFScrollUp,[KeyW,KeyUp])
   ,(KFScrollDown,[KeyS,KeyDown])
   ,(KFScrollLeft,[KeyA,KeyLeft])

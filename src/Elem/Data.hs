@@ -4,7 +4,7 @@ module Elem.Data where
 import Prelude()
 import UPrelude
 import Data ( Color(..), Difficulty(..), Key(..)
-            , KeyFunc(..), MapType(..), MapTiles(..) )
+            , KeyFunc(..), MapType(..), MapTiles(..), MapSettings(..) )
 import qualified Vulk.GLFW as GLFW
 
 -- |  various win elements and their associated data
@@ -37,7 +37,7 @@ data ButtAction = ButtActionKey Int KeyFunc [Key]
 
 -- | commands accessable to lua, can be mapped onto buttons
 data LuaFunc = LuaFuncToggleFullScreen
-             | LuaFuncNewGame MapType
+             | LuaFuncNewGame MapSettings
              | LuaFuncUnknown String
              | LuaFuncNULL deriving (Show, Eq)
 
@@ -92,6 +92,7 @@ data InputAct = InpActKey GLFW.Key GLFW.KeyState GLFW.ModifierKeys
 
 -- | various situations in which a key may be captured
 data CapType = CapKeyChange Int KeyFunc
+             | CapTextInput String
              | CapNULL deriving (Show, Eq)
 
 

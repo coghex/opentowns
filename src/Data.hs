@@ -34,7 +34,7 @@ data Difficulty = DNormal
                 | DEasy
                 | DNULL deriving (Show, Eq)
 
--- towns has a few base maps
+-- | towns has a few base maps
 data MapType = MapNormal
              | MapDesert
              | MapJungle
@@ -43,10 +43,20 @@ data MapType = MapNormal
              | MapMountains
              | MapNULL deriving (Show, Eq)
 
--- map data is held as an array with corresponding size
+-- | the map is created with certain paraeters
+data MapSettings = MapSettings
+       { msBuried ∷ BuriedStatus
+       , msType   ∷ MapType
+       , msSize   ∷ (Int,Int) } deriving (Show, Eq)
+
+-- | one of the options to map settings
+data BuriedStatus = NoBuried | LocalBuried
+                  | LoadBuried String deriving (Show, Eq)
+
+-- | map data is held as an array with corresponding size
 data MapTiles = MapTiles (Int,Int) [[[MapTile]]] deriving (Show, Eq)
 
--- a map tile contains the tile number and index state
+-- | a map tile contains the tile number and index state
 data MapTile = MapTile Int Int deriving (Show, Eq)
 
 -- TODO: move this to a better place
@@ -69,6 +79,7 @@ data Popup = Popup { puPos  ∷ (Double,Double)
 
 -- different pop ups have different functionality
 data PopupType = PopupSetKey Int KeyFunc [Key]
+               | PopupSavename String
                | PopupNULL deriving (Show, Eq)
 
 
@@ -214,6 +225,7 @@ data KeyFunc = KFUp
              | KFScrollLeft
              | KFScrollRight
              | KFEscape
+             | KFReturn
              | KFShell
              | KFTest
              | KFTest2
