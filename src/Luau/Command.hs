@@ -218,9 +218,10 @@ hsNewElem env name pname el = case head $ splitOn ":" el of
   "worldMap" → do
     Lua.liftIO $ atomically $ writeQueue (envLoadQ env)
       $ LoadCmdNewElem name pname e
-        where e     = WinElemMap mtype tiles
-              mtype = parseMapType $ last $ splitOn ":" el
-              tiles = MapTiles (0,0) [[]]
+        where e         = WinElemMap msettings tiles
+              msettings = MapSettings NoBuried mtype (10,10)
+              mtype     = parseMapType $ last $ splitOn ":" el
+              tiles     = MapTiles (0,0) [[]]
   unk → Lua.liftIO $ atomically $ writeQueue (envEventQ env)
     $ EventLog LogWarn $ "unknown element: " ⧺ unk
 

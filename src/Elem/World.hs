@@ -3,7 +3,8 @@ module Elem.World where
 -- the world map is calculated here
 import Prelude()
 import UPrelude
-import Data ( Color(..), MapType(..), MapTiles(..), MapTile(..) )
+import Data ( Color(..), MapType(..), MapTiles(..)
+            , MapTile(..), MapSettings(..) )
 import Elem.Data ( WinElem(..) )
 import Load.Data ( DynData(..) )
 
@@ -35,8 +36,8 @@ indexTerrain 1 = (12,0)
 indexTerrain 2 = (14,0)
 indexTerrain _ = (0,0)
 
-genMapTiles ∷ MapType → MapTiles
-genMapTiles MapNormal = MapTiles (10,10) [tiles 1 1, testlevel]
+genMapTiles ∷ MapSettings → MapTiles
+genMapTiles (MapSettings _ MapNormal _) = MapTiles (10,10) [tiles 1 1, testlevel]
   where tiles i c = take 10 $ repeat $ take 10 $ repeat $ MapTile i c
         testbuff  = take 9 $ repeat $ take 10 $ repeat $ MapTile 0 0
         testrow   = take 9 $ repeat $ MapTile 0 0

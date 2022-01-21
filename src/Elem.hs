@@ -113,8 +113,8 @@ initElem win page
                     , bPage = page }
   sendInpAct $ InpActSetLink butt
   return $ WinElemButt pos col box adv (ButtActionKey n k1 k2) ind args hov
-initElem win page (WinElemMap maptype maptiles) _ = return newMap
-  where newMap = WinElemMap maptype $ genMapTiles maptype
+initElem win page (WinElemMap mapsettings maptiles) _ = return newMap
+  where newMap = WinElemMap mapsettings $ genMapTiles mapsettings
 initElem _   _   we       _ = return we
 
 -- | handles individual button presses

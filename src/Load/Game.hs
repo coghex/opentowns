@@ -10,11 +10,14 @@ import Control.Concurrent ( threadDelay )
 import Control.Monad.IO.Class ( liftIO )
 import System.Log.FastLogger (LogType'(..))
 import Data.Time.Clock ( getCurrentTime, diffUTCTime )
-import Data ( LoadState(..) )
+import Data ( LoadState(..), MapSettings(..)
+            , BuriedStatus(..), MapType(..) )
+import Elem.Data ( WinElem(..) )
 import Load.Data ( DrawState(..), WinsState(..), DSStatus(..)
                  , DrawStateCmd(..), LoadCmd(..), LoadResult(..)
                  , GameState(..), GSStatus(..), GameCmd(..) )
 import Load.Map ( genMapData )
+import Luau.Data ( Window(..), Page(..) )
 import Prog.Data ( Env(..) )
 import Prog.Init ( initGameState )
 import Sign.Data ( LogLevel(..), TState(..) )
@@ -23,12 +26,33 @@ import Sign.Log
 -- | starts the game thread
 genGame ∷ (MonadLog μ, MonadFail μ) ⇒ DrawState → LogT μ DrawState
 genGame ds = do
-  sendGameCmd GameCmdStart
-  let ds'   = ds { dsWinsState = ws { loading = newLS }
-                 , dsStatus    = DSSReload }
-      ws    = dsWinsState ds
-      newLS = Loading
+  let ds'       = ds { dsWinsState = ws { loading = newLS }
+                     , dsStatus    = DSSReload }
+      ws        = dsWinsState ds
+      newLS     = Loading
+      ms        = findMapSettings $ dsWins ds
+  sendGameCmd $ GameCmdStart ms
   return ds'
+
+-- | pulls the map settings out of a drawstate's map element
+findMapSettings ∷ [Window] → MapSettings
+findMapSettings []     = MapSettings NoBuried MapNULL (0,0)
+findMapSettings (w:ws) = case findPageMapSettings (winPages w) of
+  Just ms0 → ms0
+  Nothing  → findMapSettings ws
+findPageMapSettings ∷ [Page] → Maybe MapSettings
+findPageMapSettings []     = Nothing
+findPageMapSettings (p:ps) = case findElemsMapSettings (pageElems p) of
+  Just ms0 → Just ms0
+  Nothing  → findPageMapSettings ps
+findElemsMapSettings ∷ [WinElem] → Maybe MapSettings
+findElemsMapSettings []     = Nothing
+findElemsMapSettings (e:es) = case findElemMapSettings e of
+  Just ms0 → Just ms0
+  Nothing  → findElemsMapSettings es
+findElemMapSettings ∷ WinElem → Maybe MapSettings
+findElemMapSettings (WinElemMap ms0 _) = Just ms0
+findElemMapSettings _                  = Nothing
 
 -- | game thread
 gameThread ∷ Env → IO ()
@@ -87,10 +111,10 @@ processCommands gs = do
 processCommand ∷ (MonadLog μ,MonadFail μ)
   ⇒ GameState → GameCmd → LogT μ LoadResult
 processCommand gs cmd = case cmd of
-  GameCmdStart → do
+  GameCmdStart msettings → do
     log' LogInfo "game start"
     let gs' = gs { gsMapData = tiles }
-        tiles = genMapData (6,3)
+        tiles = genMapData msettings
     liftIO $ threadDelay 1000000
     sendLoadCmd $ LoadCmdDS $ DSCLoadMap tiles
     return $ ResGameState gs'

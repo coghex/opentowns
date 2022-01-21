@@ -58,7 +58,7 @@ updateElemsMap _  []     = []
 updateElemsMap mt (e:es) = [e'] ⧺ updateElemsMap mt es
   where e' = updateElemMap mt e
 updateElemMap ∷ MapTiles → WinElem → WinElem
-updateElemMap mt (WinElemMap mtype _) = WinElemMap mtype mt
+updateElemMap mt (WinElemMap msettings _) = WinElemMap msettings mt
 updateElemMap _  we                   = we
 
 -- | updates the keys listed for a change key button

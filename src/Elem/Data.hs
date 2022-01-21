@@ -22,7 +22,7 @@ data WinElem
                                   --   of all buttons
                 , buttVal   ∷ String -- ^ string displayed on button
                 , buttOver  ∷ Bool } -- ^ bool of mouse over button
-  | WinElemMap MapType MapTiles 
+  | WinElemMap MapSettings MapTiles 
   | WinElemNULL deriving (Show, Eq)
 
 -- possible button actions and defaults

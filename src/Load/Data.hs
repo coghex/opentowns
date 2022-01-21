@@ -5,7 +5,7 @@ import Prelude()
 import UPrelude
 import Data ( Color (..), PrintArg(..), FPS(..), LoadState(..)
             , Shell(..), Popup(..), PopupType(..), KeyFunc(..)
-            , Key(..), MapType(..), MapTiles(..) )
+            , Key(..), MapType(..), MapTiles(..), MapSettings(..) )
 import Elem.Data ( WinElem(..), Button(..), InputAct(..) )
 import Luau.Data ( Window(..), Page(..) )
 
@@ -140,5 +140,5 @@ data GSStatus = GSSLogDebug Int String
               | GSSNULL deriving (Show, Eq)
 
 -- | possible commands to the game thread
-data GameCmd = GameCmdStart
+data GameCmd = GameCmdStart MapSettings
              | GameCmdNULL deriving (Show, Eq)
