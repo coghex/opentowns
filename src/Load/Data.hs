@@ -20,6 +20,7 @@ data LoadCmd = LoadCmdPrint !PrintArg
              | LoadCmdVerts
              | LoadCmdDyns
              | LoadCmdInitBuff ![Tile]
+             | LoadCmdNewBuff !Int !Int
              | LoadCmdNewWin !Window
              | LoadCmdNewPage !String !Page
              | LoadCmdNewElem !String !String !WinElem

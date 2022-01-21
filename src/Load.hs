@@ -9,14 +9,14 @@ module Load where
 -- a thread to help recreate the swapchain
 import Prelude()
 import UPrelude
-import Data ( PrintArg(PrintNULL), LoadState(..) )
+import Data ( PrintArg(PrintNULL), LoadState(..), Color(..) )
 import Data.Maybe ( fromMaybe )
 import Elem ( initElem, processButton, lengthAllElems )
 import Elem.Data ( InputAct(..) )
 import Load.Cmd
 import Load.Data
     ( DSStatus(..),
-      DrawState(..),
+      DrawState(..), Dyns(..), DynData(..),
       LoadCmd(..),
       LoadResult(..),
       WinsState(..) )
@@ -166,6 +166,13 @@ processCommand glfwwin ds cmd = case cmd of
           ttfdat  = fromMaybe [] ttfdat'
       sendLoad $ LoadDyns newDyns
       return $ ResDrawState ds'
+  LoadCmdNewBuff ind size → do
+    return $ ResDrawState $ ds { dsBuff   = newBuff
+                               , dsStatus = DSSRecreate }
+    where newBuff = take ind oldBuff ⧺ [newDyns] ⧺ drop (ind + 1) oldBuff
+          oldBuff = dsBuff ds
+          newDyns = Dyns $ take size $ repeat
+                      $ DynData (0,0) (1,1) 0 (0,0) (Color 0 0 0 0)
   LoadCmdInitBuff tiles → do
     return $ ResDrawState $ ds { dsTiles = tiles
  --                              , dsBuff  = initBuff $ case currentWin (dsWins ds) of

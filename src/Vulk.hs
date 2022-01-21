@@ -216,7 +216,7 @@ vulkLoop (VulkanLoopData (GQData pdev dev commandPool _) queues scsd0
     -- TODO: i think its possible to change this number dynamically, it has
     -- an effect on performance since verticies are kept strictly,
     -- but it should be equal to one plus the length of the buffers combined
-    let nDynObjs = 10000
+    let nDynObjs = 20000
     (transDynMems, transDynBufs)
       ← unzip ⊚ createTransDynBuffers pdev dev swapchainLen nDynObjs
     dynDescBufInfos ← mapM (transDynBufferInfo nDynObjs) transDynBufs

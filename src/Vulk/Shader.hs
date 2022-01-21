@@ -1,4 +1,4 @@
---recompilation flag
+-- recompilation flag
 --{-# OPTIONS_GHC -fforce-recomp #-}
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE Strict #-}
