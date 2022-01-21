@@ -52,7 +52,7 @@ void main() {
     gl_Position = proj * view * dynV * vec4(inPosition, 1.0);
     int inTex = int(inTexCoord.z);
     mat4 dynTC = dynTex.dynTexI[dynI];
-    vec4 dynColor = vec4(dynTC[0][3] / 255,dynTC[1][3] / 255,dynTC[2][3] / 255,dynTC[3][3]);
+    vec4 dynColor = vec4(dynTC[0][3] / 255,dynTC[1][3] / 255,dynTC[2][3] / 255,dynTC[3][3] / 255);
     fragColor = (inMove.x > 0.0) ? inColor * dynColor : inColor;
     int texI = int(floor(dynTC[3][2]));
     fragTexCoord = (inMove.y > 0.0) ? (vec2 (inTexCoord.x + ((dynTC[3][0])/32.0), inTexCoord.y + ((dynTC[3][1])/32.0))) : inTexCoord.xy;

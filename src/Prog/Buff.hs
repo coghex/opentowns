@@ -12,6 +12,7 @@ import Load.Data
       DynData(DynData, ddTex),
       DynMap(DMNULL, DMBuff),
       Dyns(..),
+      WinsState(..),
       Tile(DTile, GTile) )
 import Luau.Data ( Window(..), Page(..) )
 import Luau.Window (currentWin)
@@ -44,10 +45,11 @@ loadDynData ds ((DTile (DMBuff b n) _ _ _ _ _ _):ts)
 loadDynData ds ((DTile DMNULL _ _ _ _ _ _):ts)
   = [DynData (0,0) (1,1) 0 (0,0) (Color 0 0 0 0)] ⧺ loadDynData ds ts
 
--- | generates buffs from drawstate
-genDynBuffs ∷ [TTFData] → DrawState → [Dyns]
+-- | generates buffs from drawstate, if loading is set will
+--   only draw a loading screen
+genDynBuffs ∷ (Float,Float) → [TTFData] → DrawState → [Dyns]
 --genDynBuffs ttfdat ds = dynsRes
-genDynBuffs ttfdat ds = dynsRes
+genDynBuffs size ttfdat ds = if loading (dsWinsState ds) then loadingScreen size (dsBuff ds) else dynsRes
   where dyns0   = dsBuff ds
         dynsRes = case currentWin (dsWins ds) (dsWinsState ds) of
           Nothing → dyns0
@@ -64,6 +66,30 @@ genDynBuffs ttfdat ds = dynsRes
           --            (genTextDyns ttfdat
           --            (genButtDyns (genLinkDyns dyns0 w) w) w) w) w
 --        popups = dsPopup ds
+
+-- | generates a loading screen and clears all dyns
+loadingScreen ∷ (Float,Float) → [Dyns] → [Dyns]
+loadingScreen size dyns = dyns1
+  where dyns1 = addLoadingScreen size dyns0
+        dyns0 = clearAllDyns dyns
+-- | clears all dyns in a brute force way
+clearAllDyns ∷ [Dyns] → [Dyns]
+clearAllDyns []            = []
+clearAllDyns ((Dyns d):ds) = [Dyns (clearDyns d)] ⧺ clearAllDyns ds
+clearDyns ∷ [DynData] → [DynData]
+clearDyns []     = []
+clearDyns (_:ds) = [d0] ⧺ clearDyns ds
+  where d0 = DynData (0,0) (0,0) 0 (0,0) (Color 0 0 0 0)
+-- generic loading screen
+addLoadingScreen ∷ (Float,Float) → [Dyns] → [Dyns]
+addLoadingScreen (w,h) = setTileBuff 6 dyns
+  where dyns = Dyns $ newD ⧺ take (16 - length newD)
+                 (repeat (DynData (0,0) (0,0) 0 (0,0) (Color 0 0 0 0)))
+        newD       = background ⧺ loadLogo
+        background
+          = [DynData (0,0) (w,h) 105 (0,0) (Color 255 255 255 255)]
+        loadLogo
+          = [DynData (0,0) (16,4) 109 (0,0) (Color 255 255 255 255)]
 
 -- | generates dynamic data for any number of popups, popups
 --   index to the center of the screen, still in openGL-style

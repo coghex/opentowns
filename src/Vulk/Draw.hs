@@ -17,12 +17,13 @@ import Luau.Window (currentWin)
 -- | loads tiles from drawstate
 loadTiles ∷ DrawState → (Double,Double) → [TTFData] → [Tile]
 loadTiles ds winSize ttfdat
+-- TODO: move these background tiles into their own buffer
   = [GTile (0,0) (w,h) (0,0) (1,1) 105 (Color 255 255 255 255)
   ,  GTile (0,0) (8,3) (0,0) (1,1) 106 (Color 255 255 255 255)]
   ⧺ winTiles
   where winTiles   = case currentWin (dsWins ds) (dsWinsState ds) of
           Just win → linkbuff ⧺ buttbuff ⧺ popupbuff ⧺ putextbuff
-                     ⧺ textbuff ⧺ mapbuff
+                     ⧺ textbuff ⧺ mapbuff ⧺ loadbuff
                      ⧺ loadWindow nDefTex win ttfdat
           Nothing  → []
         nDefTex    = 0 -- dsNDefTex ds
@@ -33,6 +34,7 @@ loadTiles ds winSize ttfdat
         popupbuff  = makeBufferTiles 3 64   True (32,32)
         putextbuff = makeBufferTiles 4 256  True (1,1)
         mapbuff    = makeBufferTiles 5 256  True (16,16)
+        loadbuff   = makeBufferTiles 6 16   True (1,1)
 
 -- | this is an empty list n long for a texture b, what i use for buff
 makeTileBuff ∷ Int → Int → [Tile]
