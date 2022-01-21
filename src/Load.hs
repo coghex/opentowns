@@ -156,11 +156,9 @@ processCommand glfwwin ds cmd = case cmd of
     if dsBuff ds ≡ [] then return ResSuccess
                       --return $ ResError "empty draw state buffer"
     else do
-      (w',h') ← liftIO $ GLFW.getWindowSize glfwwin
       let newDyns = loadDyns ds'
-          ds'     = ds { dsBuff = genDynBuffs winSize ttfdat ds }
+          ds'     = ds { dsBuff = genDynBuffs ttfdat ds }
           ttfdat  = fromMaybe [] ttfdat'
-          winSize  = (fromIntegral w'/64.0,fromIntegral h'/64.0)
       sendLoad $ LoadDyns newDyns
       return $ ResDrawState ds'
   LoadCmdInitBuff tiles → do

@@ -47,10 +47,11 @@ loadDynData ds ((DTile DMNULL _ _ _ _ _ _):ts)
 
 -- | generates buffs from drawstate, if loading is set will
 --   only draw a loading screen
-genDynBuffs ∷ (Float,Float) → [TTFData] → DrawState → [Dyns]
+genDynBuffs ∷ [TTFData] → DrawState → [Dyns]
 --genDynBuffs ttfdat ds = dynsRes
-genDynBuffs size ttfdat ds = if loading (dsWinsState ds) then loadingScreen size (dsBuff ds) else dynsRes
+genDynBuffs ttfdat ds = if loading (dsWinsState ds) then loadingScreen str (dsBuff ds) else dynsRes
   where dyns0   = dsBuff ds
+        str     = loadStr $ dsWinsState ds
         dynsRes = case currentWin (dsWins ds) (dsWinsState ds) of
           Nothing → dyns0
           -- Just _ → dyns0
@@ -68,9 +69,9 @@ genDynBuffs size ttfdat ds = if loading (dsWinsState ds) then loadingScreen size
 --        popups = dsPopup ds
 
 -- | generates a loading screen and clears all dyns
-loadingScreen ∷ (Float,Float) → [Dyns] → [Dyns]
-loadingScreen size dyns = dyns1
-  where dyns1 = addLoadingScreen size dyns0
+loadingScreen ∷ String → [Dyns] → [Dyns]
+loadingScreen str dyns = dyns1
+  where dyns1 = addLoadingScreen dyns0
         dyns0 = clearAllDyns dyns
 -- | clears all dyns in a brute force way
 clearAllDyns ∷ [Dyns] → [Dyns]
@@ -81,15 +82,13 @@ clearDyns []     = []
 clearDyns (_:ds) = [d0] ⧺ clearDyns ds
   where d0 = DynData (0,0) (0,0) 0 (0,0) (Color 0 0 0 0)
 -- generic loading screen
-addLoadingScreen ∷ (Float,Float) → [Dyns] → [Dyns]
-addLoadingScreen (w,h) = setTileBuff 6 dyns
+addLoadingScreen ∷ [Dyns] → [Dyns]
+addLoadingScreen = setTileBuff 6 dyns
   where dyns = Dyns $ newD ⧺ take (16 - length newD)
                  (repeat (DynData (0,0) (0,0) 0 (0,0) (Color 0 0 0 0)))
-        newD       = background ⧺ loadLogo
-        background
-          = [DynData (0,0) (w,h) 105 (0,0) (Color 255 255 255 255)]
+        newD       = loadLogo
         loadLogo
-          = [DynData (0,0) (16,4) 109 (0,0) (Color 255 255 255 255)]
+          = [DynData (0,-4) (8,2) 109 (0,0) (Color 255 255 255 255)]
 
 -- | generates dynamic data for any number of popups, popups
 --   index to the center of the screen, still in openGL-style
