@@ -13,7 +13,8 @@ import Data.Time.Clock ( getCurrentTime, diffUTCTime )
 import Data ( LoadState(..) )
 import Load.Data ( DrawState(..), WinsState(..), DSStatus(..)
                  , DrawStateCmd(..), LoadCmd(..), LoadResult(..)
-                 , GameState(..), GameCmd(..) )
+                 , GameState(..), GSStatus(..), GameCmd(..) )
+import Load.Map ( genMapData )
 import Prog.Data ( Env(..) )
 import Prog.Init ( initGameState )
 import Sign.Data ( LogLevel(..), TState(..) )
@@ -24,7 +25,7 @@ genGame ∷ (MonadLog μ, MonadFail μ) ⇒ DrawState → LogT μ DrawState
 genGame ds = do
   sendGameCmd GameCmdStart
   let ds'   = ds { dsWinsState = ws { loading = newLS }
-               , dsStatus    = DSSRecreate }
+                 , dsStatus    = DSSReload }
       ws    = dsWinsState ds
       newLS = Loading
   return ds'
@@ -65,6 +66,12 @@ processCommands gs = do
       ret ← processCommand gs cmd
       case ret of
         ResSuccess → processCommands gs
+        ResGameState gs' → case gsStatus gs' of
+          GSSLogDebug n str → do
+            log' (LogDebug n) str
+            processCommands gs''
+              where gs'' = gs' { gsStatus = GSSNULL }
+          GSSNULL → processCommands gs'
         ResDrawState _ → do
           log' LogWarn "game thread cant process load result"
           processCommands gs
@@ -82,7 +89,9 @@ processCommand ∷ (MonadLog μ,MonadFail μ)
 processCommand gs cmd = case cmd of
   GameCmdStart → do
     log' LogInfo "game start"
-    liftIO $ threadDelay 5000000
-    sendLoadCmd $ LoadCmdDS DSCLoadMap
-    return ResSuccess
+    let gs' = gs { gsMapData = tiles }
+        tiles = genMapData (6,3)
+    liftIO $ threadDelay 1000000
+    sendLoadCmd $ LoadCmdDS $ DSCLoadMap tiles
+    return $ ResGameState gs'
   GameCmdNULL  → return ResNULL

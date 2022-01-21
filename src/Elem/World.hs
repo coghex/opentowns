@@ -1,4 +1,5 @@
 module Elem.World where
+-- TODO: get rid of all of this
 -- the world map is calculated here
 import Prelude()
 import UPrelude

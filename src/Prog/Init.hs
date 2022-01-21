@@ -19,7 +19,7 @@ import Load.Data ( DSStatus(DSSNULL), DrawState(DrawState), WinsState(..)
 import Data
     ( Key(..), KeyFunc(..), LoadState(..),
       KeyMap(..), Difficulty(..),
-      FPS(..), Shell(..), MapType(..) )
+      FPS(..), Shell(..), MapType(..), MapTile(..), MapTiles(..) )
 import Prog ( Prog(unProg) )
 import Prog.Data
     ( Env(..), Halt(..),
@@ -162,7 +162,8 @@ initWinsState = WinsState "NULL" "NULL" "NULL" "NULL" Unloaded "NULL"
 
 -- | inits the state for the game thread
 initGameState ∷ GameState
-initGameState = GameState GSSNULL MapNULL
+initGameState = GameState GSSNULL maptiles MapNULL
+  where maptiles = MapTiles (0,0) [[[MapTile 0 0]]]
 
 -- | creates the base key mapping
 -- TODO: load this from a file

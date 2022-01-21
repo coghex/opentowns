@@ -4,7 +4,7 @@ module Load.Cmd where
 -- up the main loading thread.
 import Prelude()
 import UPrelude
-import Data ( Key(..), KeyFunc(..), LoadState(..) )
+import Data ( Key(..), KeyFunc(..), LoadState(..), MapTiles(..) )
 import Elem.Data ( WinElem(..), Button(..), ButtFunc(..), ButtAction(..) )
 import Load.Data ( DrawState(..), DrawStateCmd(..)
                  , LoadCmd(..), DSStatus(..), WinsState(..) )
@@ -36,12 +36,30 @@ processDrawStateCommand ds (DSCSavename str)  = do
   sendSettings $ SettingsChangeSavename str
   return ds'
   where ds' = ds { dsStatus = DSSLoadScreen }
-processDrawStateCommand ds DSCLoadMap         = do
+processDrawStateCommand ds (DSCLoadMap gmap)  = do
   return ds'
   where ds' = ds { dsWinsState = ws { loading = Loaded }
+                 , dsWins      = updateMap gmap (dsWins ds)
                  , dsStatus    = DSSRecreate }
         ws  = dsWinsState ds
 processDrawStateCommand ds _                  = return ds
+
+-- | updates the map in the draw state memory
+updateMap ∷ MapTiles → [Window] → [Window]
+updateMap _  []     = []
+updateMap mt (w:ws) = [w'] ⧺ updateMap mt ws
+  where w' = w { winPages = updatePagesMap mt (winPages w) }
+updatePagesMap ∷ MapTiles → [Page] → [Page]
+updatePagesMap _  []     = []
+updatePagesMap mt (p:ps) = [p'] ⧺ updatePagesMap mt ps
+  where p' = p { pageElems = updateElemsMap mt (pageElems p) }
+updateElemsMap ∷ MapTiles → [WinElem] → [WinElem]
+updateElemsMap _  []     = []
+updateElemsMap mt (e:es) = [e'] ⧺ updateElemsMap mt es
+  where e' = updateElemMap mt e
+updateElemMap ∷ MapTiles → WinElem → WinElem
+updateElemMap mt (WinElemMap mtype _) = WinElemMap mtype mt
+updateElemMap _  we                   = we
 
 -- | updates the keys listed for a change key button
 updateKeyButton ∷ [Window] → WinsState → KeyFunc → [Key] → [Window]

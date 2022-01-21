@@ -119,6 +119,9 @@ processCommands win ds = do
                               , loadStr = "Loading..." }
                     ws   = dsWinsState ds'
           DSSNULL → processCommands win ds'
+        ResGameState _ → do
+          log' LogWarn "load thread cant process game result"
+          processCommands win ds
         ResError str → do
           log' LogError $ "load command error: " ⧺ str
           processCommands win ds

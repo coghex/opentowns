@@ -5,13 +5,15 @@ import Prelude()
 import UPrelude
 import Data ( Color (..), PrintArg(..), FPS(..), LoadState(..)
             , Shell(..), Popup(..), PopupType(..), KeyFunc(..)
-            , Key(..), MapType(..) )
+            , Key(..), MapType(..), MapTiles(..) )
 import Elem.Data ( WinElem(..), Button(..), InputAct(..) )
 import Luau.Data ( Window(..), Page(..) )
 
 -- | result of the loading thread
 data LoadResult = ResSuccess | ResError String
-                | ResDrawState DrawState | ResNULL
+                | ResDrawState DrawState
+                | ResGameState GameState
+                | ResNULL
 
 -- | commands that can be asked of the loading thread queue
 data LoadCmd = LoadCmdPrint !PrintArg
@@ -84,7 +86,7 @@ data DrawStateCmd = DSCToggleButts [Button] Bool
                   | DSCClearPopup PopupType
                   | DSCUpdateKeyButton KeyFunc [Key]
                   | DSCSavename String
-                  | DSCLoadMap
+                  | DSCLoadMap MapTiles
                   | DSCNULL deriving (Show, Eq)
 
 -- | gtiles represent abstract tiles
@@ -131,6 +133,7 @@ data WinsState = WinsState { thisWin  ∷ String
 
 -- | state of the game thread
 data GameState = GameState { gsStatus  ∷ GSStatus
+                           , gsMapData ∷ MapTiles
                            , gsMapType ∷ MapType }
 -- | return state of game thread loop
 data GSStatus = GSSLogDebug Int String

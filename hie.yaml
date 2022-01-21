@@ -30,6 +30,9 @@ cradle:
     - path: "src/Load/Game.hs"
       component: "opentowns:exe:opentowns"
 
+    - path: "src/Load/Map.hs"
+      component: "opentowns:exe:opentowns"
+
     - path: "src/Load/Popup.hs"
       component: "opentowns:exe:opentowns"
 
