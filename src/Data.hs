@@ -231,3 +231,5 @@ data KeyFunc = KFUp
              | KFTest2
              | KFUnknown String
              | KFNULL deriving (Show, Eq, Ord)
+-- | various states of loading for the UI
+data LoadState = Loaded | Unloaded | Loading deriving (Show, Eq)

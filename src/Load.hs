@@ -9,7 +9,7 @@ module Load where
 -- a thread to help recreate the swapchain
 import Prelude()
 import UPrelude
-import Data ( PrintArg(PrintNULL) )
+import Data ( PrintArg(PrintNULL), LoadState(..) )
 import Data.Maybe ( fromMaybe )
 import Elem ( initElem, processButton, lengthAllElems )
 import Elem.Data ( InputAct(..) )
@@ -20,6 +20,7 @@ import Load.Data
       LoadCmd(..),
       LoadResult(..),
       WinsState(..) )
+import Load.Game ( genGame )
 import Luau.Data ( Window(..), Page(..) )
 import Luau.Window ( addPageToWin, addElemToPageInWin
                    , switchWin, resizeWins, currentWin )
@@ -109,11 +110,12 @@ processCommands win ds = do
             processCommands win ds''
               where ds'' = ds' { dsStatus = DSSNULL }
           DSSLoadScreen → do
-            log' (LogDebug 1) "load"
+            sendLoadCmd LoadCmdDyns
+            sendLoadCmd LoadCmdGame
             processCommands win ds''
               where ds'' = ds' { dsStatus    = DSSNULL
                                , dsWinsState = ws' }
-                    ws'  = ws { loading = True
+                    ws'  = ws { loading = Loading
                               , loadStr = "Loading..." }
                     ws   = dsWinsState ds'
           DSSNULL → processCommands win ds'
@@ -164,7 +166,7 @@ processCommand glfwwin ds cmd = case cmd of
   LoadCmdInitBuff tiles → do
     return $ ResDrawState $ ds { dsTiles = tiles
  --                              , dsBuff  = initBuff $ case currentWin (dsWins ds) of
-                               , dsBuff  = initBuff [64,64,512,64,256,256,16] }
+                               , dsBuff  = initBuff [64,64,512,64,256,256,32] }
         --                         Nothing → []
         --                         Just w0 → winBuffs w0 }
   LoadCmdNewWin win → do
@@ -212,6 +214,9 @@ processCommand glfwwin ds cmd = case cmd of
     sendLoadCmd LoadCmdDyns
     return $ ResDrawState ds'
     where ds' = ds { dsWins = resizeWins size (dsWins ds) }
+  LoadCmdGame → do
+    ds' ← genGame ds
+    return $ ResDrawState ds'
   LoadCmdTest → do
     --log' LogInfo $ "(curr,last) win: " ⧺ show (dsWinsState ds)
     --log' LogInfo $ "popups: " ⧺ show (dsPopup ds)

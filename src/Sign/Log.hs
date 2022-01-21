@@ -15,7 +15,7 @@ import Prog.Data ( Env(..) )
 import Sign.Data ( LogLevel(..), Event(..), TState(..), SysAction(..), LoadData(..), SettingsChange(..) )
 import Sign.Var ( atomically, readTVar )
 import Sign.Queue ( writeQueue, readChan, tryReadChan, tryReadQueue )
-import Load.Data (LoadCmd(..))
+import Load.Data (LoadCmd(..), GameCmd(..))
 import Vulk.Font (TTFData(..))
 import qualified Vulk.GLFW as GLFW
 
@@ -89,16 +89,31 @@ readTimerBlocked ∷ (MonadLog μ, MonadFail μ) ⇒ μ TState
 readTimerBlocked = do
   (Log _   env _   _   _) ← askLog
   liftIO $ atomically $ readChan (envLoadCh env)
+-- | hangs execution until it reads something
+readGameTimerBlocked ∷ (MonadLog μ, MonadFail μ) ⇒ μ TState
+readGameTimerBlocked = do
+  (Log _   env _   _   _) ← askLog
+  liftIO $ atomically $ readChan (envGameCh env)
 -- | returns nothing if load channel is empty
 readTimer ∷ (MonadLog μ, MonadFail μ) ⇒ μ (Maybe TState)
 readTimer = do
   (Log _   env _   _   _) ← askLog
   liftIO $ atomically $ tryReadChan (envLoadCh env)
+-- | returns nothing if game channel is empty
+readGameTimer ∷ (MonadLog μ, MonadFail μ) ⇒ μ (Maybe TState)
+readGameTimer = do
+  (Log _   env _   _   _) ← askLog
+  liftIO $ atomically $ tryReadChan (envGameCh env)
 -- | returns nothing if load queue is empty
 readCommand ∷ (MonadLog μ, MonadFail μ) ⇒ μ (Maybe LoadCmd)
 readCommand = do
   (Log _   env _   _   _) ← askLog
   liftIO $ atomically $ tryReadQueue (envLoadQ env)
+-- | returns nothing if game queue is empty
+readGameCommand ∷ (MonadLog μ, MonadFail μ) ⇒ μ (Maybe GameCmd)
+readGameCommand = do
+  (Log _   env _   _   _) ← askLog
+  liftIO $ atomically $ tryReadQueue (envGameQ env)
 -- | sends a syscommand over the event queue
 sendSys ∷ (MonadLog μ, MonadFail μ) ⇒ SysAction → μ ()
 sendSys sa = do
@@ -114,6 +129,11 @@ sendLoadCmd ∷ (MonadLog μ, MonadFail μ) ⇒ LoadCmd → μ ()
 sendLoadCmd lc = do
   (Log _   env _   _   _) ← askLog
   liftIO $ atomically $ writeQueue (envLoadQ env) lc
+-- | sends a game command over the load queue
+sendGameCmd ∷ (MonadLog μ, MonadFail μ) ⇒ GameCmd → μ ()
+sendGameCmd gc = do
+  (Log _   env _   _   _) ← askLog
+  liftIO $ atomically $ writeQueue (envGameQ env) gc
 -- | reads the current key layout
 readFontMapM ∷ (MonadLog μ, MonadFail μ) ⇒ LogT μ (Maybe [TTFData])
 readFontMapM = do

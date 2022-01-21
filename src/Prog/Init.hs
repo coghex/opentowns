@@ -3,7 +3,7 @@
 --   env, drawsstate, inputsttate, settings, and
 --   the keymapping, among others...
 module Prog.Init
-  ( runProg, initDrawState
+  ( runProg, initDrawState, initGameState
   , initInpState, initKeyMap ) where
 -- initialization of env and state occurs
 import Prelude()
@@ -14,11 +14,12 @@ import Data.Time.Clock.System ( getSystemTime )
 import qualified Foreign.Lua as Lua
 import GHC.Stack ( HasCallStack) -- , prettyCallStack, callStack )
 import Elem.Data ( CapType(..) )
-import Load.Data ( DSStatus(DSSNULL), DrawState(DrawState), WinsState(..) )
+import Load.Data ( DSStatus(DSSNULL), DrawState(DrawState), WinsState(..)
+                 , GameState(..), GSStatus(GSSNULL) )
 import Data
-    ( Key(..), KeyFunc(..),
+    ( Key(..), KeyFunc(..), LoadState(..),
       KeyMap(..), Difficulty(..),
-      FPS(..), Shell(..) )
+      FPS(..), Shell(..), MapType(..) )
 import Prog ( Prog(unProg) )
 import Prog.Data
     ( Env(..), Halt(..),
@@ -50,6 +51,8 @@ initEnv = do
   -- load queue calculates then delivers verticies/indicies
   -- to the draw thread from the drawState
   loadQ    ← newQueue
+  -- game thread loads game assets and tracks game state
+  gameQ    ← newQueue
   -- input thread tracks the mouse and processes input
   inpQ     ← newQueue
   -- lua thread processes lua commands every arbitrary tick
@@ -58,6 +61,7 @@ initEnv = do
   luaState ← Lua.newstate
   -- channels that contain semaphores for each thread
   loadCh   ← newTChan
+  gameCh   ← newTChan
   inputCh  ← newTChan
   luaCh    ← newTChan
   -- font metrics var to hold the current fonts metrics
@@ -71,11 +75,13 @@ initEnv = do
   dyns     ← atomically $ newTVar Nothing
   let env = Env { envEventQ = eventQ
                 , envLoadQ  = loadQ
+                , envGameQ  = gameQ
                 , envLoadCh = loadCh
                 , envLuaCh  = luaCh
                 , envLuaSt  = luaState
                 , envInpQ   = inpQ
                 , envInpCh  = inputCh
+                , envGameCh = gameCh
                 , envWindow = win
                 , envFontM  = fontM
                 , envVerts  = verts
@@ -152,7 +158,11 @@ initInpState = InputState { inpStatus = ISSNULL
 
 -- | an empty winsstate
 initWinsState ∷ WinsState
-initWinsState = WinsState "NULL" "NULL" "NULL" "NULL" False "NULL"
+initWinsState = WinsState "NULL" "NULL" "NULL" "NULL" Unloaded "NULL"
+
+-- | inits the state for the game thread
+initGameState ∷ GameState
+initGameState = GameState GSSNULL MapNULL
 
 -- | creates the base key mapping
 -- TODO: load this from a file

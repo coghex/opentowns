@@ -34,7 +34,7 @@ loadTiles ds winSize ttfdat
         popupbuff  = makeBufferTiles 3 64   True (32,32)
         putextbuff = makeBufferTiles 4 256  True (1,1)
         mapbuff    = makeBufferTiles 5 256  True (16,16)
-        loadbuff   = makeBufferTiles 6 16   True (1,1)
+        loadbuff   = makeBufferTiles 6 32   True (1,1)
 
 -- | this is an empty list n long for a texture b, what i use for buff
 makeTileBuff ∷ Int → Int → [Tile]

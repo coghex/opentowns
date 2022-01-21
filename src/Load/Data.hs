@@ -3,8 +3,9 @@ module Load.Data where
 -- data for the loading thread is found
 import Prelude()
 import UPrelude
-import Data ( Color (..), PrintArg(..), FPS(..)
-            , Shell(..), Popup(..), PopupType(..), KeyFunc(..), Key(..) )
+import Data ( Color (..), PrintArg(..), FPS(..), LoadState(..)
+            , Shell(..), Popup(..), PopupType(..), KeyFunc(..)
+            , Key(..), MapType(..) )
 import Elem.Data ( WinElem(..), Button(..), InputAct(..) )
 import Luau.Data ( Window(..), Page(..) )
 
@@ -24,6 +25,7 @@ data LoadCmd = LoadCmdPrint !PrintArg
              | LoadCmdWindowSize !(Int,Int)
              | LoadCmdDS !DrawStateCmd
              | LoadCmdInput InputAct
+             | LoadCmdGame
              | LoadCmdTest
              | LoadCmdTest2
              | LoadCmdNULL deriving (Show, Eq)
@@ -82,6 +84,7 @@ data DrawStateCmd = DSCToggleButts [Button] Bool
                   | DSCClearPopup PopupType
                   | DSCUpdateKeyButton KeyFunc [Key]
                   | DSCSavename String
+                  | DSCLoadMap
                   | DSCNULL deriving (Show, Eq)
 
 -- | gtiles represent abstract tiles
@@ -123,5 +126,16 @@ data WinsState = WinsState { thisWin  ∷ String
                            , lastWin  ∷ String
                            , thisPage ∷ String
                            , lastPage ∷ String
-                           , loading  ∷ Bool
+                           , loading  ∷ LoadState
                            , loadStr  ∷ String } deriving (Show, Eq)
+
+-- | state of the game thread
+data GameState = GameState { gsStatus  ∷ GSStatus
+                           , gsMapType ∷ MapType }
+-- | return state of game thread loop
+data GSStatus = GSSLogDebug Int String
+              | GSSNULL deriving (Show, Eq)
+
+-- | possible commands to the game thread
+data GameCmd = GameCmdStart
+             | GameCmdNULL deriving (Show, Eq)

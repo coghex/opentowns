@@ -35,6 +35,7 @@ import Prog.Event ( processEvents )
 import Prog.Foreign ( mallocRes, newArrayRes )
 import Prog.Input ( inputThread )
 import Load ( loadThread )
+import Load.Game ( gameThread )
 import Prog.Util ( getTime, logDebug, logExcept, logInfo, loop )
 import Sign.Data ( TState(TStart) )
 import Sign.Except ( testEx, ExType(ExVulk) )
@@ -147,9 +148,10 @@ runVulk = do
         -- mouse input tracking and key input processing thread
         _ ← liftIO $ forkIO $ inputThread env window
         liftIO $ atomically $ writeChan (envInpCh env) TStart
-     --   -- sort of a utility thread for when lots of work needs to be done
-     --   _ ← liftIO $ forkIO $ calcThread env
-     --   liftIO $ atomically $ writeChan (envInpCh env) TStart
+        -- game thread handles loading and keeps the game state
+        -- seperate from the draw state and the lua commands
+        _ ← liftIO $ forkIO $ gameThread env
+        liftIO $ atomically $ writeChan (envGameCh env) TStart
         -- window size change handling
         let beforeSwapchainCreation ∷ Prog ε σ ()
             beforeSwapchainCreation =

@@ -9,7 +9,7 @@ import Data ( FPS(..), Difficulty(..)
 import Data.Time.Clock.System ( SystemTime )
 import qualified Foreign.Lua as Lua
 import Elem.Data ( InputAct(..), InputElem(..), CapType(..) )
-import Load.Data ( LoadCmd(..), Dyns(..) )
+import Load.Data ( LoadCmd(..), GameCmd(..), Dyns(..) )
 import Sign.Data ( Event, TState )
 import Sign.Except ( ProgExcept )
 import Sign.Queue ( Queue, TChan )
@@ -26,11 +26,13 @@ data LoopControl = ContinueLoop | AbortLoop deriving Eq
 -- | env should only hold pointers/references
 data Env = Env { envEventQ ∷ Queue Event
                , envLoadQ  ∷ Queue LoadCmd
+               , envGameQ  ∷ Queue GameCmd
                , envLoadCh ∷ TChan TState
                , envLuaCh  ∷ TChan TState
                , envLuaSt  ∷ Lua.State
                , envInpCh  ∷ TChan TState
                , envInpQ   ∷ Queue InputAct
+               , envGameCh ∷ TChan TState
                -- this static glfw handle should only be used for reads
                , envWindow ∷ TVar (Maybe GLFW.Window)
                , envFontM  ∷ TVar (Maybe [TTFData])

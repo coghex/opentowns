@@ -4,7 +4,8 @@ module Prog.Buff where
 -- a buffer of invisibly dynamic tiles to manipulate
 import Prelude()
 import UPrelude
-import Data ( Color(..), Difficulty(..), KeyFunc(..), Key(..), Popup(..), PopupType(..) )
+import Data ( Color(..), Difficulty(..), KeyFunc(..), Key(..)
+            , Popup(..), PopupType(..), LoadState(..) )
 import Elem.Data
 import Elem.World ( genWorldDyns )
 import Load.Data
@@ -46,22 +47,31 @@ loadDynData ds ((DTile DMNULL _ _ _ _ _ _):ts)
   = [DynData (0,0) (1,1) 0 (0,0) (Color 0 0 0 0)] ⧺ loadDynData ds ts
 
 -- | generates buffs from drawstate, if loading is set will
---   only draw a loading screen
+--   only draw a loading screen, if game hasnt been loaded yet
+--   will only draw ui elements and popups
 genDynBuffs ∷ [TTFData] → DrawState → [Dyns]
 --genDynBuffs ttfdat ds = dynsRes
-genDynBuffs ttfdat ds = if loading (dsWinsState ds) then loadingScreen str (dsBuff ds) else dynsRes
+genDynBuffs ttfdat ds = case loading (dsWinsState ds) of
+  Loading  → loadingScreen ttfdat str (dsBuff ds) 
+  Unloaded → dynsRes0
+  Loaded   → dynsRes
   where dyns0   = dsBuff ds
         str     = loadStr $ dsWinsState ds
-        dynsRes = case currentWin (dsWins ds) (dsWinsState ds) of
+        dynsRes0 = case currentWin (dsWins ds) (dsWinsState ds) of
           Nothing → dyns0
-          -- Just _ → dyns0
-          -- TODO: generate dynamic buffers
-          Just w → dyns5
-            where dyns5 = genMapDyns dyns4 w
-                  dyns4 = genPUTextDyns ttfdat (dsPopup ds) dyns3
+          Just w  → dyns4
+            where dyns4 = genPUTextDyns ttfdat (dsPopup ds) dyns3
                   dyns3 = genPopupDyns (dsPopup ds) dyns2
                   dyns2 = genButtDyns dyns1 w
                   dyns1 = genTextDyns ttfdat w dyns0
+        dynsRes = case currentWin (dsWins ds) (dsWinsState ds) of
+          Nothing → dyns0
+          -- TODO: generate dynamic buffers
+          Just w → dyns4
+            where dyns4 = genMapDyns dyns3 w
+                  dyns3 = genPUTextDyns ttfdat (dsPopup ds) dyns2
+                  dyns2 = genPopupDyns (dsPopup ds) dyns1
+                  dyns1 = clearLoadingScreenDyns dyns0
           --Just w  → genPUTextDyns ttfdat popups
           --            (genPopupDyns popups
           --            (genTextDyns ttfdat
@@ -69,9 +79,9 @@ genDynBuffs ttfdat ds = if loading (dsWinsState ds) then loadingScreen str (dsBu
 --        popups = dsPopup ds
 
 -- | generates a loading screen and clears all dyns
-loadingScreen ∷ String → [Dyns] → [Dyns]
-loadingScreen str dyns = dyns1
-  where dyns1 = addLoadingScreen dyns0
+loadingScreen ∷ [TTFData] → String → [Dyns] → [Dyns]
+loadingScreen ttfdat str dyns = dyns1
+  where dyns1 = addLoadingScreen ttfdat str dyns0
         dyns0 = clearAllDyns dyns
 -- | clears all dyns in a brute force way
 clearAllDyns ∷ [Dyns] → [Dyns]
@@ -81,14 +91,21 @@ clearDyns ∷ [DynData] → [DynData]
 clearDyns []     = []
 clearDyns (_:ds) = [d0] ⧺ clearDyns ds
   where d0 = DynData (0,0) (0,0) 0 (0,0) (Color 0 0 0 0)
--- generic loading screen
-addLoadingScreen ∷ [Dyns] → [Dyns]
-addLoadingScreen = setTileBuff 6 dyns
-  where dyns = Dyns $ newD ⧺ take (16 - length newD)
+-- | generic loading screen
+addLoadingScreen ∷ [TTFData] → String → [Dyns] → [Dyns]
+addLoadingScreen ttfdat str = setTileBuff 6 dyns
+  where dyns = Dyns $ newD ⧺ take (32 - length newD)
                  (repeat (DynData (0,0) (0,0) 0 (0,0) (Color 0 0 0 0)))
-        newD       = loadLogo
+        newD       = loadLogo ⧺ msg
         loadLogo
           = [DynData (0,-4) (8,2) 109 (0,0) (Color 255 255 255 255)]
+        msg
+          = calcTextDD (Color 255 255 255 255) ttfdat (0,-6) str
+-- | clears only the loading screen
+clearLoadingScreenDyns ∷ [Dyns] → [Dyns]
+clearLoadingScreenDyns = setTileBuff 6 dyns
+  where dyns = Dyns $ take 32
+                 (repeat (DynData (0,0) (0,0) 0 (0,0) (Color 0 0 0 0)))
 
 -- | generates dynamic data for any number of popups, popups
 --   index to the center of the screen, still in openGL-style
