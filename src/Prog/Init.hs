@@ -13,12 +13,12 @@ import qualified Data.Map as Map
 import Data.Time.Clock.System ( getSystemTime )
 import qualified Foreign.Lua as Lua
 import GHC.Stack ( HasCallStack) -- , prettyCallStack, callStack )
-import Data ( Difficulty(DNormal), FPS(FPS), Shell(Shell) )
 import Elem.Data ( CapType(..) )
-import Load.Data ( DSStatus(DSSNULL), DrawState(DrawState) )
+import Load.Data ( DSStatus(DSSNULL), DrawState(DrawState), WinsState(..) )
 import Data
     ( Key(..), KeyFunc(..),
-      KeyMap(..) )
+      KeyMap(..), Difficulty(..),
+      FPS(..), Shell(..) )
 import Prog ( Prog(unProg) )
 import Prog.Data
     ( Env(..), Halt(..),
@@ -124,7 +124,7 @@ initSettings = return $ Settings initKeyMap True 100 True 100 True
 -- | creates a drawstate with empty values
 initDrawState ∷ DrawState
 initDrawState = DrawState DSSNULL [] [] (FPS 60.0 60 True)
-  [] (("NULL","NULL"),("NULL","NULL")) [] initShell Nothing
+  [] initWinsState [] initShell Nothing
 
 -- | creates a shell with empty values
 initShell ∷ Shell
@@ -149,6 +149,10 @@ initInpState = InputState { inpStatus = ISSNULL
                           , keyDown   = False
                           , keyRight  = False
                           , keyAccel  = (0,0) }
+
+-- | an empty winsstate
+initWinsState ∷ WinsState
+initWinsState = WinsState "NULL" "NULL" "NULL" "NULL" False "NULL"
 
 -- | creates the base key mapping
 -- TODO: load this from a file

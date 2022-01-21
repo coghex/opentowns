@@ -7,11 +7,12 @@ import UPrelude
 import Data ( Key(..), KeyFunc(..) )
 import Elem.Data ( WinElem(..), Button(..), ButtFunc(..), ButtAction(..) )
 import Load.Data ( DrawState(..), DrawStateCmd(..)
-                 , LoadCmd(..), DSStatus(..) )
+                 , LoadCmd(..), DSStatus(..), WinsState(..) )
 import Load.Popup ( findAndClearPopup, findAndUpdatePopup )
 import Luau.Command ( unsanitizeKeyFunc, unsanitizeKeys )
 import Luau.Data ( Window(..), Page(..) )
-import Sign.Log ( MonadLog(..), LogT(..), sendLoadCmd )
+import Sign.Log ( MonadLog(..), LogT(..), sendLoadCmd, sendSettings )
+import Sign.Data ( SettingsChange(..) )
 
 -- | handles possible commands designed to change the draw state
 processDrawStateCommand ∷ (MonadLog μ, MonadFail μ)
@@ -31,22 +32,29 @@ processDrawStateCommand ds (DSCClearPopup pu)  = return ds'
 processDrawStateCommand ds (DSCUpdateKeyButton kf ks) = return ds'
   where ds' = ds { dsWins = updateKeyButton
                               (dsWins ds) (dsWinsState ds) kf ks }
+processDrawStateCommand ds (DSCSavename str)  = do
+  sendSettings $ SettingsChangeSavename str
+  return ds'
+  where ds' = ds { dsStatus = DSSLoadScreen }
 processDrawStateCommand ds _                  = return ds
 
 -- | updates the keys listed for a change key button
-updateKeyButton ∷ [Window] → ((String,String),(String,String)) → KeyFunc → [Key] → [Window]
-updateKeyButton []     _               _  _  = []
-updateKeyButton (w:ws) ((current,a),b) kf ks
-  | winTitle w ≡ current = [w'] ⧺ updateKeyButton ws ((current,a),b) kf ks
-  | otherwise            = [w]  ⧺ updateKeyButton ws ((current,a),b) kf ks
-    where w' = w { winPages = updateKeyButtonInWin (winPages w) kf ks }
+updateKeyButton ∷ [Window] → WinsState → KeyFunc → [Key] → [Window]
+updateKeyButton []     _      _  _  = []
+updateKeyButton (w:ws) winsSt kf ks
+  | winTitle w ≡ current = [w'] ⧺ updateKeyButton ws winsSt kf ks
+  | otherwise            = [w]  ⧺ updateKeyButton ws winsSt kf ks
+    where w'      = w { winPages
+                     = updateKeyButtonInWin (winPages w) kf ks }
+          current = thisWin winsSt
 updateKeyButtonInWin ∷ [Page] → KeyFunc → [Key] → [Page]
 updateKeyButtonInWin []     _  _  = []
 updateKeyButtonInWin (p:ps) kf ks = [p'] ⧺ updateKeyButtonInWin ps kf ks
   where p' = p { pageElems = updateKeyButtonInPage (pageElems p) kf ks }
 updateKeyButtonInPage ∷ [WinElem] → KeyFunc → [Key] → [WinElem]
 updateKeyButtonInPage []       _  _  = []
-updateKeyButtonInPage (we:wes) kf ks = [we'] ⧺ updateKeyButtonInPage wes kf ks
+updateKeyButtonInPage (we:wes) kf ks = [we']
+  ⧺ updateKeyButtonInPage wes kf ks
   where we' = updateKeyButtonInElem we kf ks
 updateKeyButtonInElem ∷ WinElem → KeyFunc → [Key] → WinElem
 updateKeyButtonInElem

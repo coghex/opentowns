@@ -9,7 +9,9 @@ import Elem.Data ( WinElem(..), ButtAction(..)
                  , Button(..), ButtFunc(..), TextButton(..)
                  , InputAct(..), LuaFunc(..), CapType(..) )
 import Elem.World ( genMapTiles )
-import Load.Data ( DrawState(..), Tile(..), DSStatus(..), LoadCmd(..) )
+import Load.Data ( DrawState(..), Tile(..)
+                 , DSStatus(..), LoadCmd(..)
+                 , WinsState(..) )
 import Load.Popup ( addToPopups, saveGamePopup )
 import Luau.Data ( Page(..), Window(..) )
 import Luau.Window ( currentWin )
@@ -141,13 +143,14 @@ processButton ds _ = return ds
 
 
 -- | we go though all that work again just to find the names
-changePageInWinsState ∷ ((String,String),(String,String))
-  → [Window] → Int → String → String
-  → ((String,String),(String,String))
+changePageInWinsState ∷ WinsState → [Window] → Int
+  → String → String → WinsState
 changePageInWinsState oldwinsstate []     _    _   _    = oldwinsstate
 changePageInWinsState oldwinsstate (w:ws) dest win page
- | winTitle w ≡ win = ((cwin,fst (fst oldwinsstate))
-                      ,(cpage,fst (snd oldwinsstate)))
+ | winTitle w ≡ win = oldwinsstate { thisWin  = cwin
+                                   , lastWin  = thisWin oldwinsstate
+                                   , thisPage = cpage
+                                   , lastPage = thisPage oldwinsstate }
  | otherwise        = changePageInWinsState oldwinsstate ws dest win page
    where cpage
            = findButtonDestByInd dest page (winLast w) (winPages w)
@@ -258,8 +261,11 @@ execButtonLoad ds ind win _ = do
     where ds'     = ds { dsWinsState = newWinsState
                        , dsStatus    = DSSReload }
           (new,p) = findNewWin (dsWins ds) ind win
-          newWinsState = ((new,lwin),(p,lpage))
-          ((lwin,_),(lpage,_)) = dsWinsState ds
+          newWinsState = ws { thisWin  = new
+                            , lastWin  = thisWin ws
+                            , thisPage = p
+                            , lastPage = thisPage ws }
+          ws = dsWinsState ds
 
 -- | executes the text button action atttached to a button
 execButtonText ∷ (MonadLog μ, MonadFail μ) ⇒ DrawState → Int → String → String → LogT μ DrawState

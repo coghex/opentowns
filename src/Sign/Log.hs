@@ -12,7 +12,7 @@ import Control.Monad.Reader
 import System.Log.FastLogger
 import Elem.Data ( InputAct(..) )
 import Prog.Data ( Env(..) )
-import Sign.Data ( LogLevel(..), Event(..), TState(..), SysAction(..), LoadData(..) )
+import Sign.Data ( LogLevel(..), Event(..), TState(..), SysAction(..), LoadData(..), SettingsChange(..) )
 import Sign.Var ( atomically, readTVar )
 import Sign.Queue ( writeQueue, readChan, tryReadChan, tryReadQueue )
 import Load.Data (LoadCmd(..))
@@ -104,6 +104,11 @@ sendSys ∷ (MonadLog μ, MonadFail μ) ⇒ SysAction → μ ()
 sendSys sa = do
   (Log _   env _   _   _) ← askLog
   liftIO $ atomically $ writeQueue (envEventQ env) $ EventSys sa
+-- | sends a new settings change to the event queue
+sendSettings ∷ (MonadLog μ, MonadFail μ) ⇒ SettingsChange → μ ()
+sendSettings sa = do
+  (Log _   env _   _   _) ← askLog
+  liftIO $ atomically $ writeQueue (envEventQ env) $ EventSettings sa
 -- | sends a load command over the load queue
 sendLoadCmd ∷ (MonadLog μ, MonadFail μ) ⇒ LoadCmd → μ ()
 sendLoadCmd lc = do

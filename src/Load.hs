@@ -18,7 +18,8 @@ import Load.Data
     ( DSStatus(..),
       DrawState(..),
       LoadCmd(..),
-      LoadResult(..) )
+      LoadResult(..),
+      WinsState(..) )
 import Luau.Data ( Window(..), Page(..) )
 import Luau.Window ( addPageToWin, addElemToPageInWin
                    , switchWin, resizeWins, currentWin )
@@ -107,6 +108,10 @@ processCommands win ds = do
             log' (LogDebug n) str
             processCommands win ds''
               where ds'' = ds' { dsStatus = DSSNULL }
+          DSSLoadScreen → do
+            log' (LogDebug 1) "load"
+            processCommands win ds''
+              where ds'' = ds' { dsStatus = DSSNULL }
           DSSNULL → processCommands win ds'
         ResError str → do
           log' LogError $ "load command error: " ⧺ str
@@ -186,8 +191,11 @@ processCommand glfwwin ds cmd = case cmd of
     return $ ResDrawState ds'
   LoadCmdSwitchWin win page → do
     log' (LogDebug 3) "LoadCmdSwitchWin"
-    let ds'  = ds { dsWinsState = ((win,lastwin),(page,lastpage)) }
-        ((lastwin,_),(lastpage,_)) = dsWinsState ds
+    let ds' = ds { dsWinsState = ws { thisWin  = win
+                                    , lastWin  = thisWin ws
+                                    , thisPage = page
+                                    , lastPage = thisPage ws } }
+        ws  = dsWinsState ds
     --    buffSizes = case (findWin win (dsWins ds)) of
     --                  Nothing → []
     --                  Just w  → winBuffs w

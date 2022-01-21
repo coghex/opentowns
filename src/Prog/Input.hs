@@ -158,6 +158,7 @@ processLoadInput env win inpSt keymap inp = case inp of
         if lookupKey keymap (findKey k) ≡ KFReturn
           then do
             atomically $ writeQueue (envLoadQ env) $ LoadCmdDS $ DSCClearPopup $ PopupSavename str
+            atomically $ writeQueue (envLoadQ env) $ LoadCmdDS $ DSCSavename str
             return $ ResInpState inpSt { inpCap = CapNULL }
           else do
             sc ← GLFW.getKeyScancode k

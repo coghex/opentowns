@@ -41,8 +41,11 @@ data DrawState = DrawState
   , dsFPS       ∷ FPS
   -- | windows are abstract seperate sets of verticies
   , dsWins      ∷ [Window]
-  -- | current and last window are saved, along with current and last page
-  , dsWinsState ∷ ((String,String),(String,String))
+  -- | current and last window are saved,
+  --   along with current and last page
+  --   and a loading screen state
+  --, dsWinsState ∷ ((String,String),(String,String))
+  , dsWinsState ∷ WinsState
   -- | popups are abstract verticies that are seperate from windows
   , dsPopup     ∷ [Popup]
   -- | the shell is completely seperate from all windowing
@@ -67,6 +70,7 @@ data DSStatus = DSSLogDebug Int String
               | DSSLoadDyns
  --             | DSSLoadCap Bool
  --             | DSSSwitchWin String
+              | DSSLoadScreen
               | DSSExit
               | DSSNULL deriving (Show, Eq)
 
@@ -77,6 +81,7 @@ data DrawStateCmd = DSCToggleButts [Button] Bool
                   | DSCUpdatePopup PopupType
                   | DSCClearPopup PopupType
                   | DSCUpdateKeyButton KeyFunc [Key]
+                  | DSCSavename String
                   | DSCNULL deriving (Show, Eq)
 
 -- | gtiles represent abstract tiles
@@ -113,4 +118,10 @@ data DynData = DynData { ddPos     ∷ (Float,Float)
 data DynMap = DMBuff Int Int
             | DMNULL deriving (Show, Eq)
 
-
+-- | a collection of memory for the state of the windowing
+data WinsState = WinsState { thisWin  ∷ String
+                           , lastWin  ∷ String
+                           , thisPage ∷ String
+                           , lastPage ∷ String
+                           , loading  ∷ Bool
+                           , loadStr  ∷ String } deriving (Show, Eq)

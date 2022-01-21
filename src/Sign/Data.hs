@@ -52,5 +52,6 @@ data SysAction = SysRecreate | SysReload
 
 -- | possible changes to make to the settings
 data SettingsChange = SettingsChangeKeyMap KeyMap
+                    | SettingsChangeSavename String
                     | SettingsChangeNULL deriving (Show, Eq)
 

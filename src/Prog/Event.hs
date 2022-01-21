@@ -99,5 +99,6 @@ processEvent event = case event of
   --(EventGLFW cmd) → processGLFWCommand cmd
   (EventSettings cmd) → processSettingsChange cmd
 
+-- TODO: move this into its own folder and implement settings
 processSettingsChange ∷ SettingsChange → Prog ε σ ()
 processSettingsChange change = logInfo $ show change

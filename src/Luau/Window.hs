@@ -7,14 +7,15 @@ module Luau.Window where
 import Prelude()
 import UPrelude
 import Elem.Data ( WinElem(..) )
+import Load.Data ( WinsState(..) )
 import Luau.Data ( Window(..), Page(..) )
 
 
 -- | returns maybe the head window
-currentWin ∷ [Window] → ((String,String),(String,String)) → Maybe Window
-currentWin wins ((current,_),_)
+currentWin ∷ [Window] → WinsState → Maybe Window
+currentWin wins ws
   | length wins ≤ 0 = Nothing
-  | otherwise       = findWin current wins
+  | otherwise       = findWin (thisWin ws) wins
 
 -- | search wins by name
 findWin ∷ String → [Window] → Maybe Window
