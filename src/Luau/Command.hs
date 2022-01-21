@@ -216,12 +216,16 @@ hsNewElem env name pname el = case head $ splitOn ":" el of
     Lua.liftIO $ atomically $ writeQueue loadQ
       $ LoadCmdNewElem name pname e
   "worldMap" → do
+    args         ← vtail $ splitOn ":" el
+    tailargs     ← vtail args
+    let w'        = readMaybe (head args)     ∷ Maybe Int
+        h'        = readMaybe (head tailargs) ∷ Maybe Int
+        msettings = MapSettings NoBuried mtype $ sanitizeXY w' h'
+        e         = WinElemMap msettings tiles
+        mtype     = parseMapType $ last $ splitOn ":" el
+        tiles     = MapTiles (0,0) [[]]
     Lua.liftIO $ atomically $ writeQueue (envLoadQ env)
       $ LoadCmdNewElem name pname e
-        where e         = WinElemMap msettings tiles
-              msettings = MapSettings NoBuried mtype (10,10)
-              mtype     = parseMapType $ last $ splitOn ":" el
-              tiles     = MapTiles (0,0) [[]]
   unk → Lua.liftIO $ atomically $ writeQueue (envEventQ env)
     $ EventLog LogWarn $ "unknown element: " ⧺ unk
 
@@ -451,7 +455,7 @@ sanitizeText "FX-Volume"    = "Volume"
 sanitizeText str            = str
 
 -- | makes sure x,y pair strings are readable, if not, returns 0's
-sanitizeXY ∷ Maybe Double → Maybe Double → (Double,Double)
+sanitizeXY ∷ (Num α) ⇒ Maybe α → Maybe α → (α,α)
 sanitizeXY Nothing  Nothing  = (0,0)
 sanitizeXY (Just x) Nothing  = (x,0)
 sanitizeXY Nothing  (Just y) = (0,y)

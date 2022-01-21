@@ -160,7 +160,7 @@ function initMod ()
 
     local normalmap = page:new ()
     normalmap:newBit(text       (1.0,1.0,"Normal Map","0xFFFFFF"))
-    normalmap:newBit(worldMap ("normalmap"))
+    normalmap:newBit(worldMap (10,10,"normalmap"))
     normalmap:newBit(funcButton (1.0,1.5,"Do not use buried towns","0xFFFFFF", "genMapNormalNoBuried"))
     normalmap:newBit(funcButton (1.0,2.0,"Use local buried towns","0xFFFFFF", "genMapNormalLocalBuried"))
     normalmap:newBit(funcButton (1.0,2.5,"Load a buried town from...","0xFFFFFF", "genMapNormalLoadBuried"))
