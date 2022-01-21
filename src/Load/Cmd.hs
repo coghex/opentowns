@@ -4,7 +4,7 @@ module Load.Cmd where
 -- up the main loading thread.
 import Prelude()
 import UPrelude
-import Data ( Key(..), KeyFunc(..) )
+import Data ( Key(..), KeyFunc(..), LoadState(..) )
 import Elem.Data ( WinElem(..), Button(..), ButtFunc(..), ButtAction(..) )
 import Load.Data ( DrawState(..), DrawStateCmd(..)
                  , LoadCmd(..), DSStatus(..), WinsState(..) )
@@ -36,6 +36,11 @@ processDrawStateCommand ds (DSCSavename str)  = do
   sendSettings $ SettingsChangeSavename str
   return ds'
   where ds' = ds { dsStatus = DSSLoadScreen }
+processDrawStateCommand ds DSCLoadMap         = do
+  return ds'
+  where ds' = ds { dsWinsState = ws { loading = Loaded }
+                 , dsStatus    = DSSRecreate }
+        ws  = dsWinsState ds
 processDrawStateCommand ds _                  = return ds
 
 -- | updates the keys listed for a change key button

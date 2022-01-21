@@ -82,5 +82,7 @@ processCommand ∷ (MonadLog μ,MonadFail μ)
 processCommand gs cmd = case cmd of
   GameCmdStart → do
     log' LogInfo "game start"
+    liftIO $ threadDelay 5000000
+    sendLoadCmd $ LoadCmdDS DSCLoadMap
     return ResSuccess
   GameCmdNULL  → return ResNULL
