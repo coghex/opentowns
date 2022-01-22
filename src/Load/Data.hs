@@ -3,6 +3,8 @@ module Load.Data where
 -- data for the loading thread is found
 import Prelude()
 import UPrelude
+import Data.Map (Map)
+import qualified Data.Map as Map
 import Data ( Color (..), PrintArg(..), FPS(..), LoadState(..)
             , Shell(..), Popup(..), PopupType(..), KeyFunc(..)
             , Key(..), MapType(..), MapTiles(..), MapSettings(..) )
@@ -20,7 +22,7 @@ data LoadCmd = LoadCmdPrint !PrintArg
              | LoadCmdVerts
              | LoadCmdDyns
              | LoadCmdInitBuff ![Tile]
-             | LoadCmdNewBuff !Int !Int
+             | LoadCmdNewBuff !BuffIndex !Int
              | LoadCmdNewWin !Window
              | LoadCmdNewPage !String !Page
              | LoadCmdNewElem !String !String !WinElem
@@ -41,7 +43,7 @@ data DrawState = DrawState
   , dsTiles     ∷ [Tile]
   -- | each buffer holds a collection of dynamic data
   --   to be combined and converted to verticies
-  , dsBuff      ∷ [Dyns]
+  , dsBuff      ∷ Buff
   -- | frames per seconds has multiple values for PID-style corrections
   , dsFPS       ∷ FPS
   -- | windows are abstract seperate sets of verticies
@@ -121,8 +123,21 @@ data DynData = DynData { ddPos     ∷ (Float,Float)
 -- | mapping of buffer to tiles, this could be used
 --   to hold all different kinds of things at the lowest
 --   level but right now its just for generic buffers
-data DynMap = DMBuff Int Int
+data DynMap = DMBuff BuffIndex Int
             | DMNULL deriving (Show, Eq)
+
+-- synonym
+newtype Buff = Buff (Map BuffIndex Dyns)
+
+-- | buffers used to be indexed by int, now an ADT
+data BuffIndex = BuffLoadScreen
+               | BuffButt
+               | BuffText
+               | BuffPopup
+               | BuffPUText
+               | BuffMap
+               | BuffLink
+               | BuffNULL deriving (Show, Ord, Eq)
 
 -- | a collection of memory for the state of the windowing
 data WinsState = WinsState { thisWin  ∷ String

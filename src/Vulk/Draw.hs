@@ -8,7 +8,7 @@ import UPrelude
 import Data.List.Split (splitOn)
 import Data ( Color(..) )
 import Elem ( loadWindow )
-import Load.Data ( DrawState(..), Tile(..), DynMap(..) )
+import Load.Data ( DrawState(..), Tile(..), DynMap(..), BuffIndex(..) )
 import Prog.Buff ( makeBufferTiles )
 import Vulk.Font
     ( indexTTFData, GlyphMetrics(GlyphMetrics), TTFData(TTFData) )
@@ -28,16 +28,16 @@ loadTiles ds winSize ttfdat
           Nothing  → []
         nDefTex    = 0 -- dsNDefTex ds
         (w,h)      = winSize
-        linkbuff   = makeBufferTiles 0 64   True (32,32)
-        buttbuff   = makeBufferTiles 1 64   True (32,32)
-        textbuff   = makeBufferTiles 2 512  True (1,1)
-        popupbuff  = makeBufferTiles 3 64   True (32,32)
-        putextbuff = makeBufferTiles 4 256  True (1,1)
-        mapbuff    = makeBufferTiles 5 256  True (16,16)
-        loadbuff   = makeBufferTiles 6 32   True (1,1)
+        linkbuff   = makeBufferTiles BuffLink       64   True (32,32)
+        buttbuff   = makeBufferTiles BuffButt       64   True (32,32)
+        textbuff   = makeBufferTiles BuffText       512  True (1,1)
+        popupbuff  = makeBufferTiles BuffPopup      64   True (32,32)
+        putextbuff = makeBufferTiles BuffPUText     256  True (1,1)
+        mapbuff    = makeBufferTiles BuffMap        256  True (16,16)
+        loadbuff   = makeBufferTiles BuffLoadScreen 32   True (1,1)
 
 -- | this is an empty list n long for a texture b, what i use for buff
-makeTileBuff ∷ Int → Int → [Tile]
+makeTileBuff ∷ BuffIndex → Int → [Tile]
 makeTileBuff b n
   | n ≡ 0     = []
   | otherwise = makeTileBuff b (n - 1) ⧺ [tile]

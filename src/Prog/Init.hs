@@ -9,13 +9,15 @@ module Prog.Init
 import Prelude()
 import UPrelude
 import qualified Control.Monad.Logger.CallStack as Logger
+import Data ( Color(..) )
 import qualified Data.Map as Map
 import Data.Time.Clock.System ( getSystemTime )
 import qualified Foreign.Lua as Lua
 import GHC.Stack ( HasCallStack) -- , prettyCallStack, callStack )
 import Elem.Data ( CapType(..) )
 import Load.Data ( DSStatus(DSSNULL), DrawState(DrawState), WinsState(..)
-                 , GameState(..), GSStatus(GSSNULL) )
+                 , GameState(..), GSStatus(GSSNULL), Buff(..), Dyns(..)
+                 , BuffIndex(..), DynData(..) )
 import Data
     ( Key(..), KeyFunc(..), LoadState(..),
       KeyMap(..), Difficulty(..),
@@ -129,12 +131,26 @@ initSettings = return $ Settings initKeyMap True 100 True 100 True
 
 -- | creates a drawstate with empty values
 initDrawState ∷ DrawState
-initDrawState = DrawState DSSNULL [] [] (FPS 60.0 60 True)
+initDrawState = DrawState DSSNULL [] initBuff (FPS 60.0 60 True)
   [] initWinsState [] initShell Nothing
 
 -- | creates a shell with empty values
 initShell ∷ Shell
 initShell = Shell "$> " Nothing 1 "" "" "" "" False (-1) []
+
+-- | creates a basic buff with the default buffers
+initBuff ∷ Buff
+initBuff = Buff $ Map.fromList [(BuffLink      ,initDyns 64)
+                               ,(BuffButt      ,initDyns 64)
+                               ,(BuffText      ,initDyns 512)
+                               ,(BuffPopup     ,initDyns 64)
+                               ,(BuffPUText    ,initDyns 256)
+                               ,(BuffMap       ,initDyns 256)
+                               ,(BuffLoadScreen,initDyns 32)]
+-- | creates a dyns of empty dyndata
+initDyns ∷ Int → Dyns
+initDyns n = Dyns $ take n $ repeat
+               $ DynData (0,0) (1,1) 0 (0,0) (Color 0 0 0 0)
 
 -- | creates an empty input state
 initInpState ∷ InputState

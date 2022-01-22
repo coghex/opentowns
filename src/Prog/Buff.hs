@@ -4,6 +4,8 @@ module Prog.Buff where
 -- a buffer of invisibly dynamic tiles to manipulate
 import Prelude()
 import UPrelude
+import Data.Map (Map)
+import qualified Data.Map as Map
 import Data ( Color(..), Difficulty(..), KeyFunc(..), Key(..)
             , Popup(..), PopupType(..), LoadState(..) )
 import Elem.Data
@@ -11,8 +13,8 @@ import Elem.World ( genWorldDyns )
 import Load.Data
     ( DrawState(..),
       DynData(DynData, ddTex),
-      DynMap(DMNULL, DMBuff),
-      Dyns(..),
+      DynMap(DMNULL, DMBuff), Buff(..),
+      Dyns(..), BuffIndex(..),
       WinsState(..),
       Tile(DTile, GTile) )
 import Luau.Data ( Window(..), Page(..) )
@@ -27,7 +29,7 @@ initBuff (n:ns) = dyns : initBuff ns
 
 -- | b is the buffer index, n is the buffer
 --   size, move is movability, atl is the atlas size
-makeBufferTiles ∷ Int → Int → Bool → (Int,Int) → [Tile]
+makeBufferTiles ∷ BuffIndex → Int → Bool → (Int,Int) → [Tile]
 makeBufferTiles b n move atl
   | n ≡ 0     = []
   | otherwise = makeBufferTiles b (n - 1) move atl ⧺ [tile]
@@ -41,15 +43,16 @@ loadDynData ∷ DrawState → [Tile] → [DynData]
 loadDynData _  []            = []
 loadDynData ds (GTile {}:ts) = [] ⧺ loadDynData ds ts
 loadDynData ds ((DTile (DMBuff b n) _ _ _ _ _ _):ts)
-  = [buff !! n] ⧺ loadDynData ds ts
-    where Dyns buff = dsBuff ds !! b
+  = [dyns !! n] ⧺ loadDynData ds ts
+    where Dyns dyns = buff Map.! b
+          Buff buff = dsBuff ds
 loadDynData ds ((DTile DMNULL _ _ _ _ _ _):ts)
   = [DynData (0,0) (1,1) 0 (0,0) (Color 0 0 0 0)] ⧺ loadDynData ds ts
 
 -- | generates buffs from drawstate, if loading is set will
 --   only draw a loading screen, if game hasnt been loaded yet
 --   will only draw ui elements and popups
-genDynBuffs ∷ [TTFData] → DrawState → [Dyns]
+genDynBuffs ∷ [TTFData] → DrawState → Buff
 --genDynBuffs ttfdat ds = dynsRes
 genDynBuffs ttfdat ds = case loading (dsWinsState ds) of
   Loading  → loadingScreen ttfdat str (dsBuff ds) 
@@ -79,47 +82,48 @@ genDynBuffs ttfdat ds = case loading (dsWinsState ds) of
 --        popups = dsPopup ds
 
 -- | generates a loading screen and clears all dyns
-loadingScreen ∷ [TTFData] → String → [Dyns] → [Dyns]
+loadingScreen ∷ [TTFData] → String → Buff → Buff
 loadingScreen ttfdat str dyns = dyns1
   where dyns1 = addLoadingScreen ttfdat str dyns0
         dyns0 = clearAllDyns dyns
 -- | clears all dyns in a brute force way
-clearAllDyns ∷ [Dyns] → [Dyns]
-clearAllDyns []            = []
-clearAllDyns ((Dyns d):ds) = [Dyns (clearDyns d)] ⧺ clearAllDyns ds
-clearDyns ∷ [DynData] → [DynData]
-clearDyns []     = []
-clearDyns (_:ds) = [d0] ⧺ clearDyns ds
+clearAllDyns ∷ Buff → Buff
+clearAllDyns (Buff buff) = Buff $ Map.map clearDyns buff
+clearDyns ∷ Dyns → Dyns
+clearDyns (Dyns dyns) = Dyns $ clearDDs dyns
+clearDDs ∷ [DynData] → [DynData]
+clearDDs []     = []
+clearDDs (_:ds) = [d0] ⧺ clearDDs ds
   where d0 = DynData (0,0) (0,0) 0 (0,0) (Color 0 0 0 0)
 -- | generic loading screen
-addLoadingScreen ∷ [TTFData] → String → [Dyns] → [Dyns]
-addLoadingScreen ttfdat str buffs = setTileBuff ind dyns buffs
-  where dyns = Dyns $ newD ⧺ take (buffSize - length newD)
+addLoadingScreen ∷ [TTFData] → String → Buff → Buff
+addLoadingScreen ttfdat str buffs = setTileBuff BuffLoadScreen dyns buffs
+  where dyns = Dyns $ newD ⧺ take (ddsSize - length newD)
                  (repeat (DynData (0,0) (0,0) 0 (0,0) (Color 0 0 0 0)))
         newD       = loadLogo ⧺ msg
         loadLogo
           = [DynData (0,-4) (8,2) 109 (0,0) (Color 255 255 255 255)]
         msg
           = calcTextDD (Color 255 255 255 255) ttfdat (0,-6) str
-        ind       = 6
-        Dyns buff = buffs ‼ ind
-        buffSize  = length buff
+        Dyns dds  = buff Map.! BuffLoadScreen
+        Buff buff = buffs
+        ddsSize   = length dds
 -- | clears only the loading screen
-clearLoadingScreenDyns ∷ [Dyns] → [Dyns]
-clearLoadingScreenDyns = setTileBuff 6 dyns
+clearLoadingScreenDyns ∷ Buff → Buff
+clearLoadingScreenDyns = setTileBuff BuffLoadScreen dyns
   where dyns = Dyns $ take 32
                  (repeat (DynData (0,0) (0,0) 0 (0,0) (Color 0 0 0 0)))
 
 -- | generates dynamic data for any number of popups, popups
 --   index to the center of the screen, still in openGL-style
-genPopupDyns ∷ [Popup] → [Dyns] → [Dyns]
-genPopupDyns popups buffs = setTileBuff ind dyns buffs
-  where dyns      = Dyns $ newD ⧺ take (buffSize - length newD)
+genPopupDyns ∷ [Popup] → Buff → Buff
+genPopupDyns popups buffs = setTileBuff BuffPopup dyns buffs
+  where dyns      = Dyns $ newD ⧺ take (ddsSize - length newD)
                       (repeat (DynData (0,0) (0,0) 0 (0,0) (Color 0 0 0 0)))
         newD      = genPopupDynsF popups
-        ind       = 3
-        Dyns buff = buffs ‼ ind
-        buffSize  = length buff
+        Dyns dds  = buff Map.! BuffPopup
+        Buff buff = buffs
+        ddsSize   = length dds
 genPopupDynsF ∷ [Popup] → [DynData]
 genPopupDynsF = foldr ((⧺) . genEachPopupDyns) []
 --genPopupDynsF []       = []
@@ -213,13 +217,13 @@ genericPopup x y w h = topleft ⧺ toprightbk ⧺ topright ⧺ bottomleft
         
 
 -- | generates dynamic buffer for a map
-genMapDyns ∷ [Dyns] → Window → [Dyns]
-genMapDyns buffs w = setTileBuff ind dyns buffs
-  where dyns = Dyns $ newD ⧺ take (buffSize - length newD) (repeat (DynData (0,0) (0,0) 0 (0,0) (Color 0 0 0 0)))
+genMapDyns ∷ Buff → Window → Buff
+genMapDyns buffs w = setTileBuff BuffMap dyns buffs
+  where dyns = Dyns $ newD ⧺ take (ddsSize - length newD) (repeat (DynData (0,0) (0,0) 0 (0,0) (Color 0 0 0 0)))
         newD = genPageMapDyns (winPages w)
-        ind       = 5
-        Dyns buff = buffs ‼ ind
-        buffSize  = length buff
+        Dyns dds  = buff Map.! BuffMap
+        Buff buff = buffs
+        ddsSize   = length dds
 genPageMapDyns ∷ [Page] → [DynData]
 genPageMapDyns []           = []
 genPageMapDyns (page:pages) = pe0 ⧺ genPageMapDyns pages
@@ -233,13 +237,13 @@ genElemMapDyns (we:wes) = pe0 ⧺ genElemMapDyns wes
 
 -- | generates dynamic data for the text of a popup.  in a seperate
 --   buffer since the atlas format is different
-genPUTextDyns ∷ [TTFData] → [Popup] → [Dyns] → [Dyns]
-genPUTextDyns ttfdat popups buffs = setTileBuff ind dyns buffs
-  where dyns = Dyns $ newD ⧺ take (buffSize - length newD) (repeat (DynData (0,0) (0,0) 0 (0,0) (Color 0 0 0 0)))
+genPUTextDyns ∷ [TTFData] → [Popup] → Buff → Buff
+genPUTextDyns ttfdat popups buffs = setTileBuff BuffPUText dyns buffs
+  where dyns = Dyns $ newD ⧺ take (ddsSize - length newD) (repeat (DynData (0,0) (0,0) 0 (0,0) (Color 0 0 0 0)))
         newD = genPUTextDynsF ttfdat popups
-        ind       = 4
-        Dyns buff = buffs ‼ ind
-        buffSize  = length buff
+        Dyns dds  = buff Map.! BuffPUText
+        Buff buff = buffs
+        ddsSize   = length dds
 genPUTextDynsF ∷ [TTFData] → [Popup] → [DynData]
 genPUTextDynsF _      []       = []
 genPUTextDynsF ttfdat (pu:pus) = genEachPUTextDyns ttfdat pu ⧺ genPUTextDynsF ttfdat pus
@@ -268,19 +272,19 @@ printKey ∷ Key → String
 printKey key = tail $ tail $ tail $ show key
 
 -- | set dyns in buff
-setTileBuff ∷ Int → Dyns → [Dyns] → [Dyns]
-setTileBuff n dyns buff = take n buff ⧺ [dyns] ⧺ tail (drop n buff)
+setTileBuff ∷ BuffIndex → Dyns → Buff → Buff
+setTileBuff ind dyns (Buff buff) = Buff $ Map.adjust (return dyns) ind buff
+--setTileBuff n dyns buff = take n buff ⧺ [dyns] ⧺ tail (drop n buff)
 
 -- | generate dynamic data for a button
-genButtDyns ∷ [Dyns] → Window → [Dyns]
-genButtDyns []   _   = []
-genButtDyns buffs win = setTileBuff ind dyns buffs
-  where dyns = Dyns $ newD ⧺ take (buffSize - length newD)
+genButtDyns ∷ Buff → Window → Buff
+genButtDyns buffs win = setTileBuff BuffButt dyns buffs
+  where dyns = Dyns $ newD ⧺ take (ddsSize - length newD)
                  (repeat (DynData (0,0) (0,0) 0 (0,0) (Color 0 0 0 0)))
         newD = findPageElemData (winSize win) (winCurr win) (winPages win)
-        ind       = 1
-        Dyns buff = buffs ‼ ind
-        buffSize  = length buff
+        Dyns dds  = buff Map.! BuffButt
+        Buff buff = buffs
+        ddsSize   = length dds
 
 findPageElemData ∷ (Int,Int) → String → [Page] → [DynData]
 findPageElemData _    _   []     = []
@@ -303,16 +307,15 @@ findElemData size ((WinElemButt (x,y) col (w,_) _ _ _ _ hov):wes) = case hov of
 findElemData size (_:wes) = findElemData size wes
 
 -- | turns text from a window's page into dynamic data
-genTextDyns ∷ [TTFData] → Window → [Dyns] → [Dyns]
-genTextDyns _      _   []    = []
+genTextDyns ∷ [TTFData] → Window → Buff → Buff
   -- there should be a haskell extension to allow currying here
-genTextDyns ttfdat win buffs = setTileBuff ind dyns buffs
-  where dyns = Dyns $ newD ⧺ take (buffSize - length newD)
+genTextDyns ttfdat win buffs = setTileBuff BuffText dyns buffs
+  where dyns = Dyns $ newD ⧺ take (ddsSize - length newD)
                  (repeat (DynData (0,0) (0,0) 0 (0,0) (Color 0 0 0 0)))
         newD = findPagesText ttfdat (winSize win) (winCurr win) (winPages win)
-        ind       = 2
-        Dyns buff = buffs ‼ ind
-        buffSize  = length buff
+        Dyns dds  = buff Map.! BuffText
+        Buff buff = buffs
+        ddsSize   = length dds
 
 -- | text data requires a buffer set to a 1x1 texture atlas
 findPagesText ∷ [TTFData] → (Int,Int) → String → [Page] → [DynData]
@@ -414,10 +417,10 @@ genStrDDs col ttfdat x0 (x,y) (ch:str)   = dd
 printBuff ∷ DrawState → String
 printBuff ds = printDyns $ dsBuff ds
 -- | turns dyns into chars, hlint provides a snazzy one-liner
-printDyns ∷ [Dyns] → String
+printDyns ∷ Buff → String
 --printDyns []     = []
 --printDyns (d:ds) = (printDyn d) ⧺ "\n" ⧺ printDyns ds
-printDyns = foldr (\ d -> (⧺) (printDyn d ⧺ "\n")) []
+printDyns _ = "i dont know hot to print!" --foldr (\ d -> (⧺) (printDyn d ⧺ "\n")) []
 
 -- | returs a string for Dyns
 printDyn ∷ Dyns → String

@@ -24,7 +24,7 @@ import Load.Game ( genGame )
 import Luau.Data ( Window(..), Page(..) )
 import Luau.Window ( addPageToWin, addElemToPageInWin
                    , switchWin, resizeWins, currentWin )
-import Prog.Buff ( genDynBuffs, loadDyns, initBuff )
+import Prog.Buff ( genDynBuffs, loadDyns, initBuff, setTileBuff )
 import Prog.Data ( Env(..) )
 import Sign.Data
     ( LoadData(LoadDyns, LoadVerts),
@@ -156,29 +156,26 @@ processCommand glfwwin ds cmd = case cmd of
   LoadCmdDyns → do
     log' (LogDebug 3) "LoadCmdDyns"
     ttfdat' ← readFontMapM
-    -- TODO: find out why this gets called with empty buffer sometimes
-    --       not that important wince we can just check here
-    if dsBuff ds ≡ [] then return ResSuccess
-                      --return $ ResError "empty draw state buffer"
-    else do
-      let newDyns = loadDyns ds'
-          ds'     = ds { dsBuff = genDynBuffs ttfdat ds }
-          ttfdat  = fromMaybe [] ttfdat'
-      sendLoad $ LoadDyns newDyns
-      return $ ResDrawState ds'
+    let newDyns = loadDyns ds'
+        ds'     = ds { dsBuff = genDynBuffs ttfdat ds }
+        ttfdat  = fromMaybe [] ttfdat'
+    sendLoad $ LoadDyns newDyns
+    return $ ResDrawState ds'
   LoadCmdNewBuff ind size → do
     return $ ResDrawState $ ds { dsBuff   = newBuff
                                , dsStatus = DSSRecreate }
-    where newBuff = take ind oldBuff ⧺ [newDyns] ⧺ drop (ind + 1) oldBuff
+    where newBuff = setTileBuff ind newDyns (dsBuff ds)
           oldBuff = dsBuff ds
           newDyns = Dyns $ take size $ repeat
                       $ DynData (0,0) (1,1) 0 (0,0) (Color 0 0 0 0)
-  LoadCmdInitBuff tiles → do
-    return $ ResDrawState $ ds { dsTiles = tiles
- --                              , dsBuff  = initBuff $ case currentWin (dsWins ds) of
-                               , dsBuff  = initBuff [64,64,512,64,256,256,32] }
-        --                         Nothing → []
-        --                         Just w0 → winBuffs w0 }
+  LoadCmdInitBuff _ → do
+    log' (LogDebug 3) "LoadCmdInitBuff"
+    return $ ResSuccess
+--    return $ ResDrawState $ ds { dsTiles = tiles
+-- --                              , dsBuff  = initBuff $ case currentWin (dsWins ds) of
+--                               , dsBuff  = initBuff [64,64,512,64,256,256,32] }
+--        --                         Nothing → []
+--        --                         Just w0 → winBuffs w0 }
   LoadCmdNewWin win → do
     log' (LogDebug 3) "LoadCmdNewWin"
     return $ ResDrawState ds'

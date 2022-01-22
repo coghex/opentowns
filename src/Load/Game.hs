@@ -15,7 +15,8 @@ import Data ( LoadState(..), MapSettings(..)
 import Elem.Data ( WinElem(..) )
 import Load.Data ( DrawState(..), WinsState(..), DSStatus(..)
                  , DrawStateCmd(..), LoadCmd(..), LoadResult(..)
-                 , GameState(..), GSStatus(..), GameCmd(..) )
+                 , GameState(..), GSStatus(..), GameCmd(..)
+                 , BuffIndex(..) )
 import Load.Map ( genMapData )
 import Luau.Data ( Window(..), Page(..) )
 import Prog.Data ( Env(..) )
@@ -116,7 +117,7 @@ processCommand gs cmd = case cmd of
     let gs' = gs { gsMapData = tiles }
         tiles = genMapData msettings
     liftIO $ threadDelay 1000000
-    sendLoadCmd $ LoadCmdNewBuff 5 1024
+    sendLoadCmd $ LoadCmdNewBuff BuffMap 1024
     sendLoadCmd $ LoadCmdDS $ DSCLoadMap tiles
     return $ ResGameState gs'
   GameCmdNULL  → return ResNULL
