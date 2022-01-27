@@ -4,7 +4,7 @@ module Elem where
 import Prelude()
 import UPrelude
 import Data.List.Split (splitOn)
-import Data ( Difficulty (..), Popup(..), PopupType(..) )
+import Data ( Difficulty (..), Popup(..), PopupType(..), Stack )
 import Elem.Data ( WinElem(..), ButtAction(..)
                  , Button(..), ButtFunc(..), TextButton(..)
                  , InputAct(..), LuaFunc(..), CapType(..) )
@@ -18,6 +18,7 @@ import Luau.Window ( currentWin )
 import Sign.Data ( LogLevel(..), SysAction(..) )
 import Sign.Log ( LogT(..), MonadLog(..), sendInpAct, log', sendSys, toggleFullScreen )
 import Vulk.Font ( TTFData(..) )
+import qualified Load.Stack as S
 
 -- | finds tiles from a window
 loadWindow ∷ Int → Window → [TTFData] → [Tile]
@@ -36,14 +37,14 @@ loadPageElem _      _ _    _    = [] -- calcText ttfdat color (fst pos') pos' st
 --        sizeNorm = (1,1)-- ((fromIntegral (fst size))/128.0,(fromIntegral (snd size))/128.0)
 
 -- | finds the current page, if we cant find it just use the first page
-currentPage ∷ Window → Page
-currentPage (Window _ _ pages curr _)
-  = findCurrentPage (head pages) pages curr
-findCurrentPage ∷ Page → [Page] → String → Page
-findCurrentPage p0 []     _    = p0
-findCurrentPage p0 (p:ps) curr
-  | pageTitle p ≡ curr = p
-  | otherwise          = findCurrentPage p0 ps curr
+--currentPage ∷ Window → Page
+--currentPage (Window _ _ pages curr _)
+--  = findCurrentPage (head pages) pages curr
+--findCurrentPage ∷ Page → [Page] → String → Page
+--findCurrentPage p0 []     _    = p0
+--findCurrentPage p0 (p:ps) curr
+--  | pageTitle p ≡ curr = p
+--  | otherwise          = findCurrentPage p0 ps curr
 
 -- | sets up element input mapping for buttons, calls world generation
 --   for map elem
@@ -122,15 +123,13 @@ processButton ∷ (MonadLog μ, MonadFail μ)
   ⇒ DrawState → Button → LogT μ DrawState
 processButton ds (Button (ButtFuncLink ind) _ _ win page) = do
   -- there are some reserved menu names, for simplicity
-  let new  = findNewPageInWins (dsWins ds) ind win page
+  let new  = findNewPageInWins (dsWins ds) (dsWinsState ds) ind win page
   if new ≡ "EXIT" then sendSys SysExit ≫ return ds
   else do
     sendInpAct $ InpActSetPage win new
     log' (LogDebug 1) new
     return ds'
-    where ds'  = ds { dsWins
-                        = changePageInWins (dsWins ds) ind win page
-                    , dsWinsState = newWinsState
+    where ds'  = ds { dsWinsState = newWinsState
                     , dsStatus    = DSSReload }
           newWinsState = changePageInWinsState (dsWinsState ds) (dsWins ds) ind win page
 processButton ds (Button (ButtFuncFunc ind) _ _ win page)
@@ -147,41 +146,55 @@ changePageInWinsState ∷ WinsState → [Window] → Int
   → String → String → WinsState
 changePageInWinsState oldwinsstate []     _    _   _    = oldwinsstate
 changePageInWinsState oldwinsstate (w:ws) dest win page
- | winTitle w ≡ win = oldwinsstate { thisWin  = cwin
-                                   , lastWin  = thisWin oldwinsstate
-                                   , thisPage = cpage
-                                   , lastPage = thisPage oldwinsstate }
- | otherwise        = changePageInWinsState oldwinsstate ws dest win page
-   where cpage
-           = findButtonDestByInd dest page (winLast w) (winPages w)
-        -- since we are only changing pages, we can assume the same win
-         cwin = winTitle w
--- | changes the current page in the list of windows
-changePageInWins ∷ [Window] → Int → String → String → [Window]
-changePageInWins []     _    _   _    = []
-changePageInWins (w:ws) dest win page
-  | winTitle w ≡ win = [w'] ⧺ changePageInWins ws dest win page
-  | otherwise        = [w]  ⧺ changePageInWins ws dest win page
-    where w'  = changePage w new
-          new = findButtonDestByInd dest page (winLast w) (winPages w)
-changePage ∷ Window → String → Window
-changePage win page = win { 
-                            winCurr = page
-                          , winLast = winCurr win }
+  | winTitle w ≡ win = oldwinsstate
+      { winStack = S.changeStack (cwin,cpage) (winStack oldwinsstate) }
+  | otherwise        = changePageInWinsState oldwinsstate ws dest win page
+--  winTitle w ≡ win = oldwinsstate { thisWin  = cwin
+--                                   , lastWin  = thisWin oldwinsstate
+--                                   , thisPage = cpage
+--                                   , lastPage = thisPage oldwinsstate }
+     where cpage
+             = findButtonDestByInd dest page lastPage (winPages w)
+          -- since we are only changing pages, we can assume the same win
+           cwin = winTitle w
+           lastPage = case S.prev (winStack oldwinsstate) of
+                         Nothing     → "NULL"
+                         Just (_,n0) → n0
+---- | changes the current page in the list of windows
+--changePageInWins ∷ [Window] → Int → String → String → [Window]
+--changePageInWins []     _    _   _    = []
+--changePageInWins (w:ws) dest win page
+--  | winTitle w ≡ win = [w'] ⧺ changePageInWins ws dest win page
+--  | otherwise        = [w]  ⧺ changePageInWins ws dest win page
+--    where w'  = changePage w new
+--          new = findButtonDestByInd dest page (winLast w) (winPages w)
+--changePage ∷ Window → String → Window
+--changePage win page = win
+---- | changes the window state on page change
+changeWinsState ∷ WinsState → String → String → WinsState
+changeWinsState ws w p = ws { winStack  = S.changeStack (w,p) (winStack  ws) }
+
 -- | finds page referenced by button ind
-findNewPageInWins ∷ [Window] → Int → String → String → String
-findNewPageInWins [] _ _ _ = []
-findNewPageInWins (w:ws) dest win page
-  | winTitle w ≡ win = findButtonDestByInd dest page (winLast w) (winPages w)
-  | otherwise        = findNewPageInWins ws dest win page
+findNewPageInWins ∷ [Window] → WinsState → Int → String → String → String
+findNewPageInWins []     _            _    _   _ = []
+findNewPageInWins (w:ws) oldwinsstate dest win page
+  | winTitle w ≡ win = findButtonDestByInd dest page lastPage (winPages w)
+  | otherwise        = findNewPageInWins ws oldwinsstate dest win page
+    where lastPage = case S.prev (winStack oldwinsstate) of
+                         Nothing     → "NULL"
+                         Just (_,n0) → n0
 
 -- | finds win and page referenced by button ind
-findNewWin ∷ [Window] → Int → String → (String,String)
-findNewWin [] _ _ = ([],[])
-findNewWin (w:ws) dest win
+findNewWin ∷ [Window] → WinsState → Int → String → (String,String)
+findNewWin []     _         _    _   = ([],[])
+findNewWin (w:ws) winsstate dest win
   | winTitle w ≡ win = (head list, last list)
-  | otherwise        = findNewWin ws dest win
-      where list = splitOn ":" $ findButtonDestByInd dest (winCurr w) (winLast w) (winPages w)
+  | otherwise        = findNewWin ws winsstate dest win
+      where list = splitOn ":" $ findButtonDestByInd dest currPage lastPage (winPages w)
+            ((_,currPage),_) = S.popSS $ winStack winsstate 
+            lastPage = case S.prev (winStack winsstate) of
+                         Nothing     → "NULL"
+                         Just (_,n0) → n0
 
 -- this only works if names are unique, returns win or page names
 findButtonDestByInd ∷ Int → String → String → [Page] → String
@@ -260,11 +273,12 @@ execButtonLoad ds ind win _ = do
     return ds'
     where ds'     = ds { dsWinsState = newWinsState
                        , dsStatus    = DSSReload }
-          (new,p) = findNewWin (dsWins ds) ind win
-          newWinsState = ws { thisWin  = new
-                            , lastWin  = thisWin ws
-                            , thisPage = p
-                            , lastPage = thisPage ws }
+          (new,p) = findNewWin (dsWins ds) (dsWinsState ds) ind win
+          newWinsState = changeWinsState ws new p
+--          newWinsState = ws { thisWin  = new
+--                            , lastWin  = thisWin ws
+--                            , thisPage = p
+--                            , lastPage = thisPage ws }
           ws = dsWinsState ds
 
 -- | executes the text button action atttached to a button

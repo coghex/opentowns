@@ -25,6 +25,7 @@ executable opentowns
                    Load.Game
                    Load.Map
                    Load.Popup
+                   Load.Stack
                    Luau
                    Luau.Command
                    Luau.Data

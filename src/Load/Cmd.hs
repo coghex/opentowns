@@ -9,6 +9,7 @@ import Elem.Data ( WinElem(..), Button(..), ButtFunc(..), ButtAction(..) )
 import Load.Data ( DrawState(..), DrawStateCmd(..)
                  , LoadCmd(..), DSStatus(..), WinsState(..) )
 import Load.Popup ( findAndClearPopup, findAndUpdatePopup )
+import qualified Load.Stack as S
 import Luau.Command ( unsanitizeKeyFunc, unsanitizeKeys )
 import Luau.Data ( Window(..), Page(..) )
 import Sign.Log ( MonadLog(..), LogT(..), sendLoadCmd, sendSettings )
@@ -69,7 +70,9 @@ updateKeyButton (w:ws) winsSt kf ks
   | otherwise            = [w]  ⧺ updateKeyButton ws winsSt kf ks
     where w'      = w { winPages
                      = updateKeyButtonInWin (winPages w) kf ks }
-          current = thisWin winsSt
+          current = case S.pop (winStack winsSt) of
+                      Nothing         → "NULL"
+                      Just ((n0,_),_) → n0
 updateKeyButtonInWin ∷ [Page] → KeyFunc → [Key] → [Page]
 updateKeyButtonInWin []     _  _  = []
 updateKeyButtonInWin (p:ps) kf ks = [p'] ⧺ updateKeyButtonInWin ps kf ks

@@ -7,8 +7,6 @@ import Elem.Data ( WinElem(..) )
 data Window = Window { winTitle  ∷ String
                      , winSize   ∷ (Int,Int)
                      , winPages  ∷ [Page]
-                     , winCurr   ∷ String
-                     , winLast   ∷ String
                      } deriving (Show, Eq)
 
 -- | each window contains pages, each page contains winElems

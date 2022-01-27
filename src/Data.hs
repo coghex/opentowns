@@ -6,6 +6,9 @@ import Prelude()
 import Data.Map (Map)
 import UPrelude
 
+-- | stack is a simple stack with pop/stash
+type Stack α = [α]
+
 -- | generic 0-255 rgba structure
 data Color = Color Int Int Int Int deriving (Show, Eq)
 

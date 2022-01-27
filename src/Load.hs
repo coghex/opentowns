@@ -11,7 +11,7 @@ import Prelude()
 import UPrelude
 import Data ( PrintArg(PrintNULL), LoadState(..), Color(..) )
 import Data.Maybe ( fromMaybe )
-import Elem ( initElem, processButton, lengthAllElems )
+import Elem ( initElem, processButton, lengthAllElems, changeWinsState )
 import Elem.Data ( InputAct(..) )
 import Load.Cmd
 import Load.Data
@@ -204,10 +204,11 @@ processCommand glfwwin ds cmd = case cmd of
     return $ ResDrawState ds'
   LoadCmdSwitchWin win page → do
     log' (LogDebug 3) "LoadCmdSwitchWin"
-    let ds' = ds { dsWinsState = ws { thisWin  = win
-                                    , lastWin  = thisWin ws
-                                    , thisPage = page
-                                    , lastPage = thisPage ws } }
+    let ds' = ds { dsWinsState = changeWinsState ws win page }
+--    let ds' = ds { dsWinsState = ws { thisWin  = win
+--                                    , lastWin  = thisWin ws
+--                                    , thisPage = page
+--                                    , lastPage = thisPage ws } }
         ws  = dsWinsState ds
     --    buffSizes = case (findWin win (dsWins ds)) of
     --                  Nothing → []
@@ -225,11 +226,11 @@ processCommand glfwwin ds cmd = case cmd of
     ds' ← genGame ds
     return $ ResDrawState ds'
   LoadCmdTest → do
-    --log' LogInfo $ "(curr,last) win: " ⧺ show (dsWinsState ds)
+    log' LogInfo $ "winsState: " ⧺ show (dsWinsState ds)
     --log' LogInfo $ "popups: " ⧺ show (dsPopup ds)
-    case currentWin (dsWins ds) (dsWinsState ds) of
-      Nothing → log' LogInfo "no current window"
-      Just w0 → log' LogInfo $ "elems: " ⧺ show (winPages w0)
+    --case currentWin (dsWins ds) (dsWinsState ds) of
+    --  Nothing → log' LogInfo "no current window"
+    --  Just w0 → log' LogInfo $ "elems: " ⧺ show (winPages w0)
     return ResSuccess
   LoadCmdTest2 → do
     sendInpAct InpActTest

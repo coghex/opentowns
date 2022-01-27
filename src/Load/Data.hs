@@ -6,7 +6,7 @@ import UPrelude
 import Data.Map (Map)
 import qualified Data.Map as Map
 import Data ( Color (..), PrintArg(..), FPS(..), LoadState(..)
-            , Shell(..), Popup(..), PopupType(..), KeyFunc(..)
+            , Shell(..), Popup(..), PopupType(..), KeyFunc(..), Stack(..)
             , Key(..), MapType(..), MapTiles(..), MapSettings(..) )
 import Elem.Data ( WinElem(..), Button(..), InputAct(..) )
 import Luau.Data ( Window(..), Page(..) )
@@ -140,12 +140,9 @@ data BuffIndex = BuffLoadScreen
                | BuffNULL deriving (Show, Ord, Eq)
 
 -- | a collection of memory for the state of the windowing
-data WinsState = WinsState { thisWin  ∷ String
-                           , lastWin  ∷ String
-                           , thisPage ∷ String
-                           , lastPage ∷ String
-                           , loading  ∷ LoadState
-                           , loadStr  ∷ String } deriving (Show, Eq)
+data WinsState = WinsState { winStack  ∷ Stack (String,String)
+                           , loading   ∷ LoadState
+                           , loadStr   ∷ String } deriving (Show, Eq)
 
 -- | state of the game thread
 data GameState = GameState { gsStatus  ∷ GSStatus

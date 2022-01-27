@@ -19,6 +19,7 @@ import Load.Data
       Tile(DTile, GTile) )
 import Luau.Data ( Window(..), Page(..) )
 import Luau.Window (currentWin)
+import qualified Load.Stack as S
 import Vulk.Font ( TTFData(..), GlyphMetrics(..), indexTTFData )
 
 -- | buffer dyns initiated with size n, index b
@@ -59,16 +60,19 @@ genDynBuffs ttfdat ds = case loading (dsWinsState ds) of
   Unloaded → dynsRes0
   Loaded   → dynsRes
   where dyns0   = dsBuff ds
-        str     = loadStr $ dsWinsState ds
+        ws      = dsWinsState ds
+        str     = loadStr ws
         dynsRes0 = case currentWin (dsWins ds) (dsWinsState ds) of
-          Nothing → dyns0
+          Nothing → dynserr
+            where dynserr = genErrDyns ttfdat dyns0
           Just w  → dyns4
             where dyns4 = genPUTextDyns ttfdat (dsPopup ds) dyns3
                   dyns3 = genPopupDyns (dsPopup ds) dyns2
-                  dyns2 = genButtDyns dyns1 w
-                  dyns1 = genTextDyns ttfdat w dyns0
+                  dyns2 = genButtDyns dyns1 w ws
+                  dyns1 = genTextDyns ttfdat w ws dyns0
         dynsRes = case currentWin (dsWins ds) (dsWinsState ds) of
-          Nothing → dyns0
+          Nothing → dynserr
+            where dynserr = genErrDyns ttfdat dyns0
           -- TODO: generate dynamic buffers
           Just w → dyns4
             where dyns4 = genMapDyns dyns3 w
@@ -277,14 +281,15 @@ setTileBuff ind dyns (Buff buff) = Buff $ Map.adjust (return dyns) ind buff
 --setTileBuff n dyns buff = take n buff ⧺ [dyns] ⧺ tail (drop n buff)
 
 -- | generate dynamic data for a button
-genButtDyns ∷ Buff → Window → Buff
-genButtDyns buffs win = setTileBuff BuffButt dyns buffs
+genButtDyns ∷ Buff → Window → WinsState → Buff
+genButtDyns buffs win ws = setTileBuff BuffButt dyns buffs
   where dyns = Dyns $ newD ⧺ take (ddsSize - length newD)
                  (repeat (DynData (0,0) (0,0) 0 (0,0) (Color 0 0 0 0)))
-        newD = findPageElemData (winSize win) (winCurr win) (winPages win)
+        newD = findPageElemData (winSize win) currPage (winPages win)
         Dyns dds  = buff Map.! BuffButt
         Buff buff = buffs
         ddsSize   = length dds
+        ((_,currPage),_) = S.popSS $ winStack ws
 
 findPageElemData ∷ (Int,Int) → String → [Page] → [DynData]
 findPageElemData _    _   []     = []
@@ -307,12 +312,24 @@ findElemData size ((WinElemButt (x,y) col (w,_) _ _ _ _ hov):wes) = case hov of
 findElemData size (_:wes) = findElemData size wes
 
 -- | turns text from a window's page into dynamic data
-genTextDyns ∷ [TTFData] → Window → Buff → Buff
+genTextDyns ∷ [TTFData] → Window → WinsState → Buff → Buff
   -- there should be a haskell extension to allow currying here
-genTextDyns ttfdat win buffs = setTileBuff BuffText dyns buffs
+genTextDyns ttfdat win ws buffs = setTileBuff BuffText dyns buffs
   where dyns = Dyns $ newD ⧺ take (ddsSize - length newD)
                  (repeat (DynData (0,0) (0,0) 0 (0,0) (Color 0 0 0 0)))
-        newD = findPagesText ttfdat (winSize win) (winCurr win) (winPages win)
+        newD = findPagesText ttfdat (winSize win) currPage (winPages win)
+        Dyns dds  = buff Map.! BuffText
+        Buff buff = buffs
+        ddsSize   = length dds
+        ((_,currPage),_) = S.popSS $ winStack ws
+
+-- | some error text as a window
+genErrDyns ∷ [TTFData] → Buff → Buff
+genErrDyns ttfdat buffs = setTileBuff BuffText dyns buffs
+  where dyns = Dyns $ newD ⧺ take (ddsSize - length newD)
+                 (repeat (DynData (0,0) (0,0) 0 (0,0) (Color 0 0 0 0)))
+        newD  = calcTextDD (Color 255 255 255 255) ttfdat pos' "blop"
+        pos'  = (0,0)
         Dyns dds  = buff Map.! BuffText
         Buff buff = buffs
         ddsSize   = length dds

@@ -61,7 +61,7 @@ hsNewWindow env name = do
   let loadQ = envLoadQ env
   Lua.liftIO $ atomically $ writeQueue loadQ $ LoadCmdNewWin win
   -- TODO: unhardcode the window size
-  where win = Window name (1280,720) [] "NULL" "NULL"
+  where win = Window name (1280,720) []
 
 -- | add a new page to the draw state
 hsNewPage ∷ Env → String → String → Lua.Lua()

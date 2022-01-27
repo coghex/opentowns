@@ -6,16 +6,20 @@ module Luau.Window where
 -- functions to help manipulate windows
 import Prelude()
 import UPrelude
+import Data ( Stack )
 import Elem.Data ( WinElem(..) )
 import Load.Data ( WinsState(..) )
 import Luau.Data ( Window(..), Page(..) )
+import qualified Load.Stack as S
 
 
 -- | returns maybe the head window
 currentWin ∷ [Window] → WinsState → Maybe Window
 currentWin wins ws
   | length wins ≤ 0 = Nothing
-  | otherwise       = findWin (thisWin ws) wins
+  | otherwise       = case S.pop (winStack ws) of
+    Nothing     → Nothing
+    Just ((n0,_),_) → findWin n0 wins
 
 -- | search wins by name
 findWin ∷ String → [Window] → Maybe Window
@@ -26,11 +30,9 @@ findWin name (win:wins)
 
 -- | switchs to the specified window
 switchWin ∷ String → [Window] → [Window]
-switchWin name wins = [win1] ⧺ olds
+switchWin name wins = [win0] ⧺ olds
   where olds = filter (\w → winTitle w ≠ name) wins
         win0 = head $ filter (\w → winTitle w ≠ name) wins
-        win1 = win0 { winCurr = name
-                    , winLast = winTitle $ head olds }
 
 -- | adds a page to a window
 addPageToWin ∷ String → Page → [Window] → [Window]
@@ -46,10 +48,7 @@ addElemToPageInWin _   _    _    []     = []
 addElemToPageInWin win page el (w:ws)
   | win ≡ winTitle w = [w'] ⧺ addElemToPageInWin win page el ws
   | otherwise        = [w]  ⧺ addElemToPageInWin win page el ws
-    where w'    = w { winPages = pages
-    -- the first page added will become the current page
-                    , winCurr  = if winCurr w ≡ "NULL" then page
-                                 else winCurr w }
+    where w'    = w { winPages = pages }
           pages = addElemToPage page el (winPages w)
 
 -- | adds an elem into a page
