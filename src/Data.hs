@@ -57,10 +57,15 @@ data BuriedStatus = NoBuried | LocalBuried
                   | LoadBuried String deriving (Show, Eq)
 
 -- | map data is held as an array with corresponding size
-data MapTiles = MapTiles (Int,Int) [[[MapTile]]] deriving (Show, Eq)
+data MapTiles = MapTiles (Int,Int) (Space MapTile) deriving (Show, Eq)
 
 -- | a map tile contains the tile number and index state
 data MapTile = MapTile Int Int deriving (Show, Eq)
+
+-- | collections of map tiles are classified in data
+type Space α = [Plane α]
+type Plane α = [Row α]
+type Row α = [α]
 
 -- TODO: move this to a better place
 -- | lua shell executes commands in global state

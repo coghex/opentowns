@@ -13,11 +13,12 @@ import Data.Time.Clock ( getCurrentTime, diffUTCTime )
 import Data ( LoadState(..), MapSettings(..)
             , BuriedStatus(..), MapType(..) )
 import Elem.Data ( WinElem(..) )
+import Elem.World ( genMapTiles )
 import Load.Data ( DrawState(..), WinsState(..), DSStatus(..)
                  , DrawStateCmd(..), LoadCmd(..), LoadResult(..)
                  , GameState(..), GSStatus(..), GameCmd(..)
                  , BuffIndex(..) )
-import Load.Map ( genMapData )
+--import Load.Map ( genMapData )
 import Luau.Data ( Window(..), Page(..) )
 import Prog.Data ( Env(..) )
 import Prog.Init ( initGameState )
@@ -115,8 +116,8 @@ processCommand gs cmd = case cmd of
   GameCmdStart msettings → do
     log' LogInfo "game start"
     let gs' = gs { gsMapData = tiles }
-        tiles = genMapData msettings
-    liftIO $ threadDelay 1000000
+        tiles = genMapTiles msettings
+    liftIO $ threadDelay 100000
     sendLoadCmd $ LoadCmdNewBuff BuffMap 1024
     sendLoadCmd $ LoadCmdDS $ DSCLoadMap tiles
     return $ ResGameState gs'
