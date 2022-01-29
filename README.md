@@ -7,7 +7,7 @@ there are some differences between this and the original towns:
 * towns was originally written in an ancient cuneiform known as
 "java" and as such has many bugs, poor performance, and quirks. instead
 all scripting is done in lua and all engine code is haskell. any xml
-files are instanty converted to json
+files are instanty converted to json on startup
 * the font is no longer an obsolete windows bitmap format now its
 the cantarell ttf from the google website and the actual hinting from
 the actual font is used, so it wont look the same.
@@ -81,9 +81,10 @@ the code structure is devided up into many parts
 arbitrarily named:
 
 * vulk - the graphics engine itself.
-* prog - the continuation monad that
-provides mutable state.
+* prog - the continuation monad and main thread functionality
 * luau - the lua interpreter and code
 to generate game objects from the lua scripts.
 * sign - a collection of threading functions to
 pass data around between the various components.
+* load - a thread that calculates verticies and dynamic data
+* elem - code for abstract window elements

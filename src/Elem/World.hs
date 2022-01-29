@@ -13,7 +13,7 @@ genWorldDyns ∷ WinElem → [DynData]
 genWorldDyns (WinElemMap mtype mtiles) = genTileDyns mtiles
 genWorldDyns _ = []
 genTileDyns ∷ MapTiles → [DynData]
-genTileDyns (MapTiles size tiles) = flatten $ map (genTileDynsZ size) $ zip tiles' [0..]
+genTileDyns (MapTiles size tiles) = flatten $ map (genTileDynsZ size) $ zip tiles [0..]
   where tiles' = trimTiles tiles
 genTileDynsZ ∷ (Int,Int) → ([[MapTile]],Int) → [DynData]
 genTileDynsZ size (zlvl,l) = flatten $ map (genTileDynsRow size l) $ zip zlvl [0..]
@@ -70,11 +70,13 @@ indexTerrain 2 = (14,0)
 indexTerrain _ = (0,0)
 
 genMapTiles ∷ MapSettings → MapTiles
-genMapTiles (MapSettings _ MapNormal _) = MapTiles (10,10) [t2,tiles 1 1, testlevel]
+genMapTiles (MapSettings _ MapNormal _) = MapTiles (10,10) [testlevel,tiles 1 1, t2]
   where tiles i c = take 10 $ repeat $ take 10 $ repeat $ MapTile i c
-        testbuff  = take 9 $ repeat $ take 10 $ repeat $ MapTile 0 0
-        testrow   = take 9 $ repeat $ MapTile 0 0
+        testbuff  = take 9  $ repeat $ take 10 $ repeat $ MapTile 0 0
+        testrow   = take 9  $ repeat $ MapTile 0 0
         testspot  = MapTile 2 2
         testlevel = (testspot : testrow) : testbuff
-        t2        = testlevel
+        t2        = t2buff ⧺ [t2row,t2row]
+        t2row     = take 10 $ repeat $ MapTile 2 2
+        t2buff    = take 8  $ repeat $ take 10 $ repeat $ MapTile 0 0
 genMapTiles _ = MapTiles (0,0) [[[]]]
