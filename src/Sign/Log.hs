@@ -1,4 +1,4 @@
-{-# LANGUAGE OverloadedStrings, FlexibleInstances, UndecidableInstances, MultiParamTypeClasses, GeneralizedNewtypeDeriving, ConstraintKinds, FlexibleContexts, MonoLocalBinds, CPP, ImplicitParams #-}
+{-# LANGUAGE OverloadedStrings, FlexibleInstances, UndecidableInstances, MultiParamTypeClasses, Strict, GeneralizedNewtypeDeriving, ConstraintKinds, FlexibleContexts, MonoLocalBinds, CPP, ImplicitParams #-}
 -- | logging functions for threads
 module Sign.Log where
 -- we defines functions to let us pass callstacks to logger

@@ -65,5 +65,5 @@ genMapTiles (MapSettings _ MapNormal _) = MapTiles (10,10) [testlevel,tiles 1 1,
         testlevel = (testspot : testrow) : testbuff
         t2        = t2buff ⧺ [t2row,t2row,t2row,t2row]
         t2row     = take 10 $ repeat $ MapTile 2 2
-        t2buff    = take 6  $ repeat $ take 10 $ repeat $ MapTile 2 2
+        t2buff    = take 6  $ repeat $ take 10 $ repeat $ MapTile 0 0
 genMapTiles _ = MapTiles (0,0) [[[]]]

@@ -90,6 +90,8 @@ data DrawStateCmd = DSCToggleButts [Button] Bool
                   | DSCUpdateKeyButton KeyFunc [Key]
                   | DSCSavename String
                   | DSCLoadMap MapTiles
+                  | DSCLoading String
+                  | DSCLoadReady
                   | DSCNULL deriving (Show, Eq)
 
 -- | gtiles represent abstract tiles
@@ -141,8 +143,7 @@ data BuffIndex = BuffLoadScreen
 
 -- | a collection of memory for the state of the windowing
 data WinsState = WinsState { winStack  ∷ Stack (String,String)
-                           , loading   ∷ LoadState
-                           , loadStr   ∷ String } deriving (Show, Eq)
+                           , loading   ∷ LoadState } deriving (Show, Eq)
 
 -- | state of the game thread
 data GameState = GameState { gsStatus  ∷ GSStatus
@@ -153,5 +154,6 @@ data GSStatus = GSSLogDebug Int String
               | GSSNULL deriving (Show, Eq)
 
 -- | possible commands to the game thread
-data GameCmd = GameCmdStart MapSettings
+data GameCmd = GameCmdStart
+             | GameCmdLoad MapSettings
              | GameCmdNULL deriving (Show, Eq)

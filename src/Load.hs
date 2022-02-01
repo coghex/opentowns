@@ -17,10 +17,10 @@ import Load.Cmd
 import Load.Data
     ( DSStatus(..),
       DrawState(..), Dyns(..), DynData(..),
-      LoadCmd(..),
+      LoadCmd(..), GameCmd(..),
       LoadResult(..),
       WinsState(..) )
-import Load.Game ( genGame )
+import Load.Game ( findMapSettings )
 import Luau.Data ( Window(..), Page(..) )
 import Luau.Window ( addPageToWin, addElemToPageInWin
                    , switchWin, resizeWins, currentWin )
@@ -111,13 +111,14 @@ processCommands win ds = do
               where ds'' = ds' { dsStatus = DSSNULL }
           DSSLoadScreen → do
             sendLoadCmd LoadCmdDyns
-            sendLoadCmd LoadCmdGame
+            --sendLoadCmd LoadCmdGame
+            sendGameCmd $ GameCmdLoad ms
             processCommands win ds''
               where ds'' = ds' { dsStatus    = DSSNULL
                                , dsWinsState = ws' }
-                    ws'  = ws { loading = Loading
-                              , loadStr = "Loading..." }
+                    ws'  = ws { loading = Loading "NULL2" }
                     ws   = dsWinsState ds'
+                    ms   = findMapSettings $ dsWins ds'
           DSSNULL → processCommands win ds'
         ResGameState _ → do
           log' LogWarn "load thread cant process game result"
@@ -223,8 +224,8 @@ processCommand glfwwin ds cmd = case cmd of
     return $ ResDrawState ds'
     where ds' = ds { dsWins = resizeWins size (dsWins ds) }
   LoadCmdGame → do
-    ds' ← genGame ds
-    return $ ResDrawState ds'
+--    ds' ← genGame ds
+    return $ ResDrawState ds
   LoadCmdTest → do
     log' LogInfo $ "winsState: " ⧺ show (dsWinsState ds)
     --log' LogInfo $ "popups: " ⧺ show (dsPopup ds)

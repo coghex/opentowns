@@ -240,4 +240,4 @@ data KeyFunc = KFUp
              | KFUnknown String
              | KFNULL deriving (Show, Eq, Ord)
 -- | various states of loading for the UI
-data LoadState = Loaded | Unloaded | Loading deriving (Show, Eq)
+data LoadState = Loaded | Unloaded | Loading String deriving (Show, Eq)

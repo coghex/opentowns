@@ -1,3 +1,4 @@
+{-# StrictData #-}
 -- | functions related to loading lua into load thread, using
 --   a seperate game thread that can keep game state computationally
 --   seperated from the lua and draw threads
@@ -26,15 +27,16 @@ import Sign.Data ( LogLevel(..), TState(..) )
 import Sign.Log
 
 -- | starts the game thread
-genGame ∷ (MonadLog μ, MonadFail μ) ⇒ DrawState → LogT μ DrawState
-genGame ds = do
-  let ds'       = ds { dsWinsState = ws { loading = newLS }
-                     , dsStatus    = DSSReload }
-      ws        = dsWinsState ds
-      newLS     = Loading
-      ms        = findMapSettings $ dsWins ds
-  sendGameCmd $ GameCmdStart ms
-  return ds'
+--genGame ∷ (MonadLog μ, MonadFail μ) ⇒ DrawState → LogT μ DrawState
+--genGame ds = do
+--  let ds'       = ds { dsWinsState = ws { loading = newLS }
+--                     , dsStatus    = DSSReload }
+--      ws        = dsWinsState ds
+--      newLS     = Loading "NULL"
+--      ms        = findMapSettings $ dsWins ds
+--  sendGameCmd $ GameCmdStart ms
+--  sendGameCmd GameCmdStart
+--  return ds'
 
 -- | pulls the map settings out of a drawstate's map element
 findMapSettings ∷ [Window] → MapSettings
@@ -113,12 +115,18 @@ processCommands gs = do
 processCommand ∷ (MonadLog μ,MonadFail μ)
   ⇒ GameState → GameCmd → LogT μ LoadResult
 processCommand gs cmd = case cmd of
-  GameCmdStart msettings → do
-    log' LogInfo "game start"
+  GameCmdLoad msettings → do
+    log' LogInfo "game load"
+    sendLoadCmd $ LoadCmdDS $ DSCLoading "Loading tiles..."
     let gs' = gs { gsMapData = tiles }
         tiles = genMapTiles msettings
-    liftIO $ threadDelay 10000
-    sendLoadCmd $ LoadCmdNewBuff BuffMap 1024
-    sendLoadCmd $ LoadCmdDS $ DSCLoadMap tiles
+    liftIO $ threadDelay 100000
+    sendLoadCmd $ LoadCmdDS DSCLoadReady
     return $ ResGameState gs'
+  GameCmdStart → do
+    log' LogInfo "game start"
+    sendLoadCmd $ LoadCmdDS $ DSCLoading "Loading map"
+    sendLoadCmd $ LoadCmdNewBuff BuffMap 1024
+    sendLoadCmd $ LoadCmdDS $ DSCLoadMap $ gsMapData gs
+    return ResSuccess
   GameCmdNULL  → return ResNULL

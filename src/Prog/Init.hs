@@ -174,7 +174,7 @@ initInpState = InputState { inpStatus = ISSNULL
 
 -- | an empty winsstate
 initWinsState ∷ WinsState
-initWinsState = WinsState [] Unloaded "NULL"
+initWinsState = WinsState [] Unloaded
 
 -- | inits the state for the game thread
 initGameState ∷ GameState

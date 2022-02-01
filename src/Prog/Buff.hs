@@ -56,12 +56,11 @@ loadDynData ds ((DTile DMNULL _ _ _ _ _ _):ts)
 genDynBuffs ∷ [TTFData] → DrawState → Buff
 --genDynBuffs ttfdat ds = dynsRes
 genDynBuffs ttfdat ds = case loading (dsWinsState ds) of
-  Loading  → loadingScreen ttfdat str (dsBuff ds) 
-  Unloaded → dynsRes0
-  Loaded   → dynsRes
+  Loading s → loadingScreen ttfdat s (dsBuff ds) 
+  Unloaded  → dynsRes0
+  Loaded    → dynsRes
   where dyns0   = dsBuff ds
         ws      = dsWinsState ds
-        str     = loadStr ws
         dynsRes0 = case currentWin (dsWins ds) (dsWinsState ds) of
           Nothing → dynserr
             where dynserr = genErrDyns ttfdat dyns0

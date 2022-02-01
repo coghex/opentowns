@@ -6,13 +6,14 @@ import Prelude()
 import UPrelude
 import Data ( Key(..), KeyFunc(..), LoadState(..), MapTiles(..) )
 import Elem.Data ( WinElem(..), Button(..), ButtFunc(..), ButtAction(..) )
-import Load.Data ( DrawState(..), DrawStateCmd(..)
+import Load.Data ( DrawState(..), DrawStateCmd(..), GameCmd(..)
                  , LoadCmd(..), DSStatus(..), WinsState(..) )
 import Load.Popup ( findAndClearPopup, findAndUpdatePopup )
 import qualified Load.Stack as S
 import Luau.Command ( unsanitizeKeyFunc, unsanitizeKeys )
 import Luau.Data ( Window(..), Page(..) )
-import Sign.Log ( MonadLog(..), LogT(..), sendLoadCmd, sendSettings )
+import Sign.Log ( MonadLog(..), LogT(..), sendLoadCmd, sendSettings
+                , sendGameCmd )
 import Sign.Data ( SettingsChange(..) )
 
 -- | handles possible commands designed to change the draw state
@@ -41,8 +42,16 @@ processDrawStateCommand ds (DSCLoadMap gmap)  = do
   return ds'
   where ds' = ds { dsWinsState = ws { loading = Loaded }
                  , dsWins      = updateMap gmap (dsWins ds)
-                 , dsStatus    = DSSRecreate }
+                 , dsStatus    = DSSReload }
         ws  = dsWinsState ds
+processDrawStateCommand ds (DSCLoading status) = do
+  return ds'
+  where ds' = ds { dsWinsState = ws { loading  = Loading status }
+                                    , dsStatus = DSSReload }
+        ws  = dsWinsState ds
+processDrawStateCommand ds DSCLoadReady       = do
+  sendGameCmd GameCmdStart
+  return ds
 processDrawStateCommand ds _                  = return ds
 
 -- | updates the map in the draw state memory
