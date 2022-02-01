@@ -117,7 +117,7 @@ processCommand gs cmd = case cmd of
     log' LogInfo "game start"
     let gs' = gs { gsMapData = tiles }
         tiles = genMapTiles msettings
-    liftIO $ threadDelay 100000
+    liftIO $ threadDelay 10000
     sendLoadCmd $ LoadCmdNewBuff BuffMap 1024
     sendLoadCmd $ LoadCmdDS $ DSCLoadMap tiles
     return $ ResGameState gs'

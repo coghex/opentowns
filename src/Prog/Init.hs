@@ -145,7 +145,7 @@ initBuff = Buff $ Map.fromList [(BuffLink      ,initDyns 64)
                                ,(BuffText      ,initDyns 512)
                                ,(BuffPopup     ,initDyns 64)
                                ,(BuffPUText    ,initDyns 256)
-                               ,(BuffMap       ,initDyns 256)
+                               ,(BuffMap       ,initDyns 32)
                                ,(BuffLoadScreen,initDyns 32)]
 -- | creates a dyns of empty dyndata
 initDyns ∷ Int → Dyns

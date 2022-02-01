@@ -13,7 +13,7 @@ genWorldDyns ∷ WinElem → [DynData]
 genWorldDyns (WinElemMap mtype mtiles) = genTileDyns mtiles
 genWorldDyns _ = []
 genTileDyns ∷ MapTiles → [DynData]
-genTileDyns (MapTiles size tiles) = flatten $ map (genTileDynsZ size) $ zip tiles [0..]
+genTileDyns (MapTiles size tiles) = flatten $ map (genTileDynsZ size) $ zip tiles' [0..]
   where tiles' = trimTiles tiles
 genTileDynsZ ∷ (Int,Int) → ([[MapTile]],Int) → [DynData]
 genTileDynsZ size (zlvl,l) = flatten $ map (genTileDynsRow size l) $ zip zlvl [0..]
@@ -36,21 +36,8 @@ genTileDynsSpot (w,_) l j (MapTile t _,i) = DynData
 -- | only tiles on top and in front need rendering
 -- TODO: this is rudimentary, doesnt account for multiple levels
 trimTiles ∷ Space MapTile → Space MapTile
-trimTiles mts = reverse $ trimTilesF (length mts) (reverse mts) plane0
--- we double reverse to match z axis
-  where plane0 = take (length (head mts)) $ repeat
-                 $ take (length (head (head mts)))
-                 $ repeat $ MapTile 0 0
-trimTilesF ∷ Int → Space MapTile → Plane MapTile → Space MapTile
-trimTilesF _ []     _ = []
-trimTilesF n (m:ms) p = [m'] ⧺ trimTilesF (n - 1) ms p'
-  where p' = trimRowTiles m p
-        m' = filterRowTiles m p
--- | checks for new tiles in iteration
-trimRowTiles ∷ Plane MapTile → Plane MapTile → Plane MapTile
-trimRowTiles m p = map trimRowTilesF $ zip m p
-trimRowTilesF ∷ (Row MapTile,Row MapTile) → Row MapTile
-trimRowTilesF (m,p) = map compareRows $ zip m p
+trimTiles mts = mts
+
 compareRows ∷ (MapTile,MapTile) → MapTile
 compareRows (MapTile 0 0,MapTile a b) = MapTile a b
 compareRows (MapTile a b,MapTile 0 0) = MapTile a b
@@ -76,7 +63,7 @@ genMapTiles (MapSettings _ MapNormal _) = MapTiles (10,10) [testlevel,tiles 1 1,
         testrow   = take 9  $ repeat $ MapTile 0 0
         testspot  = MapTile 2 2
         testlevel = (testspot : testrow) : testbuff
-        t2        = t2buff ⧺ [t2row,t2row]
+        t2        = t2buff ⧺ [t2row,t2row,t2row,t2row]
         t2row     = take 10 $ repeat $ MapTile 2 2
-        t2buff    = take 8  $ repeat $ take 10 $ repeat $ MapTile 0 0
+        t2buff    = take 6  $ repeat $ take 10 $ repeat $ MapTile 2 2
 genMapTiles _ = MapTiles (0,0) [[[]]]

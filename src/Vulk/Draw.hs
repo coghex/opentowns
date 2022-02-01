@@ -7,8 +7,10 @@ import Prelude()
 import UPrelude
 import Data.List.Split (splitOn)
 import Data ( Color(..) )
+import qualified Data.Map as Map
 import Elem ( loadWindow )
-import Load.Data ( DrawState(..), Tile(..), DynMap(..), BuffIndex(..) )
+import Load.Data ( DrawState(..), Tile(..), DynMap(..)
+                 , BuffIndex(..), Buff(..), Dyns(..) )
 import Prog.Buff ( makeBufferTiles )
 import Vulk.Font
     ( indexTTFData, GlyphMetrics(GlyphMetrics), TTFData(TTFData) )
@@ -28,13 +30,37 @@ loadTiles ds winSize ttfdat
           Nothing  → []
         nDefTex    = 0 -- dsNDefTex ds
         (w,h)      = winSize
-        linkbuff   = makeBufferTiles BuffLink       64   True (32,32)
-        buttbuff   = makeBufferTiles BuffButt       64   True (32,32)
-        textbuff   = makeBufferTiles BuffText       512  True (1,1)
-        popupbuff  = makeBufferTiles BuffPopup      64   True (32,32)
-        putextbuff = makeBufferTiles BuffPUText     256  True (1,1)
-        mapbuff    = makeBufferTiles BuffMap        256  True (16,16)
-        loadbuff   = makeBufferTiles BuffLoadScreen 32   True (1,1)
+        -- TODO: move the size check into the makebuffertiles function
+        Buff buff  = dsBuff ds
+        Dyns lbds  = buff Map.! BuffLink
+        linkbuff   = makeBufferTiles BuffLink
+                       (length lbds) True (32,32)
+        Dyns bbds  = buff Map.! BuffButt
+        buttbuff   = makeBufferTiles BuffButt
+                       (length bbds) True (32,32)
+        Dyns tbds  = buff Map.! BuffButt
+        textbuff   = makeBufferTiles BuffText
+                       (length tbds) True (1,1)
+        Dyns pubds = buff Map.! BuffPopup
+        popupbuff  = makeBufferTiles BuffPopup
+                       (length pubds) True (32,32)
+        Dyns btbds = buff Map.! BuffPopup
+        putextbuff = makeBufferTiles BuffPUText
+                       (length btbds) True (1,1)
+        Dyns mbds  = buff Map.! BuffMap
+        mapbuff    = makeBufferTiles BuffMap
+                       (length mbds) True (16,16)
+        Dyns ldbds = buff Map.! BuffLoadScreen
+        loadbuff   = makeBufferTiles BuffLoadScreen
+                       (length ldbds) True (1,1)
+        
+--        linkbuff   = makeBufferTiles BuffLink       64   True (32,32)
+--        buttbuff   = makeBufferTiles BuffButt       64   True (32,32)
+--        textbuff   = makeBufferTiles BuffText       512  True (1,1)
+--        popupbuff  = makeBufferTiles BuffPopup      64   True (32,32)
+--        putextbuff = makeBufferTiles BuffPUText     256  True (1,1)
+--        mapbuff    = makeBufferTiles BuffMap        32   True (16,16)
+--        loadbuff   = makeBufferTiles BuffLoadScreen 32   True (1,1)
 
 -- | this is an empty list n long for a texture b, what i use for buff
 makeTileBuff ∷ BuffIndex → Int → [Tile]
