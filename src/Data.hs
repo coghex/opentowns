@@ -17,6 +17,27 @@ data Cardinal = North | South | West | East
               | NorthWest | NorthEast | SouthWest
               | SouthEast | CardNULL deriving (Show, Eq)
 
+-- | cards represents cardinal tiles in a 2-3d grid, with
+--   Nothing representing the edge of the grid
+data Cards α = Cards   { cNorth ∷ Maybe α
+                       , cSouth ∷ Maybe α
+                       , cEast  ∷ Maybe α
+                       , cWest  ∷ Maybe α }
+             | Cards8W { cNorth ∷ Maybe α
+                       , cSouth ∷ Maybe α
+                       , cEast  ∷ Maybe α
+                       , cWest  ∷ Maybe α
+                       , cNW    ∷ Maybe α
+                       , cNE    ∷ Maybe α
+                       , cSW    ∷ Maybe α
+                       , cSE    ∷ Maybe α }
+             | Cards3D { cNorth ∷ Maybe α
+                       , cSouth ∷ Maybe α
+                       , cEast  ∷ Maybe α
+                       , cWest  ∷ Maybe α
+                       , cAbove ∷ Maybe α
+                       , cBelow ∷ Maybe α } deriving (Show, Eq)
+
 -- | print args logInfo specific info from the lowest levels
 data PrintArg = PrintNULL deriving (Show, Eq)
 

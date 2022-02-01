@@ -120,6 +120,7 @@ processCommand gs cmd = case cmd of
     sendLoadCmd $ LoadCmdDS $ DSCLoading "Loading tiles..."
     let gs' = gs { gsMapData = tiles }
         tiles = genMapTiles msettings
+    -- TODO: fix the race condition so we dont need this
     liftIO $ threadDelay 100000
     sendLoadCmd $ LoadCmdDS DSCLoadReady
     return $ ResGameState gs'

@@ -3,8 +3,9 @@ module Elem.World where
 -- the world map is calculated here
 import Prelude()
 import UPrelude
+import Data.List ( zip7 )
 import Data ( Color(..), MapType(..), MapTiles(..), Space, Plane, Row
-            , MapTile(..), MapSettings(..) )
+            , MapTile(..), MapSettings(..), Cards(..) )
 import Elem.Data ( WinElem(..) )
 import Load.Data ( DynData(..) )
 
@@ -32,38 +33,89 @@ genTileDynsSpot (w,_) l j (MapTile t _,i) = DynData
         w'  = fromIntegral w
         l'  = fromIntegral l
 --        h'  = fromIntegral h
-
--- | only tiles on top and in front need rendering
--- TODO: this is rudimentary, doesnt account for multiple levels
-trimTiles ∷ Space MapTile → Space MapTile
-trimTiles mts = mts
-
-compareRows ∷ (MapTile,MapTile) → MapTile
-compareRows (MapTile 0 0,MapTile a b) = MapTile a b
-compareRows (MapTile a b,MapTile 0 0) = MapTile a b
-compareRows (MapTile a b,_          ) = MapTile a b
--- | modifies current plane based on if there is already a tile
-filterRowTiles ∷ Plane MapTile → Plane MapTile → Plane MapTile
-filterRowTiles m p = map filterRowTilesF $ zip m p
-filterRowTilesF ∷ (Row MapTile,Row MapTile) → Row MapTile
-filterRowTilesF (m,p) = [head m] ⧺ map filterRows (tail $ zip m p)
-filterRows ∷ (MapTile,MapTile) → MapTile
-filterRows (MapTile a b, MapTile 0 0) = MapTile a b
-filterRows (_          , _          ) = MapTile 0 0
-
 indexTerrain ∷ Int → (Int,Int)
 indexTerrain 1 = (12,0)
 indexTerrain 2 = (14,0)
 indexTerrain _ = (0,0)
 
+-- | only tiles on top and in front need rendering
+trimTiles ∷ Space MapTile → Space MapTile
+trimTiles mts = map trimPlane $ zip mts cards
+  where cards = genCards mts
+trimPlane ∷ (Plane MapTile, Plane (Cards MapTile)) → Plane MapTile
+trimPlane (p,c) = map trimRow $ zip p c
+trimRow ∷ (Row MapTile, Row (Cards MapTile)) → Row MapTile
+trimRow (r,c) = map trimSpot $ zip r c
+trimSpot ∷ (MapTile, Cards MapTile) → MapTile
+trimSpot (t,Cards3D _ Nothing _       _ _ _       ) = t
+trimSpot (t,Cards3D _ _       Nothing _ _ _       ) = t
+trimSpot (_,Cards3D _ _       _       _ _ (Just _)) = MapTile 0 0
+trimSpot (t,_)                                      = t
+
+-- | given a 3d space return a new 3d array of cardinal points
+genCards ∷ Space MapTile → Space (Cards MapTile)
+genCards mts = map genCardsPlanes $ zip7 mts mtsAbove mtsBelow
+                                             mtsNorth mtsSouth
+                                             mtsEast mtsWest
+  where blankPlane = take 10 $ repeat blankRow
+        mtsBelow   = tail mts ⧺ [blankPlane]
+        mtsAbove   = [blankPlane] ⧺ init mts
+        mtsNorth   = map nCards mts
+        nCards p   = map ncRows p
+        ncRows r   = tail r ⧺ [blankTile]
+        mtsSouth   = map sCards mts
+        sCards p   = map scRows p
+        scRows r   = [blankTile] ⧺ init r
+        mtsEast    = map eCards mts
+        eCards p   = tail p ⧺ [blankRow]
+        mtsWest    = map wCards mts
+        wCards p   = [blankRow] ⧺ init p
+        blankRow   = take 10 $ repeat blankTile
+        blankTile  = MapTile 0 0
+genCardsPlanes ∷ (Plane MapTile,Plane MapTile
+                 ,Plane MapTile,Plane MapTile
+                 ,Plane MapTile,Plane MapTile
+                 ,Plane MapTile) → Plane (Cards MapTile)
+genCardsPlanes (p,pA,pB,pN,pS,pE,pW)
+  = map genCardsRows $ zip7 p pA pB pN pS pE pW
+genCardsRows ∷ (Row MapTile,Row MapTile
+               ,Row MapTile,Row MapTile
+               ,Row MapTile,Row MapTile
+               ,Row MapTile) → Row (Cards MapTile)
+genCardsRows (r,rA,rB,rN,rS,rE,rW)
+  = map genCardsRow $ zip7 r rA rB rN rS rE rW
+genCardsRow ∷ (MapTile,MapTile,MapTile
+              ,MapTile,MapTile,MapTile
+              ,MapTile) → Cards MapTile
+genCardsRow (_,tA,tB,tN,tS,tE,tW) = Cards3D (san tN) (san tS)
+                                            (san tE) (san tW)
+                                            (san tA) (san tB)
+  where san t = case t of
+                MapTile 0 0 → Nothing
+                MapTile a b → Just $ MapTile a b
+
+-- | this is just a test set of data for now
 genMapTiles ∷ MapSettings → MapTiles
-genMapTiles (MapSettings _ MapNormal _) = MapTiles (10,10) [testlevel,tiles 1 1, t2]
+genMapTiles (MapSettings _ MapNormal _) = MapTiles (10,10) [testlevel,tiles 1 1, t2,t3,t3]
   where tiles i c = take 10 $ repeat $ take 10 $ repeat $ MapTile i c
         testbuff  = take 9  $ repeat $ take 10 $ repeat $ MapTile 0 0
         testrow   = take 9  $ repeat $ MapTile 0 0
         testspot  = MapTile 2 2
         testlevel = (testspot : testrow) : testbuff
         t2        = t2buff ⧺ [t2row,t2row,t2row,t2row]
-        t2row     = take 10 $ repeat $ MapTile 2 2
         t2buff    = take 6  $ repeat $ take 10 $ repeat $ MapTile 0 0
+        t2row     = take 10 $ repeat $ MapTile 2 2
+        t3        = t3buff ⧺ [t3row,t3row,t3row]
+        t3buff    = take 7  $ repeat $ take 10 $ repeat $ MapTile 0 0
+        t3row     = t3rowbuff ⧺ [testspot,testspot,testspot]
+        t3rowbuff = take 7  $ repeat $ MapTile 0 0
 genMapTiles _ = MapTiles (0,0) [[[]]]
+
+-- | basic printer
+printMap ∷ (Show α) ⇒ Space α → IO ()
+printMap = printMapF 0
+printMapF ∷ (Show α) ⇒ Int → Space α → IO ()
+printMapF _ []     = return ()
+printMapF n (p:ps) = do
+  print $ "z(" ⧺ show n ⧺ "):" ⧺ show p
+  printMapF (n+1) ps
