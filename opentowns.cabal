@@ -92,7 +92,7 @@ executable opentowns
                  , aeson
                  , mmorph
                  , transformers
-                 , hslua < 1.4
+                 , hslua
                  , stm
                  , mtl
                  , random

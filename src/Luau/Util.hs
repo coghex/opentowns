@@ -2,7 +2,7 @@ module Luau.Util where
 -- we have some utility funcitons that work in lua monad
 import Prelude()
 import UPrelude
-import Foreign.Lua as Lua
+import qualified HsLua as Lua
 import GHC.Stack ( HasCallStack )
 
 -- | custom head so we can have errors

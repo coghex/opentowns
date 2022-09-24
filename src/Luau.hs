@@ -7,8 +7,9 @@ import Prelude()
 import UPrelude
 import Data.List (sort)
 import Data.Maybe ( fromMaybe )
+import Data.String ( fromString )
 import Data.Time.Clock (diffUTCTime, getCurrentTime)
-import qualified Foreign.Lua as Lua
+import qualified HsLua as Lua
 import System.Directory (getDirectoryContents)
 import System.FilePath (combine)
 import Load.Data ( LoadCmd(LoadCmdDyns, LoadCmdVerts) )
@@ -36,19 +37,19 @@ luauThread env = do
   else do
     let ls = envLuaSt env
     _ ← Lua.runWith ls $ do
-      Lua.registerHaskellFunction "rawExit"         (hsExit         env)
-      Lua.registerHaskellFunction "rawNewWindow"    (hsNewWindow    env)
-      Lua.registerHaskellFunction "rawNewPage"      (hsNewPage      env)
-      Lua.registerHaskellFunction "rawNewElem"      (hsNewElem      env)
-      Lua.registerHaskellFunction "rawGoToPage"     (hsGoToPage     env)
-      Lua.registerHaskellFunction "logDebug"        (hsLogDebug     env)
-      Lua.registerHaskellFunction "logInfo"         (hsLogInfo      env)
-      Lua.registerHaskellFunction "logError"        (hsLogError     env)
-      Lua.registerHaskellFunction "recreate"        (hsRecreate     env)
-      Lua.registerHaskellFunction "reload"          (hsReload       env)
+      Lua.registerHaskellFunction (fromString "rawExit")         (hsExit         env)
+      Lua.registerHaskellFunction (fromString "rawNewWindow")    (hsNewWindow    env)
+      Lua.registerHaskellFunction (fromString "rawNewPage")      (hsNewPage      env)
+      Lua.registerHaskellFunction (fromString "rawNewElem")      (hsNewElem      env)
+      Lua.registerHaskellFunction (fromString "rawGoToPage")     (hsGoToPage     env)
+      Lua.registerHaskellFunction (fromString "logDebug")        (hsLogDebug     env)
+      Lua.registerHaskellFunction (fromString "logInfo")         (hsLogInfo      env)
+      Lua.registerHaskellFunction (fromString "logError")        (hsLogError     env)
+      Lua.registerHaskellFunction (fromString "recreate")        (hsRecreate     env)
+      Lua.registerHaskellFunction (fromString "reload")          (hsReload       env)
       Lua.openlibs
       _ ← Lua.dofile "mod/base/game.lua"
-      ret ← Lua.callFunc "initLuau" modFiles
+      ret ← Lua.invoke (fromString "initLuau") modFiles ∷ Lua.LuaE Lua.Exception Int
       return (ret∷Int)
     let loadQ = envLoadQ env
     atomically $ writeQueue (envEventQ env) $ EventSys SysRecreate
@@ -73,7 +74,7 @@ luauLoop TStart env modFiles = do
   _ ← Lua.runWith ls $ do
     Lua.openlibs
     _ ← Lua.dofile "mod/base/game.lua"
-    ret ← Lua.callFunc "runLuau" modFiles
+    ret ← Lua.invoke (fromString "runLuau") modFiles ∷ Lua.LuaE Lua.Exception Int
     return (ret∷Int)
   end ← getCurrentTime
   let diff  = diffUTCTime end start

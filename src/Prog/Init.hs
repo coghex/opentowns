@@ -12,7 +12,7 @@ import qualified Control.Monad.Logger.CallStack as Logger
 import Data ( Color(..) )
 import qualified Data.Map as Map
 import Data.Time.Clock.System ( getSystemTime )
-import qualified Foreign.Lua as Lua
+import qualified HsLua as Lua
 import GHC.Stack ( HasCallStack) -- , prettyCallStack, callStack )
 import Elem.Data ( CapType(..) )
 import Load.Data ( DSStatus(DSSNULL), DrawState(DrawState), WinsState(..)

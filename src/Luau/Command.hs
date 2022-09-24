@@ -3,7 +3,7 @@ module Luau.Command where
 -- commands for lua are defined
 import Prelude()
 import UPrelude
-import qualified Foreign.Lua as Lua
+import qualified HsLua as Lua
 import Data ( Color(..), Difficulty(..), Key(..), BuriedStatus(..)
             , KeyFunc(..), MapType(..), MapTiles(..), MapSettings(..) )
 import Data.List.Split (splitOn)

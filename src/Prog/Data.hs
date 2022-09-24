@@ -7,7 +7,7 @@ import qualified Control.Monad.Logger.CallStack as Logger
 import Data ( FPS(..), Difficulty(..)
             , Key, KeyFunc, KeyMap )
 import Data.Time.Clock.System ( SystemTime )
-import qualified Foreign.Lua as Lua
+import qualified HsLua as Lua
 import Elem.Data ( InputAct(..), InputElem(..), CapType(..) )
 import Load.Data ( LoadCmd(..), GameCmd(..), Dyns(..) )
 import Sign.Data ( Event, TState )
