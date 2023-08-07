@@ -4,7 +4,7 @@ module Elem where
 import Prelude()
 import UPrelude
 import Data.List.Split (splitOn)
-import Data ( Difficulty (..), Popup(..), PopupType(..), Stack )
+import Data ( Difficulty (..), Popup(..), PopupType(..), Stack, LoadState(..) )
 import Elem.Data ( WinElem(..), ButtAction(..)
                  , Button(..), ButtFunc(..), TextButton(..)
                  , InputAct(..), LuaFunc(..), CapType(..) )
@@ -132,6 +132,8 @@ processButton ds (Button (ButtFuncLink ind) _ _ win page) = do
     where ds'  = ds { dsWinsState = newWinsState
                     , dsStatus    = DSSReload }
           newWinsState = changePageInWinsState (dsWinsState ds) (dsWins ds) ind win page
+processButton ds (Button (ButtFuncBack ind) _ _ win page)
+  = execButtonBack ds ind win page
 processButton ds (Button (ButtFuncFunc ind) _ _ win page)
   = execButtonFunc ds ind win page
 processButton ds (Button (ButtFuncLoad ind) _ _ win page)
@@ -312,6 +314,18 @@ execButtonText ds ind win page = do
     case buttonChanges ind (dsWins ds') of
       Just ia → sendInpAct ia ≫ return ds'
       Nothing → return ds'
+
+execButtonBack ∷ (MonadLog μ, MonadFail μ) ⇒ DrawState → Int → String → String → LogT μ DrawState
+execButtonBack ds ind win page = do
+  let new  = findNewPageInWins (dsWins ds) (dsWinsState ds) ind win page
+  if new ≡ "EXIT" then sendSys SysExit ≫ return ds
+  else do
+    sendInpAct $ InpActSetPage win new
+    log' (LogDebug 1) new
+    return ds'
+    where ds'  = ds { dsWinsState = newWinsState
+                    , dsStatus    = DSSReload }
+          newWinsState = changePageInWinsState (dsWinsState ds) (dsWins ds) ind win page
 
 -- | checks for any non pure side effects that we need to change
 buttonChanges ∷ Int → [Window] → Maybe InputAct
