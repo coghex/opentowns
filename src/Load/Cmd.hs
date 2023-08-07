@@ -125,6 +125,10 @@ toggleWinElemButt b (Button (ButtFuncLink i) _ _ _ _)
   (WinElemButt pos col box adv act ind val _)
     | i ≡ ind   = WinElemButt pos col box adv act ind val b
     | otherwise = WinElemButt pos col box adv act ind val False
+toggleWinElemButt b (Button (ButtFuncBack i) _ _ _ _)
+  (WinElemButt pos col box adv act ind val _)
+    | i ≡ ind   = WinElemButt pos col box adv act ind val b
+    | otherwise = WinElemButt pos col box adv act ind val False
 toggleWinElemButt b (Button (ButtFuncFunc i) _ _ _ _)
   (WinElemButt pos col box adv act ind val _)
     | i ≡ ind   = WinElemButt pos col box adv act ind val b

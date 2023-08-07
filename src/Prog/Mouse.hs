@@ -111,6 +111,7 @@ buttInd ∷ Button → Int
 buttInd butt = buttFuncInd $ bFunc butt
 buttFuncInd ∷ ButtFunc → Int
 buttFuncInd (ButtFuncLink ind) = ind
+buttFuncInd (ButtFuncBack ind) = ind
 buttFuncInd (ButtFuncFunc ind) = ind
 buttFuncInd (ButtFuncText ind) = ind
 buttFuncInd (ButtFuncLoad ind) = ind

@@ -62,7 +62,7 @@ initElem win page
   return $ WinElemButt pos col box adv (ButtActionLink dest) ind args hov
 initElem win page
   (WinElemButt pos col box adv ButtActionBack _ args hov) ind = do
-  let butt = Button { bFunc = ButtFuncLink ind
+  let butt = Button { bFunc = ButtFuncBack ind
                     , bPos  = pos
                     , bSize = box
                     , bWin  = win
@@ -173,7 +173,27 @@ changePageInWinsState oldwinsstate (w:ws) dest win page
 ---- | changes the window state on page change
 changeWinsState ∷ WinsState → String → String → WinsState
 changeWinsState ws w p = ws { winStack  = S.changeStack (w,p) (winStack  ws) }
-
+-- | winTitle w ≡ win = oldwinsstate { thisWin  = cwin
+--                                   , lastWin  = thisWin oldwinsstate
+--                                   , thisPage = cpage
+--                                   , lastPage = thisPage oldwinsstate }
+-- | otherwise        = changePageInWinsState oldwinsstate ws dest win page
+--   where cpage
+--           = findButtonDestByInd dest page (winLast w) (winPages w)
+--        -- since we are only changing pages, we can assume the same win
+--         cwin = winTitle w
+-- | changes the current page in the list of windows
+--changePageInWins ∷ [Window] → Int → String → String → [Window]
+--changePageInWins []     _    _   _    = []
+--changePageInWins (w:ws) dest win page
+--  | winTitle w ≡ win = [w'] ⧺ changePageInWins ws dest win page
+--  | otherwise        = [w]  ⧺ changePageInWins ws dest win page
+--    where w'  = changePage w new
+--          new = findButtonDestByInd dest page (winLast w) (winPages w)
+--changePage ∷ Window → String → Window
+--changePage win page = win { 
+--                            winLast = winCurr win
+--                          , winCurr = page }
 -- | finds page referenced by button ind
 findNewPageInWins ∷ [Window] → WinsState → Int → String → String → String
 findNewPageInWins []     _            _    _   _ = []

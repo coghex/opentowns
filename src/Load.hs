@@ -23,7 +23,7 @@ import Load.Data
 import Load.Game ( findMapSettings )
 import Luau.Data ( Window(..), Page(..) )
 import Luau.Window ( addPageToWin, addElemToPageInWin
-                   , switchWin, resizeWins, currentWin )
+                   , resizeWins, currentWin )
 import Prog.Buff ( genDynBuffs, loadDyns, initBuff, setTileBuff )
 import Prog.Data ( Env(..) )
 import Sign.Data

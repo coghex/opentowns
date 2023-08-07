@@ -73,6 +73,7 @@ data ButtFunc = ButtFuncKey   Int
               | ButtFuncFunc  Int
               | ButtFuncText  Int
               | ButtFuncLoad  Int
+              | ButtFuncBack  Int
               | ButtFuncNULL deriving (Show, Eq)
 
 -- | input state related to various winelems
