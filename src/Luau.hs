@@ -49,9 +49,13 @@ luauThread env = do
       Lua.registerHaskellFunction (fromString "reload")          (hsReload       env)
       Lua.openlibs
       _ ← Lua.dofile "mod/base/game.lua"
-      ret ← Lua.invoke (fromString "initLuau") modFiles ∷ Lua.LuaE Lua.Exception Int
-      return (ret∷Int)
+      Lua.invoke (fromString "initLuau") modFiles ∷ Lua.LuaE Lua.Exception Int
     let loadQ = envLoadQ env
+    let eventQ = envEventQ env
+    atomically $ writeQueue eventQ
+      $ EventLog (LogDebug 1) "loading mod files:"
+    atomically $ writeQueue eventQ
+      $ EventLog (LogDebug 1) $ "  " ⧺ (show modFiles)
     atomically $ writeQueue (envEventQ env) $ EventSys SysRecreate
     atomically $ writeQueue loadQ LoadCmdVerts
     atomically $ writeQueue loadQ LoadCmdDyns
@@ -74,8 +78,7 @@ luauLoop TStart env modFiles = do
   _ ← Lua.runWith ls $ do
     Lua.openlibs
     _ ← Lua.dofile "mod/base/game.lua"
-    ret ← Lua.invoke (fromString "runLuau") modFiles ∷ Lua.LuaE Lua.Exception Int
-    return (ret∷Int)
+    Lua.invoke (fromString "runLuau") modFiles ∷ Lua.LuaE Lua.Exception Int
   end ← getCurrentTime
   let diff  = diffUTCTime end start
       usecs = floor (toRational diff * 1000000) ∷ Int
@@ -95,7 +98,8 @@ findModFiles path = do
   where filterOutPathJunk ∷ FilePath → Bool
         filterOutPathJunk "."  = False
         filterOutPathJunk ".." = False
-        filterOutPathJunk _    = True
+        filterOutPathJunk x    = stripname == ".lua"
+          where stripname = drop ((length x) - 4) x
         collapsePaths ∷ [String] → String
         collapsePaths [] = ""
         collapsePaths [str]      = str
