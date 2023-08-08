@@ -119,3 +119,8 @@ printMapF _ []     = return ()
 printMapF n (p:ps) = do
   print $ "z(" ⧺ show n ⧺ "):" ⧺ show p
   printMapF (n+1) ps
+showTiles ∷ (Show α) ⇒ Space α → String
+showTiles = showTilesF 0
+showTilesF ∷ (Show α) ⇒ Int → Space α → String
+showTilesF _ []     = []
+showTilesF n (p:ps) = show p ⧺ "\n" ⧺ showTilesF (n+1) ps

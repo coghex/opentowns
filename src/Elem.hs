@@ -4,11 +4,12 @@ module Elem where
 import Prelude()
 import UPrelude
 import Data.List.Split (splitOn)
-import Data ( Difficulty (..), Popup(..), PopupType(..), Stack, LoadState(..) )
-import Elem.Data ( WinElem(..), ButtAction(..)
+import Data ( Difficulty (..), Popup(..), PopupType(..), Stack, LoadState(..), Space
+            , MapTiles(..) )
+import Elem.Data ( WinElem(..), WinElemType(..), ButtAction(..)
                  , Button(..), ButtFunc(..), TextButton(..)
                  , InputAct(..), LuaFunc(..), CapType(..) )
-import Elem.World ( genMapTiles )
+import Elem.World ( genMapTiles, showTiles )
 import Load.Data ( DrawState(..), Tile(..)
                  , DSStatus(..), LoadCmd(..)
                  , WinsState(..) )
@@ -409,6 +410,41 @@ evalTextButtAction (ButtActionText tb)
 evalTextButtAction (ButtActionKey n k1 k2)
   = ButtActionKey (n+1) k1 k2
 evalTextButtAction ba = ba
+
+-- | finds a desired element in the list of wins, empty on fail
+findElems ∷ [Window] → WinElemType → [WinElem]
+findElems wins WETMap = winelem
+  where winelem = findMapElems wins
+findElems _    _      = []
+findMapElems ∷ [Window] → [WinElem]
+findMapElems []     = []
+findMapElems (w:ws) = we ⧺ findMapElems ws
+  where we = findWinMapElems w
+findWinMapElems ∷ Window → [WinElem]
+findWinMapElems (Window _ _ []) = []
+findWinMapElems (Window a b (page:pages)) = we ⧺ findWinMapElems (Window a b pages)
+  where we = findPageMapElems page
+findPageMapElems ∷ Page → [WinElem]
+findPageMapElems (Page _ []) = []
+findPageMapElems (Page a (elem:elems)) = we ⧺ findPageMapElems (Page a elems)
+  where we = case elem of
+                WinElemMap settings tiles → [WinElemMap settings tiles]
+                _                         → []
+
+-- | prints a list of elems
+printElems ∷ [WinElem] → String
+printElems []       = []
+printElems (we:wes) = string ⧺ "\n" ⧺ printElems wes
+  where string = printElem we
+printElem ∷ WinElem → String
+printElem (WinElemText pos color str) = "WinElemText: " ⧺ elemstr
+  where elemstr = show pos ⧺ ", " ⧺ show color ⧺ ", " ⧺ str
+printElem (WinElemButt pos color box adv act ind val over) = "WinElemButt: " ⧺ elemstr
+  where elemstr = show pos ⧺ ", " ⧺ show color ⧺ ", " ⧺ val
+printElem (WinElemMap _ (MapTiles _ tiles)) = "WinElemMap: " ⧺ elemstr
+  where elemstr = showTiles tiles
+printElem (WinElemNULL) = "WinElemNULL"
+
 -- | enumeration of what happens when a textButton is pressed
 findTextElem ∷ TextButton → TextButton
 findTextElem (TextMusic          b) = TextMusic          $ not b

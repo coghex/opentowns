@@ -25,6 +25,8 @@ data WinElem
   | WinElemMap MapSettings MapTiles 
   | WinElemNULL deriving (Show, Eq)
 
+data WinElemType = WETText | WETButt | WETMap | WETNULL deriving (Show, Eq)
+
 -- possible button actions and defaults
 data ButtAction = ButtActionKey Int KeyFunc [Key]
                 | ButtActionLink String

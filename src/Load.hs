@@ -11,8 +11,9 @@ import Prelude()
 import UPrelude
 import Data ( PrintArg(PrintNULL), LoadState(..), Color(..) )
 import Data.Maybe ( fromMaybe )
-import Elem ( initElem, processButton, lengthAllElems, changeWinsState )
-import Elem.Data ( InputAct(..) )
+import Elem ( initElem, processButton, lengthAllElems, changeWinsState
+            , findElems, printElems )
+import Elem.Data ( InputAct(..), WinElemType(..) )
 import Load.Cmd
 import Load.Data
     ( DSStatus(..),
@@ -227,11 +228,7 @@ processCommand glfwwin ds cmd = case cmd of
 --    ds' ← genGame ds
     return $ ResDrawState ds
   LoadCmdTest → do
-    log' LogInfo $ "winsState: " ⧺ show (dsWinsState ds)
-    --log' LogInfo $ "popups: " ⧺ show (dsPopup ds)
-    --case currentWin (dsWins ds) (dsWinsState ds) of
-    --  Nothing → log' LogInfo "no current window"
-    --  Just w0 → log' LogInfo $ "elems: " ⧺ show (winPages w0)
+    log' LogInfo $ printElems (findElems (dsWins ds) WETMap)
     return ResSuccess
   LoadCmdTest2 → do
     sendInpAct InpActTest

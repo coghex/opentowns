@@ -81,7 +81,9 @@ data BuriedStatus = NoBuried | LocalBuried
 data MapTiles = MapTiles (Int,Int) (Space MapTile) deriving (Show, Eq)
 
 -- | a map tile contains the tile number and index state
-data MapTile = MapTile Int Int deriving (Show, Eq)
+data MapTile = MapTile Int Int deriving (Eq)
+instance Show MapTile where
+  show (MapTile n s) = show n
 
 -- | collections of map tiles are classified in data
 type Space α = [Plane α]
