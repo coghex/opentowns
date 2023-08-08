@@ -15,7 +15,7 @@ genWorldDyns (WinElemMap mtype mtiles) = genTileDyns mtiles
 genWorldDyns _ = []
 genTileDyns ∷ MapTiles → [DynData]
 genTileDyns (MapTiles size tiles) = flatten $ map (genTileDynsZ size) $ zip tiles' [0..]
-  where tiles' = trimTiles tiles
+  where tiles' = trimTiles size tiles
 genTileDynsZ ∷ (Int,Int) → ([[MapTile]],Int) → [DynData]
 genTileDynsZ size (zlvl,l) = flatten $ map (genTileDynsRow size l) $ zip zlvl [0..]
 genTileDynsRow ∷ (Int,Int) → Int → ([MapTile],Int) → [DynData]
@@ -39,9 +39,9 @@ indexTerrain 2 = (14,0)
 indexTerrain _ = (0,0)
 
 -- | only tiles on top and in front need rendering
-trimTiles ∷ Space MapTile → Space MapTile
-trimTiles mts = map trimPlane $ zip mts cards
-  where cards = genCards mts
+trimTiles ∷ (Int, Int) → Space MapTile → Space MapTile
+trimTiles (x, y) mts = map trimPlane $ zip mts cards
+  where cards = genCards x y mts
 trimPlane ∷ (Plane MapTile, Plane (Cards MapTile)) → Plane MapTile
 trimPlane (p,c) = map trimRow $ zip p c
 trimRow ∷ (Row MapTile, Row (Cards MapTile)) → Row MapTile
@@ -53,11 +53,11 @@ trimSpot (_,Cards3D _ _       _       _ _ (Just _)) = MapTile 0 0
 trimSpot (t,_)                                      = t
 
 -- | given a 3d space return a new 3d array of cardinal points
-genCards ∷ Space MapTile → Space (Cards MapTile)
-genCards mts = map genCardsPlanes $ zip7 mts mtsAbove mtsBelow
+genCards ∷ Int → Int → Space MapTile → Space (Cards MapTile)
+genCards x y mts = map genCardsPlanes $ zip7 mts mtsAbove mtsBelow
                                              mtsNorth mtsSouth
                                              mtsEast mtsWest
-  where blankPlane = take 10 $ repeat blankRow
+  where blankPlane = take x $ repeat blankRow
         mtsBelow   = tail mts ⧺ [blankPlane]
         mtsAbove   = [blankPlane] ⧺ init mts
         mtsNorth   = map nCards mts
@@ -70,7 +70,7 @@ genCards mts = map genCardsPlanes $ zip7 mts mtsAbove mtsBelow
         eCards p   = tail p ⧺ [blankRow]
         mtsWest    = map wCards mts
         wCards p   = [blankRow] ⧺ init p
-        blankRow   = take 10 $ repeat blankTile
+        blankRow   = take y $ repeat blankTile
         blankTile  = MapTile 0 0
 genCardsPlanes ∷ (Plane MapTile,Plane MapTile
                  ,Plane MapTile,Plane MapTile
@@ -96,19 +96,19 @@ genCardsRow (_,tA,tB,tN,tS,tE,tW) = Cards3D (san tN) (san tS)
 
 -- | this is just a test set of data for now
 genMapTiles ∷ MapSettings → MapTiles
-genMapTiles (MapSettings _ MapNormal _) = MapTiles (10,10) [testlevel,tiles 1 1, t2,t3,t3]
-  where tiles i c = take 10 $ repeat $ take 10 $ repeat $ MapTile i c
-        testbuff  = take 9  $ repeat $ take 10 $ repeat $ MapTile 0 0
-        testrow   = take 9  $ repeat $ MapTile 0 0
-        testspot  = MapTile 2 2
-        testlevel = (testspot : testrow) : testbuff
-        t2        = t2buff ⧺ [t2row,t2row,t2row,t2row]
-        t2buff    = take 6  $ repeat $ take 10 $ repeat $ MapTile 0 0
-        t2row     = take 10 $ repeat $ MapTile 2 2
-        t3        = t3buff ⧺ [t3row,t3row,t3row]
-        t3buff    = take 7  $ repeat $ take 10 $ repeat $ MapTile 0 0
-        t3row     = t3rowbuff ⧺ [testspot,testspot,testspot]
-        t3rowbuff = take 7  $ repeat $ MapTile 0 0
+genMapTiles (MapSettings _ MapNormal _) = MapTiles (10,20) [tiles 10 20 1 1]
+  where tiles x y i c = take x $ repeat $ take y $ repeat $ MapTile i c
+        testbuff      = take 9  $ repeat $ take 10 $ repeat $ MapTile 1 0
+        testrow       = take 9  $ repeat $ MapTile 0 0
+        testspot      = MapTile 2 2
+        testlevel     = (testspot : testrow) : testbuff
+        t2            = t2buff ⧺ [t2row,t2row,t2row,t2row]
+        t2buff        = take 6  $ repeat $ take 10 $ repeat $ MapTile 0 0
+        t2row         = take 10 $ repeat $ MapTile 2 2
+        t3            = t3buff ⧺ [t3row,t3row,t3row]
+        t3buff        = take 7  $ repeat $ take 10 $ repeat $ MapTile 0 0
+        t3row         = t3rowbuff ⧺ [testspot,testspot,testspot]
+        t3rowbuff     = take 7  $ repeat $ MapTile 0 0
 genMapTiles _ = MapTiles (0,0) [[[]]]
 
 -- | basic printer
