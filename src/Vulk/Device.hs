@@ -70,12 +70,39 @@ pickPhysicalDevice vkInstance mVkSurf = do
   devs ← asListVk $ \x → runVk ∘ vkEnumeratePhysicalDevices vkInstance x
   when (null devs) $ logExcept VulkError ExVulk "zero device count"
   logDebug $ "found " ⧺ show (length devs) ⧺ " devices"
-  selectFirstSuitable devs
-  where selectFirstSuitable [] = logExcept VulkError ExVulk
+  --selectFirstSuitable devs
+  selectDiscreteFirst devs devs
+  where selectDiscreteFirst devs [] = selectFirstSuitable devs
+        selectDiscreteFirst devs (x:xs) = do
+          (mscsd, indeed) ← isDeviceDiscrete mVkSurf x
+          if indeed then pure (mscsd, x) else selectDiscreteFirst devs xs
+        selectFirstSuitable [] = logExcept VulkError ExVulk
                                    "no suitable devices..."
         selectFirstSuitable (x:xs) = do
           (mscsd, indeed) ← isDeviceSuitable mVkSurf x
           if indeed then pure (mscsd, x) else selectFirstSuitable xs
+isDeviceDiscrete ∷ Maybe VkSurfaceKHR → VkPhysicalDevice
+  → Prog ε σ (Maybe SwapchainSupportDetails, Bool)
+isDeviceDiscrete mVkSurf pdev = do
+  extsGood ← checkDeviceExtensionSupport pdev
+               [VK_KHR_SWAPCHAIN_EXTENSION_NAME]
+  (mscsd, surfGood) ← case mVkSurf of
+    Nothing → pure (Nothing, True)
+    Just vkSurf
+      | not extsGood → pure (Nothing, True)
+      | otherwise → do
+      scsd@SwapchainSupportDetails {..}
+        ← querySwapchainSupport pdev vkSurf
+      return (Just scsd, not (null formats) ∧ not (null presentModes))
+  supportedFeatures ← allocaPeek
+    $ liftIO ∘ vkGetPhysicalDeviceFeatures pdev
+  props ← allocaPeek
+    $ liftIO ∘ vkGetPhysicalDeviceProperties pdev
+  let supportsAnisotropy
+        = getField @"samplerAnisotropy" supportedFeatures ≡ VK_TRUE
+      discrete
+        = getField @"deviceType" props ≡ VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU
+  pure (mscsd, extsGood ∧ surfGood ∧ supportsAnisotropy ∧ discrete)
 isDeviceSuitable ∷ Maybe VkSurfaceKHR → VkPhysicalDevice
   → Prog ε σ (Maybe SwapchainSupportDetails, Bool)
 isDeviceSuitable mVkSurf pdev = do

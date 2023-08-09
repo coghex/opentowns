@@ -48,7 +48,7 @@ luauThread env = do
       Lua.registerHaskellFunction (fromString "recreate")        (hsRecreate     env)
       Lua.registerHaskellFunction (fromString "reload")          (hsReload       env)
       Lua.openlibs
-      _ ← Lua.dofile "mod/base/game.lua"
+      _ ← Lua.dofile $ Just "mod/base/game.lua"
       Lua.invoke (fromString "initLuau") modFiles ∷ Lua.LuaE Lua.Exception Int
     let loadQ = envLoadQ env
     let eventQ = envEventQ env
@@ -77,7 +77,7 @@ luauLoop TStart env modFiles = do
       ls = envLuaSt env
   _ ← Lua.runWith ls $ do
     Lua.openlibs
-    _ ← Lua.dofile "mod/base/game.lua"
+    _ ← Lua.dofile $ Just "mod/base/game.lua"
     Lua.invoke (fromString "runLuau") modFiles ∷ Lua.LuaE Lua.Exception Int
   end ← getCurrentTime
   let diff  = diffUTCTime end start

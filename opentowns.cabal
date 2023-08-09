@@ -9,7 +9,7 @@ category: Game
 build-type: Simple
 
 flag dev
-    default: True
+    default: False
 
 executable opentowns
     main-is: Main.hs
@@ -146,6 +146,6 @@ executable opentowns
                         ViewPatterns
     if flag (dev)
         cpp-options: -DDEVELOPMENT
-        ghc-options: -O0 -Wall -Wcompat -Wincomplete-record-updates -Wincomplete-uni-patterns -threaded -eventlog -rtsopts -fprof-auto -haddock -dynamic
+        ghc-options: -O0 -Wall -Wcompat -Wincomplete-record-updates -Wincomplete-uni-patterns -threaded -eventlog -rtsopts -fprof-auto -haddock -static
     else
         ghc-options: -O2 -optc-O3 -fexcess-precision -threaded -rtsopts -feager-blackholing -haddock
