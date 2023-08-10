@@ -96,11 +96,17 @@ vertices ts = fromList $ combineVertices (1∷Int) ts
 
 -- | vulkan will draw the dataframe for each tile in this order, six
 --   points for the 6 verticies in two triangles laid together squarely
---   this function is suprisingly slow
 indices ∷ [Tile] → DataFrame Word32 '[XN 3]
 indices tiles = atLeastThree $ fromList $ combineIndices tiles
+--   this function is suprisingly slow
+--combineIndices ∷ ∀ a. (Num a) ⇒ [Tile] → [a]
+--combineIndices []           = []
+--combineIndices (_:tiles) = oneRectIndices ⧺ map (+4) (combineIndices tiles)
+--  where oneRectIndices = [0,3,2,2,1,0]
+--   this one speeds everything up dramatically
 combineIndices ∷ ∀ a. (Num a) ⇒ [Tile] → [a]
-combineIndices []           = []
-combineIndices (_:tiles) = oneRectIndices ⧺ map (+4) (combineIndices tiles)
-  where oneRectIndices = [0,3,2,2,1,0]
-
+combineIndices tiles = indexList 0 (length tiles)
+indexList ∷ ∀ a. (Num a) ⇒ a → Int → [a]
+indexList _ 0 = []
+indexList i n = a:b:c:d:e:f:indexList (i+4) (n-1)
+  where (a,b,c,d,e,f) = (i,i+3,i+2,i+2,i+1,i)

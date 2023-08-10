@@ -98,7 +98,7 @@ genCardsRow (_,tA,tB,tN,tS,tE,tW) = Cards3D (san tN) (san tS)
 genMapTiles ∷ MapSettings → MapTiles
 genMapTiles (MapSettings _ MapNormal _) = MapTiles (j,k) [tiles j k 1 1]
   where tiles x y i c = take x $ repeat $ take y $ repeat $ MapTile i c
-        (j,k)         = (30,30)
+        (j,k)         = (100,100)
         testbuff      = take 9  $ repeat $ take 10 $ repeat $ MapTile 1 0
         testrow       = take 9  $ repeat $ MapTile 0 0
         testspot      = MapTile 2 2

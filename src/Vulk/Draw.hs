@@ -11,7 +11,7 @@ import qualified Data.Map as Map
 import Elem ( loadWindow )
 import Load.Data ( DrawState(..), Tile(..), DynMap(..)
                  , BuffIndex(..), Buff(..), Dyns(..) )
-import Prog.Buff ( makeBufferTiles )
+import Prog.Buff ( makeBufferTiles, makeBufferTiles' )
 import Vulk.Font
     ( indexTTFData, GlyphMetrics(GlyphMetrics), TTFData(TTFData) )
 import Luau.Window (currentWin)

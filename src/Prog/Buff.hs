@@ -30,11 +30,18 @@ initBuff (n:ns) = dyns : initBuff ns
 
 -- | b is the buffer index, n is the buffer
 --   size, move is movability, atl is the atlas size
+-- this version was too slow
+--makeBufferTiles ∷ BuffIndex → Int → Bool → (Int,Int) → [Tile]
+--makeBufferTiles b n move atl
+--  | n ≡ 0     = []
+--  | otherwise = makeBufferTiles b (n - 1) move atl ⧺ [tile]
+--  where tile = DTile (DMBuff b (n - 1)) (0,0) (1,1) (0,0) atl move 0
 makeBufferTiles ∷ BuffIndex → Int → Bool → (Int,Int) → [Tile]
-makeBufferTiles b n move atl
-  | n ≡ 0     = []
-  | otherwise = makeBufferTiles b (n - 1) move atl ⧺ [tile]
-  where tile = DTile (DMBuff b (n - 1)) (0,0) (1,1) (0,0) atl move 0
+makeBufferTiles b = makeBufferTiles' b 0
+makeBufferTiles' ∷ BuffIndex → Int → Int → Bool → (Int,Int) → [Tile]
+makeBufferTiles' _ _ 0 _    _   = []
+makeBufferTiles' b i n move atl = tile : makeBufferTiles' b (i+1) (n-1) move atl
+  where tile = DTile (DMBuff b i) (0,0) (1,1) (0,0) atl move 0
 
 -- | loads dyns from a drawstate
 loadDyns ∷ DrawState → Dyns
