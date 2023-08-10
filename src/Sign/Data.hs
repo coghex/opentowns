@@ -3,7 +3,7 @@ module Sign.Data where
 -- data for the main event queue is defined
 import Prelude()
 import UPrelude
-import Data ( PrintArg(..), KeyMap(..) )
+import Data ( PrintArg(..), KeyMap(..), KeyFunc(..) )
 import Load.Data ( Dyns(..) )
 import Vulk.Data ( Verts(..) )
 import qualified Vulk.GLFW as GLFW
@@ -21,6 +21,8 @@ data Event = EventError !GLFW.Error !String -- GLFW specific
            | EventLoad !LoadData
            -- | changes to the settings
            | EventSettings !SettingsChange
+           -- | changes to the state of the input
+           | EventInputState !InputStateChange
            -- | lowest level actions go here
            | EventSys !SysAction
 
@@ -39,6 +41,12 @@ data InputEvent
   | InputMouseButton !GLFW.Window !GLFW.MouseButton
       !GLFW.MouseButtonState !GLFW.ModifierKeys
   | InputMouseScroll !GLFW.Window !Double !Double
+
+-- | input state can be changed by sending event
+data InputStateChange = ISCKeyPress !KeyFunc
+                      | ISCKeyRelease !KeyFunc
+                      | ISCAccelerate !(Double,Double)
+                      | ISCNULL deriving (Show, Eq)
 
 -- | data gets loaded in from a seperate thread
 data LoadData = LoadVerts !Verts

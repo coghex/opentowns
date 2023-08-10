@@ -5,7 +5,7 @@ module Prog.Input where
 -- a thread to handle input
 import Prelude()
 import UPrelude
-import Data ( KeyFunc(..), KeyMap(..), PopupType(..) )
+import Data ( KeyFunc(..), KeyMap(..), PopupType(..), Cardinal(..) )
 import Data.Maybe ( fromMaybe )
 import Elem.Data
     ( CapType(..),
@@ -13,19 +13,20 @@ import Elem.Data
       InputAct(..), InputElem(..) )
 import Load.Data ( LoadCmd(..), DrawStateCmd(..) )
 import Prog.Data
-    ( Env(..),
+    ( Env(..), ISKeys(..),
       ISStatus(ISSNULL, ISSLogDebug),
       InpResult(..),
       InputState(..) )
-import Prog.KeyEvent ( changeKeyMap, findKey, lookupKey, indexKeyMap )
+import Prog.KeyEvent ( changeKeyMap, findKey, lookupKey, indexKeyMap
+                     , stateKeyPress, stateKeyRelease )
 import Prog.Init ( initKeyMap, initInpState )
 import Prog.Mouse ( processLoadMouse, findAllButtsUnder, findButts )
 import Prog.Util ()
 import Sign.Data
     ( Event(..), LogLevel(..),
       SysAction(..), TState(..)
-    , SettingsChange(..) )
-import Sign.Var ( atomically )
+    , SettingsChange(..), InputStateChange(..) )
+import Sign.Var ( atomically, readTVar, writeTVar )
 import Sign.Queue
     ( readChan, tryReadChan, tryReadQueue, writeQueue )
 import Control.Concurrent (threadDelay)
@@ -55,6 +56,7 @@ runInputLoop env win inpSt0 keyMap0 TStart = do
             Just x  → return x
   inpSt1 ← processLoadMouse env win inpSt0
   (inpSt2,keyMap1) ← processLoadInputs env win inpSt1 keyMap0
+  processInputSideEffects env inpSt2
   end ← getCurrentTime
   let diff  = diffUTCTime end start
       usecs = floor (toRational diff * 1000000) ∷ Int
@@ -136,7 +138,7 @@ processLoadInput ∷ Env → GLFW.Window → InputState → KeyMap
   → InputAct → IO InpResult
 processLoadInput env win inpSt keymap inp = case inp of
   -- key press action, if the keys have been captured by a
-  -- window, we need to functionnn differently
+  -- window, we need to function differently
   InpActKey k ks _  → case inpCap inpSt of
     -- input captured by key change pop up window
     CapKeyChange n keyFunc → if ks ≡ GLFW.KeyState'Pressed then do
@@ -167,7 +169,7 @@ processLoadInput env win inpSt keymap inp = case inp of
             atomically $ writeQueue (envLoadQ env) $ LoadCmdDS $ DSCUpdatePopup $ PopupSavename newstr
             return $ ResInpState inpSt { inpCap = CapTextInput newstr }
       else return ResInpSuccess
-    -- if no input capture, case on each key function
+    -- if no input capture, case on each key function, set global inp state through event
     CapNULL → if ks ≡ GLFW.KeyState'Pressed then case lookupKey keymap (findKey k) of
         KFEscape → do
           atomically $ writeQueue (envEventQ env) $ EventSys SysExit
@@ -181,10 +183,20 @@ processLoadInput env win inpSt keymap inp = case inp of
         KFUnknown str → do
           atomically $ writeQueue (envEventQ env) $ EventLog LogWarn $ "key " ⧺ str ⧺ " not set in key map"
           return ResInpSuccess
-        keyfunc → do
+        keyFunc → do
+          --atomically $ writeQueue (envEventQ env)
+          --  $ EventLog (LogDebug 1) $ "unknown key " ⧺ show keyFunc
+          -- update global input state
           atomically $ writeQueue (envEventQ env)
-            $ EventLog (LogDebug 1) $ "unknown key " ⧺ show keyfunc
-          return ResInpSuccess
+            $ EventInputState $ ISCKeyPress keyFunc
+          let newis = stateKeyPress keyFunc inpSt
+          return $ ResInpState newis
+      else if ks ≡ GLFW.KeyState'Released then case lookupKey keymap (findKey k) of
+        keyFunc → do
+          atomically $ writeQueue (envEventQ env)
+            $ EventInputState $ ISCKeyRelease keyFunc
+          let newis = stateKeyRelease keyFunc inpSt
+          return $ ResInpState newis
       else return ResInpSuccess
 -- for mouse button presses, note that the position and state
 -- of the mouse are monitored in a completely different place,
@@ -240,3 +252,40 @@ processLoadInput env win inpSt keymap inp = case inp of
     atomically $ writeQueue (envEventQ env) $ EventLog LogInfo $ show inpSt
     return ResInpSuccess
   InpActNULL             → return ResInpSuccess
+
+-- execute side effects of input state
+processInputSideEffects ∷ Env → InputState → IO ()
+processInputSideEffects env is = do
+  -- change camera acceleration
+  camChan ← atomically $ readTVar (envCam env)
+  let keyst   = keySt is
+  case camChan of
+      Nothing      → atomically $ writeTVar (envCam env) (Just (0,0,-1))
+      Just (x,y,z) → do
+        let xd      = x - (x * 0.1)
+            yd      = y - (y * 0.1)
+            (i,j)   = keyAccel keyst
+            (i',j') = case keyst of
+              ISKeys True  True  True  True  _ → (0,0)
+              ISKeys False True  True  True  _ → (0,jd+1.0)
+              ISKeys True  False True  True  _ → (id-1.0,0)
+              ISKeys True  True  False True  _ → (0,jd-1.0)
+              ISKeys True  True  True  False _ → (id+1.0,0)
+              ISKeys False False True  True  _ → (id-0.5,jd+0.5)
+              ISKeys False True  False True  _ → (0,jd)
+              ISKeys False True  True  False _ → (id+0.5,jd+0.5)
+              ISKeys True  False False True  _ → (id-0.5,jd-0.5)
+              ISKeys True  False True  False _ → (id,0)
+              ISKeys True  True  False False _ → (id+0.5,jd-0.5)
+              ISKeys True  False False False _ → (0,jd-1.0)
+              ISKeys False True  False False _ → (i+1.0,0)
+              ISKeys False False True  False _ → (0,jd+1.0)
+              ISKeys False False False True  _ → (i-1.0,0)
+              ISKeys False False False False _ → (id,jd)
+            (x',y') = (x+i',y+j')
+            id      = i-(0.1*i)
+            jd      = j-(0.1*j)
+        atomically $ writeTVar (envCam env) (Just (x',y',z))
+        atomically $ writeQueue (envEventQ env)
+          $ EventInputState $ ISCAccelerate (i',j')
+  return ()

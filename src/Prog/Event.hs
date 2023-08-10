@@ -15,14 +15,14 @@ import Prog.Data
       ReloadState(RSRecreate, RSReload),
       State(stWindow, stReload) )
 import Prog.Util ( logError, logExcept, logInfo, logWarn, logDebug )
-import Prog.KeyEvent ( evalKey )
+import Prog.KeyEvent ( evalKey, updateInputState )
 import Prog.Mouse ( evalMouse, evalScroll )
 import Sign.Data
     ( Event(..),
       InputEvent(InputMouseScroll, InputKey, InputMouseButton),
       LoadData(LoadVerts, LoadDyns),
       LogLevel(..), SettingsChange(..),
-      SysAction(..) )
+      SysAction(..), InputStateChange(..) )
 import Sign.Except ( ExType(ExVulk) )
 import Sign.Queue ( tryReadQueue )
 import Sign.Var ( atomically, modifyTVar' )
@@ -80,6 +80,8 @@ processEvent event = case event of
     → evalMouse win mb mbs mk
   (EventInput (InputMouseScroll win x y      ))
     → evalScroll win x y
+  (EventInputState inputStateChange)
+    → updateInputState inputStateChange
   -- take the dyns from the load thread and copy to transactional memory
   (EventLoad (LoadDyns  dyns))  → do
     env ← ask

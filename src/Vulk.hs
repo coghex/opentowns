@@ -265,14 +265,17 @@ vulkLoop (VulkanLoopData (GQData pdev dev commandPool _) queues scsd0
       modify $ \s → s { stReload = RSNULL }
       -- main loop runs draw loop and trans functions
       shouldLoad ← glfwMainLoop window $ do
-        env ← ask
+        env      ← ask
         dynData' ← liftIO . atomically $ readTVar (envDyns env)
+        cam'     ← liftIO . atomically $ readTVar (envCam env)
         let Dyns dynData = case dynData' of
                              Nothing → Dyns []
                              Just d0 → d0
             -- TODO: dynamic camera
             nDynsData = length dynData
-            cam = (0,0,-1)
+            cam = case cam' of
+                    Nothing → (0,0,-1)
+                    Just c0 → c0
             rdata =
               RenderData { dev
                          , swapInfo

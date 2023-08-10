@@ -75,6 +75,8 @@ initEnv = do
   verts    ← atomically $ newTVar Nothing
   -- same for dynamic data, there will be lots of it
   dyns     ← atomically $ newTVar Nothing
+  -- simple camera tvar
+  cam      ← atomically $ newTVar Nothing
   let env = Env { envEventQ = eventQ
                 , envLoadQ  = loadQ
                 , envGameQ  = gameQ
@@ -86,6 +88,7 @@ initEnv = do
                 , envGameCh = gameCh
                 , envWindow = win
                 , envFontM  = fontM
+                , envCam    = cam
                 , envVerts  = verts
                 , envDyns   = dyns }
 
@@ -132,7 +135,7 @@ initSettings = return $ Settings initKeyMap True 100 True 100 True
 -- | creates a drawstate with empty values
 initDrawState ∷ DrawState
 initDrawState = DrawState DSSNULL [] initBuff (FPS 60.0 60 True)
-  [] initWinsState [] initShell Nothing
+  [] initWinsState [] initShell (0,0,-1) Nothing
 
 -- | creates a shell with empty values
 initShell ∷ Shell

@@ -4,14 +4,19 @@ module Prog.KeyEvent where
 -- key input is handled
 import Prelude()
 import UPrelude
+import Control.Monad.State.Class (modify)
 import qualified Data.Map as Map
 import Data ( Key(..), KeyFunc(..), KeyMap(..) )
 import Data.Maybe ( fromMaybe )
 import Elem.Data ( InputAct(..) )
 import Prog
-    ( MonadIO(liftIO), Prog, MonadReader(ask) )
+    ( MonadIO(liftIO), Prog, MonadReader(ask), MonadState(get) )
 import Prog.Data
-    ( Env(envInpQ) )
+    ( Env(envInpQ), State(..), InputState(..), ISKeys(..) )
+import Prog.Util
+    ( logDebug )
+import Sign.Data
+    ( InputStateChange(..) )
 import Sign.Queue ( writeQueue )
 import Sign.Var ( atomically )
 import qualified Vulk.GLFW as GLFW
@@ -25,7 +30,56 @@ evalKey _      k ks mk = do
 --  st  ← get
 --  let keyLayout = sKeyLayout $ stSettings st
 --      cap       = inpCap $ stInput st
+
   liftIO $ atomically $ writeQueue (envInpQ env) $ InpActKey k ks mk
+
+-- updates game state with input state
+updateInputState ∷ InputStateChange → Prog ε σ ()
+updateInputState (ISCKeyPress   kf) = do
+  st ← get
+  let newIS = stateKeyPress kf $ stInput st
+  modify $ \s → s { stInput = newIS }
+updateInputState (ISCKeyRelease kf) = do
+  st ← get
+  let newIS = stateKeyRelease kf $ stInput st
+  modify $ \s → s { stInput = newIS }
+updateInputState (ISCAccelerate ac) = do
+  st ← get
+  let newIS = stateAccelerate ac $ stInput st
+  modify $ \s → s { stInput = newIS }
+updateInputState isc = logDebug
+  $ "cant process input state change, unknown isc command: " ⧺ show isc
+stateKeyPress ∷ KeyFunc → InputState → InputState
+stateKeyPress KFScrollUp    is = is { keySt = newks }
+  where newks = oldks { keyUp    = True }
+        oldks = keySt is
+stateKeyPress KFScrollDown  is = is { keySt = newks }
+  where newks = oldks { keyDown  = True }
+        oldks = keySt is
+stateKeyPress KFScrollLeft  is = is { keySt = newks }
+  where newks = oldks { keyLeft  = True }
+        oldks = keySt is
+stateKeyPress KFScrollRight is = is { keySt = newks }
+  where newks = oldks { keyRight = True }
+        oldks = keySt is
+stateKeyPress _          is = is
+stateKeyRelease ∷ KeyFunc → InputState → InputState
+stateKeyRelease KFScrollUp    is = is { keySt = newks }
+  where newks = oldks { keyUp    = False }
+        oldks = keySt is
+stateKeyRelease KFScrollDown  is = is { keySt = newks }
+  where newks = oldks { keyDown  = False }
+        oldks = keySt is
+stateKeyRelease KFScrollLeft  is = is { keySt = newks }
+  where newks = oldks { keyLeft  = False }
+        oldks = keySt is
+stateKeyRelease KFScrollRight is = is { keySt = newks }
+  where newks = oldks { keyRight = False }
+        oldks = keySt is
+stateKeyRelease _          is = is
+stateAccelerate ∷ (Double,Double) → InputState → InputState
+stateAccelerate (x,y) is = is { keySt = keySt' }
+  where keySt' = (keySt is) { keyAccel = (x,y) }
 
 -- | returns the first key function with this key assigned
 lookupKey ∷ KeyMap → Key → KeyFunc

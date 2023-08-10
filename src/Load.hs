@@ -26,7 +26,7 @@ import Luau.Data ( Window(..), Page(..) )
 import Luau.Window ( addPageToWin, addElemToPageInWin
                    , resizeWins, currentWin )
 import Prog.Buff ( genDynBuffs, loadDyns, initBuff, setTileBuff )
-import Prog.Data ( Env(..) )
+import Prog.Data ( Env(..), InputState(..) )
 import Sign.Data
     ( LoadData(LoadDyns, LoadVerts),
       LogLevel(..), SysAction(..), TState(..) )

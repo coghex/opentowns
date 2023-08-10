@@ -36,6 +36,7 @@ data Env = Env { envEventQ ∷ Queue Event
                -- this static glfw handle should only be used for reads
                , envWindow ∷ TVar (Maybe GLFW.Window)
                , envFontM  ∷ TVar (Maybe [TTFData])
+               , envCam    ∷ TVar (Maybe (Double,Double,Double))
                , envVerts  ∷ TVar (Maybe Verts)
                , envDyns   ∷ TVar (Maybe Dyns) }
 
@@ -97,6 +98,7 @@ data InputState = InputState { inpStatus ∷ ISStatus
                              , accelCap  ∷ Bool
                              , keySt     ∷ ISKeys
                              } deriving (Show, Eq)
+
 -- | return status for the input thread
 data ISStatus = ISSLogDebug String
               | ISSNULL deriving (Show, Eq)

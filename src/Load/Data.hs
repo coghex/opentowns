@@ -5,7 +5,7 @@ import Prelude()
 import UPrelude
 import Data.Map (Map)
 import qualified Data.Map as Map
-import Data ( Color (..), PrintArg(..), FPS(..), LoadState(..)
+import Data ( Color (..), PrintArg(..), FPS(..), LoadState(..), Cardinal(..)
             , Shell(..), Popup(..), PopupType(..), KeyFunc(..), Stack(..)
             , Key(..), MapType(..), MapTiles(..), MapSettings(..) )
 import Elem.Data ( WinElem(..), Button(..), InputAct(..) )
@@ -57,6 +57,8 @@ data DrawState = DrawState
   , dsPopup     ∷ [Popup]
   -- | the shell is completely seperate from all windowing
   , dsShell     ∷ Shell
+  -- | a camera value allows panning of entire windows
+  , dsCam       ∷ (Double,Double,Double)
   -- | this helps keep things centered to the corner for resizes
   , dsOldSize   ∷ Maybe (Int,Int) }
 

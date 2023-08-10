@@ -9,7 +9,7 @@ category: Game
 build-type: Simple
 
 flag dev
-    default: False
+    default: True
 
 executable opentowns
     main-is: Main.hs
