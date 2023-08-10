@@ -31,6 +31,7 @@ data LoadCmd = LoadCmdPrint !PrintArg
              | LoadCmdDS !DrawStateCmd
              | LoadCmdInput InputAct
              | LoadCmdGame
+             | LoadCmdToggleFullscreen
              | LoadCmdTest
              | LoadCmdTest2
              | LoadCmdNULL deriving (Show, Eq)

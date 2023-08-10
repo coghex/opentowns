@@ -121,6 +121,7 @@ initState _   = do
                              , stNDefTex  = 0
                              , stSettings = settings
                              , stStartT   = st
+                             , stWinSize  = (0,0)
                              , stFPS      = FPS 60.0 60 True
                              , stInput    = is
                              , stTick     = Nothing }
@@ -195,5 +196,6 @@ initKeyMap = KeyMap $ Map.fromList
   ,(KFScrollLeft,[KeyA,KeyLeft])
   ,(KFScrollRight,[KeyD,KeyRight])
   ,(KFShell,[KeyTilde])
+  ,(KFFullScreen,[KeyF11])
   ,(KFTest,[KeyT]), (KFTest2,[KeyI])]
 

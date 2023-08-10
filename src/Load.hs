@@ -219,14 +219,18 @@ processCommand glfwwin ds cmd = case cmd of
     sendInpAct $ InpActSwitchWin win
     --atomically $ writeQueue (envInpQ  env) $ InputSwitchWin win
     return $ ResDrawState ds'
-  -- sometimes you need to test something with a command
   LoadCmdWindowSize size → do
     sendLoadCmd LoadCmdDyns
     return $ ResDrawState ds'
     where ds' = ds { dsWins = resizeWins size (dsWins ds) }
+  LoadCmdToggleFullscreen → do
+    newOldSize ← toggleFullScreen (dsOldSize ds)
+    let ds' = ds { dsOldSize = newOldSize }
+    return $ ResDrawState ds'
   LoadCmdGame → do
 --    ds' ← genGame ds
     return $ ResDrawState ds
+  -- sometimes you need to test something with a command
   LoadCmdTest → do
     log' LogInfo $ printElems (findElems (dsWins ds) WETMap)
     return ResSuccess

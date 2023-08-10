@@ -57,6 +57,8 @@ data State = State { stStatus   ∷ ProgExcept
                    , stSettings ∷ !Settings
                    -- | user inputs kept strictly
                    , stInput    ∷ !InputState
+                   -- | current window size
+                   , stWinSize  ∷ !(Int,Int)
                    -- | variables for FPS calculation
                    , stStartT   ∷ !SystemTime
                    , stFPS      ∷ !FPS

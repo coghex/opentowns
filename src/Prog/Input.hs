@@ -174,6 +174,9 @@ processLoadInput env win inpSt keymap inp = case inp of
         KFEscape → do
           atomically $ writeQueue (envEventQ env) $ EventSys SysExit
           return ResInpSuccess
+        KFFullScreen → do
+          atomically $ writeQueue (envLoadQ env) LoadCmdToggleFullscreen
+          return ResInpSuccess
         KFTest → do
           atomically $ writeQueue (envLoadQ env) LoadCmdTest
           return ResInpSuccess

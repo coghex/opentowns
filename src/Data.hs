@@ -258,6 +258,7 @@ data KeyFunc = KFUp
              | KFEscape
              | KFReturn
              | KFShell
+             | KFFullScreen
              | KFTest
              | KFTest2
              | KFUnknown String

@@ -30,7 +30,7 @@ import Prog.Data
     ( Env(..),
       LoopControl(..),
       ReloadState(RSRecreate, RSNULL),
-      State(stTick, stFPS, stReload, stWindow) )
+      State(..) )
 import Prog.Event ( processEvents )
 import Prog.Foreign ( mallocRes, newArrayRes )
 import Prog.Input ( inputThread )
@@ -110,7 +110,9 @@ runVulk = do
     window ← initGLFWWindow 800 600 "opentowns" windowSizeChanged
     -- this is the only glfw window handle that
     -- should be used for write access
-    modify $ \s → s { stWindow = Just window }
+    modify $ \s → s { stWindow = Just window
+    -- can also set inital window size here
+                    , stWinSize = (800,600) }
     -- TODO: this is part of the above todo, this is setting
     -- the window larger as part of a test
     liftIO $ GLFW.setWindowSize window 1280 720

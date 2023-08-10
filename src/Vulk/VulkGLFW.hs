@@ -186,7 +186,8 @@ makeFullscreen = do
             Just _  →  do
               (_,_,w,h) ← liftIO $ GLFW.getMonitorWorkarea m0
               liftIO $ GLFW.setWindowSize w0 w h
-              modify $ \s → s { stReload = RSRecreate }
+              modify $ \s → s { stReload = RSRecreate
+                              , stWinSize = (w,h) }
               liftIO $ atomically $ writeQueue (envLoadQ env)
                 $ LoadCmdWindowSize (w,h)
       
