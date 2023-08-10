@@ -90,6 +90,7 @@ data InputAct = InpActKey GLFW.Key GLFW.KeyState GLFW.ModifierKeys
               | InpActButton Button
               | InpActSetPage String String
               | InpActClearPopup
+              | InpActResetCam
               | InpActTest
               | InpActNULL deriving (Show, Eq)
 

@@ -46,6 +46,7 @@ data InputEvent
 data InputStateChange = ISCKeyPress !KeyFunc
                       | ISCKeyRelease !KeyFunc
                       | ISCAccelerate !(Double,Double)
+                      | ISCResetCam
                       | ISCNULL deriving (Show, Eq)
 
 -- | data gets loaded in from a seperate thread

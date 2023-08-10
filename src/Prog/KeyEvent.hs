@@ -47,6 +47,12 @@ updateInputState (ISCAccelerate ac) = do
   st ← get
   let newIS = stateAccelerate ac $ stInput st
   modify $ \s → s { stInput = newIS }
+updateInputState ISCResetCam = do
+  st ← get
+  let oldIS = stInput st
+      newIS = oldIS { keySt = newKS }
+      newKS = (keySt oldIS) { keyAccel = (0,0) }
+  modify $ \s → s { stInput = newIS }
 updateInputState isc = logDebug
   $ "cant process input state change, unknown isc command: " ⧺ show isc
 stateKeyPress ∷ KeyFunc → InputState → InputState

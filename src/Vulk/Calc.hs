@@ -47,9 +47,10 @@ vertices ts = fromList $ combineVertices (1∷Int) ts
     -- features, there are few GTiles, but they are nice for debugging
         combineVertices nDyn
           ((GTile (x',y') (xscale',yscale') (ax',ay') (sx,sy) t' c'):tts)
-            = withColor c' (withTC (indexAtlas ax ay sx sy)
+            = withColor c' (withMove (+ vec3 0 0 0)
+              (withTC (indexAtlas ax ay sx sy)
               (withTC (+ vec3 0 0 t) (withPos (+ vec4 x0 y0 0 0)
-              (withScale (* vec3 xscale yscale 1) vertsqs))))
+              (withScale (* vec3 xscale yscale 1) vertsqs)))))
                 ⧺ combineVertices nDyn tts where
           -- note that all tile positions are multiplied by 2
           (x0,y0) = (realToFrac(2*x'), realToFrac(2*y'))
@@ -60,6 +61,7 @@ vertices ts = fromList $ combineVertices (1∷Int) ts
             = fromHom ∘ f ∘ toHomPoint $ pos v })
           withTC f = map (\(S v) → S v { texCoord = f $ texCoord v })
           withScale f = map (\(S v) → S v { pos = f $ pos v })
+          withMove f = map (\(S v) → S v { move = f $ move v })
           withColor (Color r g b a)
             = map (\(S v) → S v { color = vec4 r' g' b' a' }) where
                  r' = fromIntegral r / 255

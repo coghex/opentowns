@@ -26,7 +26,7 @@ import Sign.Data
     ( Event(..), LogLevel(..),
       SysAction(..), TState(..)
     , SettingsChange(..), InputStateChange(..) )
-import Sign.Var ( atomically, readTVar, writeTVar )
+import Sign.Var ( atomically, readTVar, writeTVar, modifyTVar' )
 import Sign.Queue
     ( readChan, tryReadChan, tryReadQueue, writeQueue )
 import Control.Concurrent (threadDelay)
@@ -246,6 +246,11 @@ processLoadInput env win inpSt keymap inp = case inp of
     --print $ "button press: " ⧺ show butt
   InpActButton _         → return ResInpSuccess
   InpActClearPopup → return ResInpSuccess
+  InpActResetCam → do
+    -- make sure to also clear the copy of this data in the main thread
+    atomically $ writeQueue (envEventQ env) $ EventInputState ISCResetCam
+    atomically $ modifyTVar' (envCam env) $ const $ Just (0,0,-1)
+    return $ ResInpState $ inpSt { keySt = (keySt inpSt) { keyAccel = (0,0) } }
   InpActSetPage w page → return $ ResInpState $ inpSt { isWin  = w
                                                       , isPage = page }
   InpActTest → do

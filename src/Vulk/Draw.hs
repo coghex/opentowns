@@ -34,25 +34,25 @@ loadTiles ds winSize ttfdat
         Buff buff  = dsBuff ds
         Dyns lbds  = buff Map.! BuffLink
         linkbuff   = makeBufferTiles BuffLink
-                       (length lbds) True (32,32)
+                       (length lbds) False (32,32)
         Dyns bbds  = buff Map.! BuffButt
         buttbuff   = makeBufferTiles BuffButt
-                       (length bbds) True (32,32)
+                       (length bbds) False (32,32)
         Dyns tbds  = buff Map.! BuffButt
         textbuff   = makeBufferTiles BuffText
-                       (length tbds) True (1,1)
+                       (length tbds) False (1,1)
         Dyns pubds = buff Map.! BuffPopup
         popupbuff  = makeBufferTiles BuffPopup
-                       (length pubds) True (32,32)
+                       (length pubds) False (32,32)
         Dyns btbds = buff Map.! BuffPopup
         putextbuff = makeBufferTiles BuffPUText
-                       (length btbds) True (1,1)
+                       (length btbds) False (1,1)
         Dyns mbds  = buff Map.! BuffMap
         mapbuff    = makeBufferTiles BuffMap
                        (length mbds) True (16,16)
         Dyns ldbds = buff Map.! BuffLoadScreen
         loadbuff   = makeBufferTiles BuffLoadScreen
-                       (length ldbds) True (1,1)
+                       (length ldbds) False (1,1)
         
 --        linkbuff   = makeBufferTiles BuffLink       64   True (32,32)
 --        buttbuff   = makeBufferTiles BuffButt       64   True (32,32)

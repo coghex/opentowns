@@ -13,7 +13,7 @@ import System.Log.FastLogger (LogType'(..))
 import Data.Time.Clock ( getCurrentTime, diffUTCTime )
 import Data ( LoadState(..), MapSettings(..)
             , BuriedStatus(..), MapType(..) )
-import Elem.Data ( WinElem(..) )
+import Elem.Data ( WinElem(..), InputAct(..) )
 import Elem.World ( genMapTiles )
 import Load.Data ( DrawState(..), WinsState(..), DSStatus(..)
                  , DrawStateCmd(..), LoadCmd(..), LoadResult(..)
@@ -129,5 +129,7 @@ processCommand gs cmd = case cmd of
     sendLoadCmd $ LoadCmdDS $ DSCLoading "Loading map"
     sendLoadCmd $ LoadCmdNewBuff BuffMap 1024
     sendLoadCmd $ LoadCmdDS $ DSCLoadMap $ gsMapData gs
+    -- reset camera
+    sendInpAct InpActResetCam
     return ResSuccess
   GameCmdNULL  → return ResNULL
