@@ -132,5 +132,5 @@ findAllButtsUnder win page size (b:bs) pos
 buttUnder ∷ String → (Int,Int) → Button → (Double,Double) → Bool
 buttUnder name _ (Button _ (x,y) (w,h) _ page) (mx,my)
   | name ≡ page = (abs((mx / 64.0) - x - 0.5) < (0.5*w))
-                ∧ (abs((my / 64.0) - y - 0.25) < (0.25*h))
+                ∧ (abs((my / 64.0) - y) < (0.25*h))
   | otherwise  = False
