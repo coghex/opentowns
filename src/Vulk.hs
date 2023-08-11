@@ -77,7 +77,6 @@ import Vulk.Trans
       transDynBufferInfo,
       transObjBufferInfo,
       transTexBufferInfo,
-      nullTrans,
       updateTransDyn,
       updateTransObj,
       updateTransTex )

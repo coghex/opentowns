@@ -41,6 +41,7 @@ data TransformationObject = TransformationObject
   , proj  ∷ Mat44f
   } deriving (Show, Generic)
 instance PrimBytes TransformationObject
+transObjSize = bSizeOf @TransformationObject undefined ∷ VkDeviceSize
 
 -- | a matrix representing data sent over the descriptor
 --   hlint says a newtype is ok here
@@ -48,6 +49,8 @@ newtype DynTexTransObject = DynTexTransObject
   { dtexi ∷ Mat44f
   } deriving (Show, Generic)
 instance PrimBytes DynTexTransObject
+dynTexTransObjSize = bSizeOf @DynTexTransObject undefined ∷ Int
+dynTexTransObjSize' = bSizeOf @DynTexTransObject undefined :: VkDeviceSize
 
 -- | a matrix representing physical translation of an object
 --   hlint says a newtype is ok here
@@ -55,10 +58,9 @@ newtype DynTransObject = DynTransObject
   { move ∷ Mat44f
   } deriving (Show, Generic)
 instance PrimBytes DynTransObject
+dynTransObjSize = bSizeOf @DynTransObject undefined ∷ Int
+dynTransObjSize' = bSizeOf @DynTransObject undefined ∷ VkDeviceSize
 
--- | null transformation function
-nullTrans ∷ VkDeviceMemory → Prog ε σ ()
-nullTrans _ = return ()
 
 -- | the global transformation object is updated, at the moment it
 --   never changes, and only defines the general camera position
@@ -66,7 +68,7 @@ updateTransObj ∷ (Double,Double,Double) → VkDevice → VkExtent2D
   → VkDeviceMemory → Prog ε σ ()
 updateTransObj (cx,cy,cz) device extent uniBuf = do
   uboPtr ← allocaPeek $ runVk ∘ vkMapMemory device uniBuf 0
-    (bSizeOf @TransformationObject undefined) VK_ZERO_FLAGS
+    transObjSize VK_ZERO_FLAGS
   let model = DF4
                 (DF4 32 0 0 0)
                 (DF4 0 32 0 0)
@@ -99,7 +101,7 @@ updateTransDyn _    []       _      _      _      = return ()
 updateTransDyn nDyn dyns device _      uniBuf = do
   let nDyn'   = fromIntegral nDyn
   uboPtr ← allocaPeek $ runVk ∘ vkMapMemory device
-    uniBuf 0 (nDyn'*bSizeOf @DynTransObject undefined) VK_ZERO_FLAGS
+    uniBuf 0 (nDyn'*dynTransObjSize') VK_ZERO_FLAGS
   let updateTransDynFunc ∷ Int → [DynData] → Ptr α → Prog ε σ ()
       updateTransDynFunc _    []       _        = return ()
       updateTransDynFunc nDyn0 (dd:dds) uboPtr0 = do
@@ -117,7 +119,7 @@ updateTransDyn nDyn dyns device _      uniBuf = do
 --            (w',h') = ddScale dd
             nDyn0'  = nDyn0 - 1
         poke (plusPtr (castPtr uboPtr0)
-          (nDyn0'*bSizeOf @DynTransObject undefined))
+          (nDyn0'*dynTransObjSize))
           (scalar $ DynTransObject move)
         updateTransDynFunc nDyn0' dds uboPtr0
   updateTransDynFunc nDyn dyns uboPtr
@@ -141,7 +143,7 @@ updateTransTex _    []   _      _      _      = return ()
 updateTransTex nDyn dyns device _      uniBuf = do
   let nDyn'   = fromIntegral nDyn
   uboPtr ← allocaPeek $ runVk ∘ vkMapMemory device uniBuf 0
-    (nDyn'*bSizeOf @DynTexTransObject undefined) VK_ZERO_FLAGS
+    (nDyn'*dynTexTransObjSize') VK_ZERO_FLAGS
   let updateTransTexFunc ∷ Int → [DynData] → Ptr α → Prog ε σ ()
       updateTransTexFunc _     []       _       = return ()
       updateTransTexFunc nDyn0 (dd:dds) uboPtr0 = do
@@ -161,7 +163,7 @@ updateTransTex nDyn dyns device _      uniBuf = do
  --           n         = fromIntegral $ ddTex dd
             nDyn0'    = nDyn0 - 1
         poke (plusPtr (castPtr uboPtr0)
-          (nDyn0'*bSizeOf @DynTexTransObject undefined))
+          (nDyn0'*dynTexTransObjSize))
           (scalar $ DynTexTransObject dtexi)
         updateTransTexFunc nDyn0' dds uboPtr0
   updateTransTexFunc nDyn dyns uboPtr
@@ -183,7 +185,7 @@ texDynDataFrame (Color r' g' b' a') (x',y') n' = DF4
 createTransObjBuffers ∷ VkPhysicalDevice → VkDevice → Int
   → Prog ε σ [(VkDeviceMemory, VkBuffer)]
 createTransObjBuffers pdev dev n = replicateM n $ createBuffer
-  pdev dev (bSizeOf @TransformationObject undefined)
+  pdev dev transObjSize
   VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT
   (VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT
   ⌄ VK_MEMORY_PROPERTY_HOST_COHERENT_BIT)
@@ -194,13 +196,13 @@ transObjBufferInfo uniformBuffer
   = return $ createVk @VkDescriptorBufferInfo
     $  set @"buffer" uniformBuffer
     &* set @"offset" 0
-    &* set @"range" (bSizeOf @TransformationObject undefined)
+    &* set @"range" transObjSize
 
 -- | initialization of the trans dyn buffers
 createTransDynBuffers ∷ VkPhysicalDevice → VkDevice → Int → Int
   → Prog ε σ [(VkDeviceMemory, VkBuffer)]
 createTransDynBuffers pdev dev n nDyn = replicateM n $ createBuffer
-  pdev dev (nDyn'*bSizeOf @DynTransObject undefined)
+  pdev dev (nDyn'*dynTransObjSize')
   VK_BUFFER_USAGE_STORAGE_BUFFER_BIT
   (VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT
   ⌄ VK_MEMORY_PROPERTY_HOST_COHERENT_BIT)
@@ -212,14 +214,14 @@ transDynBufferInfo nDyn uniformBuffer
   = return $ createVk @VkDescriptorBufferInfo
     $  set @"buffer" uniformBuffer
     &* set @"offset" 0
-    &* set @"range" (nDyn'*bSizeOf @DynTransObject undefined)
+    &* set @"range" (nDyn'*dynTransObjSize')
     where nDyn' = max 1 $ fromIntegral nDyn
 
 -- | initialization of the trans tex buffers
 createTransTexBuffers ∷ VkPhysicalDevice → VkDevice → Int → Int
   → Prog ε σ [(VkDeviceMemory, VkBuffer)]
 createTransTexBuffers pdev dev n nDyn = replicateM n $ createBuffer
-  pdev dev (nDyn'*bSizeOf @DynTexTransObject undefined)
+  pdev dev (nDyn'*dynTexTransObjSize')
   VK_BUFFER_USAGE_STORAGE_BUFFER_BIT
   (VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT
   ⌄ VK_MEMORY_PROPERTY_HOST_COHERENT_BIT)
@@ -231,5 +233,5 @@ transTexBufferInfo nDyn uniformBuffer
   = return $ createVk @VkDescriptorBufferInfo
     $  set @"buffer" uniformBuffer
     &* set @"offset" 0
-    &* set @"range" (nDyn'*bSizeOf @DynTexTransObject undefined)
+    &* set @"range" (nDyn'*dynTexTransObjSize')
     where nDyn' = max 1 $ fromIntegral nDyn
