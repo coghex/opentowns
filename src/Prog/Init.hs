@@ -30,6 +30,7 @@ import Prog.Data
       InputState(..),
       ProgResult(ProgSuccess),
       ReloadState(RSNULL),
+      DynReloadState(..),
       Settings(Settings),
       State(..) )
 import Sign.Except ( ExType(ExProg), ProgExcept(ProgExcept) )
@@ -114,17 +115,18 @@ initState _   = do
   -- default settings get loaded at start
   settings ← initSettings
   -- state is accessed transactionally
-  atomically $ newTVar State { stStatus   = ref
-                             , stLogFunc  = lf
-                             , stWindow   = Nothing
-                             , stReload   = RSNULL
-                             , stNDefTex  = 0
-                             , stSettings = settings
-                             , stStartT   = st
-                             , stWinSize  = (0,0)
-                             , stFPS      = FPS 60.0 60 True
-                             , stInput    = is
-                             , stTick     = Nothing }
+  atomically $ newTVar State { stStatus    = ref
+                             , stLogFunc   = lf
+                             , stWindow    = Nothing
+                             , stReload    = RSNULL
+                             , stDynReload = DRSNULL
+                             , stNDefTex   = 0
+                             , stSettings  = settings
+                             , stStartT    = st
+                             , stWinSize   = (0,0)
+                             , stFPS       = FPS 60.0 60 True
+                             , stInput     = is
+                             , stTick      = Nothing }
 
 -- | settings begin with some dummy values atm
 -- TODO: load settings from a file
@@ -154,7 +156,7 @@ initBuff = Buff $ Map.fromList [(BuffLink      ,initDyns 64)
 -- | creates a dyns of empty dyndata
 initDyns ∷ Int → Dyns
 initDyns n = Dyns $ take n $ repeat
-               $ DynData (0,0) (1,1) 0 (0,0) (Color 0 0 0 0)
+               $ DynData (0,0) (1,1) 0 (0,0) (Color 0 0 0 0) Nothing Nothing
 
 -- | creates an empty input state
 initInpState ∷ InputState

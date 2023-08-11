@@ -21,12 +21,13 @@ import Luau.Data ( Window(..), Page(..) )
 import Luau.Window (currentWin)
 import qualified Load.Stack as S
 import Vulk.Font ( TTFData(..), GlyphMetrics(..), indexTTFData )
+import Vulk.Trans ( texDynDataFrame, dynDataFrame )
 
 -- | buffer dyns initiated with size n, index b
 initBuff ∷ [Int] → [Dyns]
 initBuff []     = []
 initBuff (n:ns) = dyns : initBuff ns
-  where dyns = Dyns $ take n $ repeat $ DynData (0,0) (1,1) 0 (0,0) (Color 0 0 0 0)
+  where dyns = Dyns $ take n $ repeat $ DynData (0,0) (1,1) 0 (0,0) (Color 0 0 0 0) Nothing Nothing
 
 -- | b is the buffer index, n is the buffer
 --   size, move is movability, atl is the atlas size
@@ -45,17 +46,38 @@ makeBufferTiles' b i n move atl = tile : makeBufferTiles' b (i+1) (n-1) move atl
 
 -- | loads dyns from a drawstate
 loadDyns ∷ DrawState → Dyns
-loadDyns ds = Dyns $ reverse $ loadDynData ds $ dsTiles ds
+loadDyns ds = Dyns $ genDynDataFrames $ reverse $ loadDynData ds $ dsTiles ds
+
+-- | creates the corresponding data frame for each dyndata
+genDynDataFrames ∷ [DynData] → [DynData]
+genDynDataFrames [] = []
+genDynDataFrames ((DynData pos scale tex texi color _ _):dds)
+  = DynData pos scale tex texi color dataF texDF : genDynDataFrames dds
+      where dataF = Just $ dynDataFrame pos scale
+            texDF = Just $ texDynDataFrame color texi tex
 
 loadDynData ∷ DrawState → [Tile] → [DynData]
 loadDynData _  []            = []
-loadDynData ds (GTile {}:ts) = [] ⧺ loadDynData ds ts
+loadDynData ds (GTile {}:ts) = loadDynData ds ts
+-- load world dyns all at once since there can only
+-- be one world, we know the tiles are together
+loadDynData ds ((DTile (DMBuff BuffMap _) _ _ _ _ _ _):ts)
+  = dyns' ⧺ loadDynData ds ts'
+      where ts'        = drop (bufflength-1) ts
+            bufflength = length dyns
+            Buff buff  = dsBuff ds
+            Dyns dyns  = buff Map.! BuffMap
+            dyns'      = take bufflength dyns
 loadDynData ds ((DTile (DMBuff b n) _ _ _ _ _ _):ts)
-  = [dyns !! n] ⧺ loadDynData ds ts
-    where Dyns dyns = buff Map.! b
-          Buff buff = dsBuff ds
+  = dynAt b n (dsBuff ds) : loadDynData ds ts
 loadDynData ds ((DTile DMNULL _ _ _ _ _ _):ts)
-  = [DynData (0,0) (1,1) 0 (0,0) (Color 0 0 0 0)] ⧺ loadDynData ds ts
+  = DynData (0,0) (1,1) 0 (0,0) (Color 0 0 0 0) Nothing Nothing : loadDynData ds ts
+dynAt ∷ BuffIndex → Int → Buff → DynData
+dynAt b n dsbuff = dyns !! n
+  where Dyns dyns = buffAt dsbuff b
+buffAt ∷ Buff → BuffIndex → Dyns
+buffAt (Buff buff) b = buff Map.! b
+
 
 -- | generates buffs from drawstate, if loading is set will
 --   only draw a loading screen, if game hasnt been loaded yet
@@ -104,15 +126,15 @@ clearDyns (Dyns dyns) = Dyns $ clearDDs dyns
 clearDDs ∷ [DynData] → [DynData]
 clearDDs []     = []
 clearDDs (_:ds) = [d0] ⧺ clearDDs ds
-  where d0 = DynData (0,0) (0,0) 0 (0,0) (Color 0 0 0 0)
+  where d0 = DynData (0,0) (0,0) 0 (0,0) (Color 0 0 0 0) Nothing Nothing
 -- | generic loading screen
 addLoadingScreen ∷ [TTFData] → String → Buff → Buff
 addLoadingScreen ttfdat str buffs = setTileBuff BuffLoadScreen dyns buffs
   where dyns = Dyns $ newD ⧺ take (ddsSize - length newD)
-                 (repeat (DynData (0,0) (0,0) 0 (0,0) (Color 0 0 0 0)))
+                 (repeat (DynData (0,0) (0,0) 0 (0,0) (Color 0 0 0 0) Nothing Nothing))
         newD       = loadLogo ⧺ msg
         loadLogo
-          = [DynData (0,-4) (8,2) 109 (0,0) (Color 255 255 255 255)]
+          = [DynData (0,-4) (8,2) 109 (0,0) (Color 255 255 255 255) Nothing Nothing]
         msg
           = calcTextDD (Color 255 255 255 255) ttfdat (0,-6) str
         Dyns dds  = buff Map.! BuffLoadScreen
@@ -122,14 +144,14 @@ addLoadingScreen ttfdat str buffs = setTileBuff BuffLoadScreen dyns buffs
 clearLoadingScreenDyns ∷ Buff → Buff
 clearLoadingScreenDyns = setTileBuff BuffLoadScreen dyns
   where dyns = Dyns $ take 32
-                 (repeat (DynData (0,0) (0,0) 0 (0,0) (Color 0 0 0 0)))
+                 (repeat (DynData (0,0) (0,0) 0 (0,0) (Color 0 0 0 0) Nothing Nothing))
 
 -- | generates dynamic data for any number of popups, popups
 --   index to the center of the screen, still in openGL-style
 genPopupDyns ∷ [Popup] → Buff → Buff
 genPopupDyns popups buffs = setTileBuff BuffPopup dyns buffs
   where dyns      = Dyns $ newD ⧺ take (ddsSize - length newD)
-                      (repeat (DynData (0,0) (0,0) 0 (0,0) (Color 0 0 0 0)))
+                      (repeat (DynData (0,0) (0,0) 0 (0,0) (Color 0 0 0 0) Nothing Nothing))
         newD      = genPopupDynsF popups
         Dyns dds  = buff Map.! BuffPopup
         Buff buff = buffs
@@ -152,70 +174,70 @@ genericPopup x y w h = topleft ⧺ toprightbk ⧺ topright ⧺ bottomleft
                     ⧺ textBoxL ⧺ textBoxFill ⧺ checkbox
   where topleft
           = [DynData (x',y'+(2*h')) (0.5,0.5) 107 (0,29)
-              (Color 255 255 255 255)]
+              (Color 255 255 255 255) Nothing Nothing]
         -- lol, you can see why they overwrote this tile, it does not tile right
         toprightbk   = [DynData
           (x' + (2*w'),  y' + (2*h'))   (0.5,       0.5)       107 (2,29)
-          $ Color 255 255 255 255]
+          (Color 255 255 255 255) Nothing Nothing]
         topright     = [DynData
           (x' + (2*w'),  y' + (2*h'))   (0.5,       0.5)       107 (26,25)
-          $ Color 255 255 255 255]
+          (Color 255 255 255 255) Nothing Nothing]
         bottomleft   = [DynData
           (x',           y')            (0.5,       0.5)       107 (0,30)
-          $ Color 255 255 255 255]
+          (Color 255 255 255 255) Nothing Nothing]
         bottomright  = [DynData
           (x' + (2*w'),  y')            (0.5,       0.5)       107 (2,30)
-          $ Color 255 255 255 255]
+          (Color 255 255 255 255) Nothing Nothing]
         top          = [DynData
           (x' + w',      y' + (2*h'))   (w' - 0.5,  0.5)       107 (4,29)
-          $ Color 255 255 255 255]
+          (Color 255 255 255 255) Nothing Nothing]
         bottom       = [DynData
           (x' + w',      y')            (w' - 0.5,  0.5)       107 (4,30)
-          $ Color 255 255 255 255]
+          (Color 255 255 255 255) Nothing Nothing]
         right        = [DynData
           (x' + (2*w'),  y' + h')       (0.5,       h' - 0.5)  107 (8,29)
-          $ Color 255 255 255 255]
+          (Color 255 255 255 255) Nothing Nothing]
         left         = [DynData
           (x',           y' + h')       (0.5,       h' - 0.5)  107 (6,29)
-          $ Color 255 255 255 255]
+          (Color 255 255 255 255) Nothing Nothing]
         fill         = [DynData
           (x' + w',      y' + h')       (w' - 0.5,  h' - 0.5)  107 (10,29)
-          $ Color 255 255 255 255]
+          (Color 255 255 255 255) Nothing Nothing]
         textBoxTL    = [DynData
           (x'',          y'' + (2*h'')) (0.5,       0.5)       108 (8,2)
-          $ Color 255 255 255 255]
+          (Color 255 255 255 255) Nothing Nothing]
         textBoxTR    = [DynData
           (x'' + (2*w''),y'' + (2*h'')) (0.5,       0.5)       108 (12,2)
-          $ Color 255 255 255 255]
+          (Color 255 255 255 255) Nothing Nothing]
         textBoxBL    = [DynData
           (x'',          y'')           (0.5,       0.5)       108 (8,4)
-          $ Color 255 255 255 255]
+          (Color 255 255 255 255) Nothing Nothing]
         textBoxBR    = [DynData
           (x'' + (2*w''),y'')           (0.5,       0.5)       108 (12,4)
-          $ Color 255 255 255 255]
+          (Color 255 255 255 255) Nothing Nothing]
         textBoxTop   = [DynData
           (x'' + w'',    y'' + (2*h'')) (w'' - 0.5, 0.5)       108 (10,2)
-          $ Color 255 255 255 255]
+          (Color 255 255 255 255) Nothing Nothing]
         textBoxBot   = [DynData
           (x'' + w'',    y'')           (w'' - 0.5, 0.5)       108 (10,4)
-          $ Color 255 255 255 255]
+          (Color 255 255 255 255) Nothing Nothing]
         textBoxR     = [DynData
           (x'' + (2*w''),y'' + h'')     (0.5,       h'' - 0.5) 108 (12,3)
-          $ Color 255 255 255 255]
+          (Color 255 255 255 255) Nothing Nothing]
         textBoxL     = [DynData
           (x'',          y'' + h'')     (0.5,       h'' - 0.5) 108 (8,3)
-          $ Color 255 255 255 255]
+          (Color 255 255 255 255) Nothing Nothing]
         textBoxFill  = [DynData
           (x'' + w'',    y'' + h'')     (w'' - 0.5, h'' - 0.5) 108 (14,2)
-          $ Color 255 255 255 255]
+          (Color 255 255 255 255) Nothing Nothing]
         checkbox = [DynData (x0 - 0.25,y0 - 2) (0.25,0.25) 108 (10,11)
-                            (Color 255 255 255 255)
+                            (Color 255 255 255 255) Nothing Nothing
                    ,DynData (x0 + 0.25,y0 - 2) (0.25,0.25) 108 (11,11)
-                            (Color 255 255 255 255)
+                            (Color 255 255 255 255) Nothing Nothing
                    ,DynData (x0 - 0.25,y0 - 2.5) (0.25,0.25) 108 (10,12)
-                            (Color 255 255 255 255)
+                            (Color 255 255 255 255) Nothing Nothing
                    ,DynData (x0 + 0.25,y0 - 2.5) (0.25,0.25) 108 (11,12)
-                            (Color 255 255 255 255)]
+                            (Color 255 255 255 255) Nothing Nothing]
         -- 0 values are a basic cast
         (x0,y0) = (realToFrac x, realToFrac y)
         -- prime values locate the outer box
@@ -229,7 +251,7 @@ genericPopup x y w h = topleft ⧺ toprightbk ⧺ topright ⧺ bottomleft
 -- | generates dynamic buffer for a map
 genMapDyns ∷ Buff → Window → Buff
 genMapDyns buffs w = setTileBuff BuffMap dyns buffs
-  where dyns = Dyns $ newD ⧺ take (ddsSize - length newD) (repeat (DynData (0,0) (0,0) 0 (0,0) (Color 0 0 0 0)))
+  where dyns = Dyns $ newD ⧺ take (ddsSize - length newD) (repeat (DynData (0,0) (0,0) 0 (0,0) (Color 0 0 0 0) Nothing Nothing))
         newD = genPageMapDyns (winPages w)
         Dyns dds  = buff Map.! BuffMap
         Buff buff = buffs
@@ -249,7 +271,7 @@ genElemMapDyns (we:wes) = pe0 ⧺ genElemMapDyns wes
 --   buffer since the atlas format is different
 genPUTextDyns ∷ [TTFData] → [Popup] → Buff → Buff
 genPUTextDyns ttfdat popups buffs = setTileBuff BuffPUText dyns buffs
-  where dyns = Dyns $ newD ⧺ take (ddsSize - length newD) (repeat (DynData (0,0) (0,0) 0 (0,0) (Color 0 0 0 0)))
+  where dyns = Dyns $ newD ⧺ take (ddsSize - length newD) (repeat (DynData (0,0) (0,0) 0 (0,0) (Color 0 0 0 0) Nothing Nothing))
         newD = genPUTextDynsF ttfdat popups
         Dyns dds  = buff Map.! BuffPUText
         Buff buff = buffs
@@ -290,7 +312,7 @@ setTileBuff ind dyns (Buff buff) = Buff $ Map.adjust (return dyns) ind buff
 genButtDyns ∷ Buff → Window → WinsState → Buff
 genButtDyns buffs win ws = setTileBuff BuffButt dyns buffs
   where dyns = Dyns $ newD ⧺ take (ddsSize - length newD)
-                 (repeat (DynData (0,0) (0,0) 0 (0,0) (Color 0 0 0 0)))
+                 (repeat (DynData (0,0) (0,0) 0 (0,0) (Color 0 0 0 0) Nothing Nothing))
         newD = findPageElemData (winSize win) currPage (winPages win)
         Dyns dds  = buff Map.! BuffButt
         Buff buff = buffs
@@ -307,7 +329,7 @@ findElemData ∷ (Int,Int) → [WinElem] → [DynData]
 findElemData _    []         = []
 findElemData size ((WinElemButt (x,y) col (w,_) _ _ _ _ hov):wes) = case hov of
   True  → [dyn] ⧺ findElemData size wes
-            where dyn     = DynData pos' box' 107 (4,2) col
+            where dyn     = DynData pos' box' 107 (4,2) col Nothing Nothing
                   (x',y') = (realToFrac x, realToFrac y)
                   w'      = realToFrac w
                   pos'    = ((2*x') - xNorm + w', (-2*y') + yNorm + 0.1)
@@ -322,7 +344,7 @@ genTextDyns ∷ [TTFData] → Window → WinsState → Buff → Buff
   -- there should be a haskell extension to allow currying here
 genTextDyns ttfdat win ws buffs = setTileBuff BuffText dyns buffs
   where dyns = Dyns $ newD ⧺ take (ddsSize - length newD)
-                 (repeat (DynData (0,0) (0,0) 0 (0,0) (Color 0 0 0 0)))
+                 (repeat (DynData (0,0) (0,0) 0 (0,0) (Color 0 0 0 0) Nothing Nothing))
         newD = findPagesText ttfdat (winSize win) currPage (winPages win)
         Dyns dds  = buff Map.! BuffText
         Buff buff = buffs
@@ -333,7 +355,7 @@ genTextDyns ttfdat win ws buffs = setTileBuff BuffText dyns buffs
 genErrDyns ∷ [TTFData] → Buff → Buff
 genErrDyns ttfdat buffs = setTileBuff BuffText dyns buffs
   where dyns = Dyns $ newD ⧺ take (ddsSize - length newD)
-                 (repeat (DynData (0,0) (0,0) 0 (0,0) (Color 0 0 0 0)))
+                 (repeat (DynData (0,0) (0,0) 0 (0,0) (Color 0 0 0 0) Nothing Nothing))
         newD  = calcTextDD (Color 255 255 255 255) ttfdat pos' "blop"
         pos'  = (0,0)
         Dyns dds  = buff Map.! BuffText
@@ -433,7 +455,7 @@ genStrDDs col ttfdat x0 (x,y) (ch:str)   = dd
                Just (TTFData _ chInd (GlyphMetrics chW chH chX chY chA))
                  → [DynData (realToFrac(x + (2*chX) + chW)
                  , realToFrac(y + (2*chY) - chH - 0.1))
-                   (realToFrac chW,realToFrac chH) chInd (0,0) col]
+                   (realToFrac chW,realToFrac chH) chInd (0,0) col Nothing Nothing]
                    ⧺ genStrDDs col ttfdat x0 (x + (2*chA),y) str
 
 -- | returns a string summarising the buffer situation

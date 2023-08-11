@@ -30,6 +30,7 @@ import Prog.Data
     ( Env(..),
       LoopControl(..),
       ReloadState(RSRecreate, RSNULL),
+      DynReloadState(DRSNULL, DRSReload),
       State(..) )
 import Prog.Event ( processEvents )
 import Prog.Foreign ( mallocRes, newArrayRes )
@@ -76,6 +77,7 @@ import Vulk.Trans
       transDynBufferInfo,
       transObjBufferInfo,
       transTexBufferInfo,
+      nullTrans,
       updateTransDyn,
       updateTransObj,
       updateTransTex )
@@ -264,12 +266,14 @@ vulkLoop (VulkanLoopData (GQData pdev dev commandPool _) queues scsd0
     shouldExit ← loadLoop window $ do
       cmdBP ← genCommandBuffs dev pdev commandPool queues graphicsPipeline
                 renderPass texData swapInfo framebuffers descriptorSets
-      modify $ \s → s { stReload = RSNULL }
+      modify $ \s → s { stReload = RSNULL
+                      , stDynReload = DRSReload }
       -- main loop runs draw loop and trans functions
       shouldLoad ← glfwMainLoop window $ do
         env      ← ask
         dynData' ← liftIO . atomically $ readTVar (envDyns env)
         cam'     ← liftIO . atomically $ readTVar (envCam env)
+        dynsreload ← gets stDynReload
         let Dyns dynData = case dynData' of
                              Nothing → Dyns []
                              Just d0 → d0
@@ -278,27 +282,27 @@ vulkLoop (VulkanLoopData (GQData pdev dev commandPool _) queues scsd0
             cam = case cam' of
                     Nothing → (0,0,-1)
                     Just c0 → c0
-            rdata =
-              RenderData { dev
-                         , swapInfo
-                         , queues
-                         , imgIndexPtr
-                         , frameIndexRef
-                         , renderFinishedSems
-                         , imageAvailableSems
-                         , inFlightFences
-                         , cmdBuffersPtr = cmdBP
-                         , memories = transObjMemories
-                         , dynMemories = transDynMemories
-                         , texMemories = transTexMemories
-                         , memoryMutator = updateTransObj cam dev
-                                             (swapExtent swapInfo)
-                         , dynMemoryMutator = updateTransDyn nDynsData
-                                                dynData dev
-                                                (swapExtent swapInfo)
-                         , texMemoryMutator = updateTransTex nDynsData
-                                                dynData dev
-                                                (swapExtent swapInfo) }
+            -- updating the dyns and texs is sorta slow so only when we need
+            rdata = RenderData { dev
+                               , swapInfo
+                               , queues
+                               , imgIndexPtr
+                               , frameIndexRef
+                               , renderFinishedSems
+                               , imageAvailableSems
+                               , inFlightFences
+                               , cmdBuffersPtr = cmdBP
+                               , memories = transObjMemories
+                               , dynMemories = transDynMemories
+                               , texMemories = transTexMemories
+                               , memoryMutator = updateTransObj cam dev
+                                                   (swapExtent swapInfo)
+                               , dynMemoryMutator = updateTransDyn nDynsData
+                                                      dynData dev
+                                                      (swapExtent swapInfo)
+                               , texMemoryMutator = updateTransTex nDynsData
+                                                      dynData dev
+                                                      (swapExtent swapInfo) }
         liftIO GLFW.pollEvents
         -- khr out of date usually when window is resized
         needRecreation ← if sizeChangedInside

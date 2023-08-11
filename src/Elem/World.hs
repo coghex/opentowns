@@ -22,17 +22,31 @@ genTileDynsRow ∷ (Int,Int) → Int → ([MapTile],Int) → [DynData]
 genTileDynsRow size l (row,j) = reverse $ map (genTileDynsSpot size l j) $ zip row [0..]
 genTileDynsSpot ∷ (Int,Int) → Int → Int → (MapTile,Int) → DynData
 genTileDynsSpot (_,_) _ _ (MapTile 0 _,_)
-  = DynData (0,0) (1,1) 0 (0,0) (Color 0 0 0 0)
+  = DynData pos scale tex tind color Nothing Nothing
+      where color = Color 0 0 0 0
+            tind  = (0,0)
+            tex   = 0
+            pos   = (0,0)
+            scale = (1,1)
+            --dataF = texDynDataFrame color tind tex
+            --texDF = dynDataFrame pos scale
+
 genTileDynsSpot (w,_) l j (MapTile t _,i) = DynData
-  (i'',j'')
-  (1,1) 110 (indexTerrain t) (Color 255 255 255 255)
-  where i'' = (i' + j') - (w' - 1)
-        j'' = (0.5*i' - 0.5*j') + l'
-        i'  = fromIntegral i
-        j'  = fromIntegral j
-        w'  = fromIntegral w
-        l'  = fromIntegral l
+  pos scale tex tind color Nothing Nothing
+  where i''   = (i' + j') - (w' - 1)
+        j''   = (0.5*i' - 0.5*j') + l'
+        i'    = fromIntegral i
+        j'    = fromIntegral j
+        w'    = fromIntegral w
+        l'    = fromIntegral l
 --        h'  = fromIntegral h
+        color = Color 255 255 255 255
+        tex   = 110
+        tind  = indexTerrain t
+        pos   = (i'',j'')
+        scale = (1,1)
+        --dataF = texDynDataFrame color tind tex
+        --texDF = dynDataFrame pos scale
 indexTerrain ∷ Int → (Int,Int)
 indexTerrain 1 = (12,0)
 indexTerrain 2 = (14,0)
@@ -98,7 +112,7 @@ genCardsRow (_,tA,tB,tN,tS,tE,tW) = Cards3D (san tN) (san tS)
 genMapTiles ∷ MapSettings → MapTiles
 genMapTiles (MapSettings _ MapNormal _) = MapTiles (j,k) [tiles j k 1 1]
   where tiles x y i c = take x $ repeat $ take y $ repeat $ MapTile i c
-        (j,k)         = (100,100)
+        (j,k)         = (200,200)
         testbuff      = take 9  $ repeat $ take 10 $ repeat $ MapTile 1 0
         testrow       = take 9  $ repeat $ MapTile 0 0
         testspot      = MapTile 2 2

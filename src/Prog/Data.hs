@@ -1,4 +1,5 @@
 -- | data for the continuation monad
+{-# LANGUAGE RankNTypes #-}
 module Prog.Data where
 -- the state is
 import Prelude()
@@ -14,8 +15,8 @@ import Sign.Data ( Event, TState )
 import Sign.Except ( ProgExcept )
 import Sign.Queue ( Queue, TChan )
 import Sign.Var ( TVar )
-import Vulk.Data ( Verts )
 import Vulk.Font ( TTFData )
+import Vulk.Data ( Verts )
 import qualified Vulk.GLFW as GLFW
 
 -- | specific utility actions
@@ -48,24 +49,29 @@ data State = State { stStatus   ∷ ProgExcept
                                     → Logger.LogLevel → Logger.LogStr
                                     → IO ()
                    -- | the main glfw object
-                   , stWindow   ∷ !(Maybe GLFW.Window)
+                   , stWindow    ∷ !(Maybe GLFW.Window)
                    -- | reloads or recreates the swapchain when needed
-                   , stReload   ∷ !ReloadState
+                   , stReload    ∷ !ReloadState
+                   -- | reloads the textures if they were dynamically changed
+                   , stDynReload ∷ !DynReloadState
                    -- | number of textures added on top of default
-                   , stNDefTex  ∷ !Int
+                   , stNDefTex   ∷ !Int
                    -- | user settings
-                   , stSettings ∷ !Settings
+                   , stSettings  ∷ !Settings
                    -- | user inputs kept strictly
-                   , stInput    ∷ !InputState
+                   , stInput     ∷ !InputState
                    -- | current window size
-                   , stWinSize  ∷ !(Int,Int)
+                   , stWinSize   ∷ !(Int,Int)
                    -- | variables for FPS calculation
-                   , stStartT   ∷ !SystemTime
-                   , stFPS      ∷ !FPS
-                   , stTick     ∷ !(Maybe Double) }
+                   , stStartT    ∷ !SystemTime
+                   , stFPS       ∷ !FPS
+                   , stTick      ∷ !(Maybe Double) }
 
 -- | defines if we want to reload everything and how
 data ReloadState = RSReload | RSRecreate | RSNULL deriving (Show, Eq)
+
+-- | defines what dynamic data must be reloaded
+data DynReloadState = DRSReload | DRSNULL deriving (Show, Eq)
 
 -- | defines some user alterable settings
 data Settings = Settings { sKeyLayout            ∷ KeyMap

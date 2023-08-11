@@ -8,6 +8,7 @@ module Vulk.VulkDraw where
 import Prelude()
 import UPrelude
 import Control.Monad (forM_, replicateM)
+import Control.Monad.State.Class ( modify )
 import Foreign.Ptr (castPtr)
 import Graphics.Vulkan
 import Graphics.Vulkan.Core_1_0
@@ -17,7 +18,7 @@ import Graphics.Vulkan.Marshal.Create
 import Graphics.Vulkan.Marshal.Create.DataFrame ( setVec )
 import Numeric.DataFrame ( Vector4(vec4) )
 import Prog ( MonadIO(liftIO), MonadState(get), Prog )
-import Prog.Data ( State(stStatus) )
+import Prog.Data ( State(stStatus, stDynReload), DynReloadState(..) )
 import Prog.Foreign
     ( allocaPeek,
       mallocArrayRes,
@@ -184,6 +185,7 @@ drawFrame RenderData{..} = do
   runVk $ vkAcquireNextImageKHR dev swapchain maxBound
     imageAvailable VK_NULL_HANDLE imgIndexPtr
   imgIndex ← fromIntegral ⊚ peek imgIndexPtr
+  st ← get
   let bufPtr  = cmdBuffersPtr `ptrAtIndex` imgIndex
       memPtr  = memories `ptrAtIndex` imgIndex
       dmemPtr = dynMemories `ptrAtIndex` imgIndex
@@ -194,6 +196,12 @@ drawFrame RenderData{..} = do
   dynMemoryMutator dmem
   tmem ← peek tmemPtr
   texMemoryMutator tmem
+  --case stDynReload st of
+  --  DRSNULL → return ()
+  --  DRSReload → do
+  --    modify $ \s → s { stDynReload = DRSNULL }
+  --    tmem ← peek tmemPtr
+  --    texMemoryMutator tmem
   let submitInfo = [ createVk @VkSubmitInfo
           $  set @"sType" VK_STRUCTURE_TYPE_SUBMIT_INFO
           &* set @"pNext" VK_NULL
@@ -219,6 +227,5 @@ drawFrame RenderData{..} = do
   liftIO $ atomically $ writeTVar frameIndexRef
     $ (frameIndex + 1) `mod` _MAX_FRAMES_IN_FLIGHT
   withVkPtr presentInfo $ runVk ∘ vkQueuePresentKHR presentQueue
-  st ← get
   return $ testEx (stStatus st) VK_SUBOPTIMAL_KHR
   --(≡ VK_SUBOPTIMAL_KHR) ∘ currentStatus ⊚ get

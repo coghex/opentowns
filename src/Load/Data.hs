@@ -10,6 +10,7 @@ import Data ( Color (..), PrintArg(..), FPS(..), LoadState(..), Cardinal(..)
             , Key(..), MapType(..), MapTiles(..), MapSettings(..) )
 import Elem.Data ( WinElem(..), Button(..), InputAct(..) )
 import Luau.Data ( Window(..), Page(..) )
+import Numeric.DataFrame ( Mat44f )
 
 -- | result of the loading thread
 data LoadResult = ResSuccess | ResError String
@@ -123,6 +124,8 @@ data DynData = DynData { ddPos     ∷ (Float,Float)
                        , ddTex     ∷ Int
                        , ddTIndex  ∷ (Int,Int)
                        , ddColor   ∷ Color
+                       , ddDataF   ∷ Maybe Mat44f
+                       , ddTexDF   ∷ Maybe Mat44f
                        } deriving (Show, Eq)
 
 -- | mapping of buffer to tiles, this could be used

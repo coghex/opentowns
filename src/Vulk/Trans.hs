@@ -56,6 +56,10 @@ newtype DynTransObject = DynTransObject
   } deriving (Show, Generic)
 instance PrimBytes DynTransObject
 
+-- | null transformation function
+nullTrans ∷ VkDeviceMemory → Prog ε σ ()
+nullTrans _ = return ()
+
 -- | the global transformation object is updated, at the moment it
 --   never changes, and only defines the general camera position
 updateTransObj ∷ (Double,Double,Double) → VkDevice → VkExtent2D
@@ -99,15 +103,18 @@ updateTransDyn nDyn dyns device _      uniBuf = do
   let updateTransDynFunc ∷ Int → [DynData] → Ptr α → Prog ε σ ()
       updateTransDynFunc _    []       _        = return ()
       updateTransDynFunc nDyn0 (dd:dds) uboPtr0 = do
-        let move = DF4
-              (DF4 w 0 0 0)
-              (DF4 0 h 0 0)
-              (DF4 0 0 1 0)
-              (DF4 x y 0 1)
-            (x ,y)  = (realToFrac x', realToFrac y')
-            (x',y') = ddPos dd
-            (w ,h)  = (realToFrac w', realToFrac h')
-            (w',h') = ddScale dd
+        let move = case ddDataF dd of
+                      Just dataf0 → dataf0
+                      Nothing     → dynDataFrame (ddPos dd) (ddScale dd)
+--        let move = DF4
+--              (DF4 w 0 0 0)
+--              (DF4 0 h 0 0)
+--              (DF4 0 0 1 0)
+--              (DF4 x y 0 1)
+--            (x ,y)  = (realToFrac x', realToFrac y')
+--            (x',y') = ddPos dd
+--            (w ,h)  = (realToFrac w', realToFrac h')
+--            (w',h') = ddScale dd
             nDyn0'  = nDyn0 - 1
         poke (plusPtr (castPtr uboPtr0)
           (nDyn0'*bSizeOf @DynTransObject undefined))
@@ -115,6 +122,16 @@ updateTransDyn nDyn dyns device _      uniBuf = do
         updateTransDynFunc nDyn0' dds uboPtr0
   updateTransDynFunc nDyn dyns uboPtr
   liftIO $ vkUnmapMemory device uniBuf
+
+-- | construct datafram for dyn data
+dynDataFrame ∷ (Float,Float) → (Float,Float) → Mat44f
+dynDataFrame (x',y') (w',h') = DF4
+    (DF4 w 0 0 0)
+    (DF4 0 h 0 0)
+    (DF4 0 0 1 0)
+    (DF4 x y 0 1)
+  where (x ,y)  = (realToFrac x', realToFrac y')
+        (w ,h)  = (realToFrac w', realToFrac h')
 
 -- | updates the texture data allowing us to cycle through textures
 --   on the same vertex data, we use this matrix for other data too
@@ -128,17 +145,20 @@ updateTransTex nDyn dyns device _      uniBuf = do
   let updateTransTexFunc ∷ Int → [DynData] → Ptr α → Prog ε σ ()
       updateTransTexFunc _     []       _       = return ()
       updateTransTexFunc nDyn0 (dd:dds) uboPtr0 = do
-        let dtexi = DF4
-              (DF4 1 0 0 r)
-              (DF4 0 1 0 g)
-              (DF4 0 0 1 b)
-              (DF4 x y n a)
-            Color r' g' b' a' = ddColor dd
-            (r,g,b,a) = (fromIntegral r', fromIntegral g'
-                        ,fromIntegral b', fromIntegral a')
-            (x ,y)    = (fromIntegral x', fromIntegral y')
-            (x',y')   = ddTIndex dd
-            n         = fromIntegral $ ddTex dd
+        let dtexi = case ddTexDF dd of
+                      Just dataf0 → dataf0
+                      Nothing → texDynDataFrame (ddColor dd) (ddTIndex dd) (ddTex dd)
+ --                     Nothing → DF4
+ --                       (DF4 1 0 0 r)
+ --                       (DF4 0 1 0 g)
+ --                       (DF4 0 0 1 b)
+ --                       (DF4 x y n a)
+ --           Color r' g' b' a' = ddColor dd
+ --           (r,g,b,a) = (fromIntegral r', fromIntegral g'
+ --                       ,fromIntegral b', fromIntegral a')
+ --           (x ,y)    = (fromIntegral x', fromIntegral y')
+ --           (x',y')   = ddTIndex dd
+ --           n         = fromIntegral $ ddTex dd
             nDyn0'    = nDyn0 - 1
         poke (plusPtr (castPtr uboPtr0)
           (nDyn0'*bSizeOf @DynTexTransObject undefined))
@@ -146,6 +166,18 @@ updateTransTex nDyn dyns device _      uniBuf = do
         updateTransTexFunc nDyn0' dds uboPtr0
   updateTransTexFunc nDyn dyns uboPtr
   liftIO $ vkUnmapMemory device uniBuf
+
+-- | constructs dataframe for tex data
+texDynDataFrame ∷ Color → (Int,Int) → Int → Mat44f
+texDynDataFrame (Color r' g' b' a') (x',y') n' = DF4
+    (DF4 1 0 0 r)
+    (DF4 0 1 0 g)
+    (DF4 0 0 1 b)
+    (DF4 x y n a)
+    where (x,y)     = (fromIntegral x', fromIntegral y')
+          n         = fromIntegral n'
+          (r,g,b,a) = (fromIntegral r', fromIntegral g'
+                      ,fromIntegral b', fromIntegral a')
 
 -- | initialization of the trans object buffers
 createTransObjBuffers ∷ VkPhysicalDevice → VkDevice → Int

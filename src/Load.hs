@@ -169,7 +169,7 @@ processCommand glfwwin ds cmd = case cmd of
     where newBuff = setTileBuff ind newDyns (dsBuff ds)
           oldBuff = dsBuff ds
           newDyns = Dyns $ take size $ repeat
-                      $ DynData (0,0) (1,1) 0 (0,0) (Color 0 0 0 0)
+                      $ DynData (0,0) (1,1) 0 (0,0) (Color 0 0 0 0) Nothing Nothing
   LoadCmdInitBuff _ → do
     log' (LogDebug 3) "LoadCmdInitBuff"
     return $ ResSuccess

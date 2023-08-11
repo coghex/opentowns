@@ -63,3 +63,4 @@ data SwapchainSupportDetails = SwapchainSupportDetails
   , formats      ∷ [VkSurfaceFormatKHR]
   , presentModes ∷ [VkPresentModeKHR]
   } deriving (Eq, Show)
+
