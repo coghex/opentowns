@@ -273,31 +273,32 @@ processInputSideEffects env is = do
         atomically $ writeTVar (envCam env) (Just (0,0,-1))
         return is
       Just (x,y,z) → do
-        let xd      = x - (x * 0.1)
-            yd      = y - (y * 0.1)
-            (i,j)   = keyAccel keyst
-            (i',j') = case keyst of
+        let (i,j)     = keyAccel keyst
+            (i',j')   = case keyst of
               ISKeys True  True  True  True  _ → (0,0)
-              ISKeys False True  True  True  _ → (0,jd+1.0)
-              ISKeys True  False True  True  _ → (id-1.0,0)
-              ISKeys True  True  False True  _ → (0,jd-1.0)
-              ISKeys True  True  True  False _ → (id+1.0,0)
-              ISKeys False False True  True  _ → (id-0.5,jd+0.5)
-              ISKeys False True  False True  _ → (0,jd)
-              ISKeys False True  True  False _ → (id+0.5,jd+0.5)
-              ISKeys True  False False True  _ → (id-0.5,jd-0.5)
-              ISKeys True  False True  False _ → (id,0)
-              ISKeys True  True  False False _ → (id+0.5,jd-0.5)
-              ISKeys True  False False False _ → (0,jd-1.0)
-              ISKeys False True  False False _ → (i+1.0,0)
-              ISKeys False False True  False _ → (0,jd+1.0)
-              ISKeys False False False True  _ → (i-1.0,0)
-              ISKeys False False False False _ → (id,jd)
-            (x',y') = (x+i',y+j')
-            id      = i-(0.1*i)
-            jd      = j-(0.1*j)
-            is'     = is { keySt = (keySt is) { keyAccel = (i',j') } }
+              ISKeys False True  True  True  _ → (0,jdec+step)
+              ISKeys True  False True  True  _ → (idec-step,0)
+              ISKeys True  True  False True  _ → (0,jdec-step)
+              ISKeys True  True  True  False _ → (idec+step,0)
+              ISKeys False False True  True  _ → (idec-step',jdec+step')
+              ISKeys False True  False True  _ → (0,jdec)
+              ISKeys False True  True  False _ → (idec+step',jdec+step')
+              ISKeys True  False False True  _ → (idec-step',jdec-step')
+              ISKeys True  False True  False _ → (idec,0)
+              ISKeys True  True  False False _ → (idec+step',jdec-step')
+              ISKeys True  False False False _ → (idec,jdec-step)
+              ISKeys False True  False False _ → (idec+step,jdec)
+              ISKeys False False True  False _ → (idec,jdec+step)
+              ISKeys False False False True  _ → (idec-step,jdec)
+              ISKeys False False False False _ → (idec,jdec)
+            (x',y')   = (x+i'',y+j'')
+            idec      = 0.99*i
+            jdec      = 0.99*j
+            step      = 0.05
+            step'     = 0.03
+            (i'',j'') = (if abs i' < 0.005 then 0 else i', if abs j' < 0.005 then 0 else j')
+            is'       = is { keySt = (keySt is) { keyAccel = (i'',j'') } }
         atomically $ writeTVar (envCam env) (Just (x',y',z))
         atomically $ writeQueue (envEventQ env)
-          $ EventInputState $ ISCAccelerate (i',j')
+          $ EventInputState $ ISCAccelerate (i'',j'')
         return is'
