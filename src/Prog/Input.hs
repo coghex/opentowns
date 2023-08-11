@@ -56,7 +56,7 @@ runInputLoop env win inpSt0 keyMap0 TStart = do
             Just x  → return x
   inpSt1 ← processLoadMouse env win inpSt0
   (inpSt2,keyMap1) ← processLoadInputs env win inpSt1 keyMap0
-  processInputSideEffects env inpSt2
+  inpSt3 ← processInputSideEffects env inpSt2
   end ← getCurrentTime
   let diff  = diffUTCTime end start
       usecs = floor (toRational diff * 1000000) ∷ Int
@@ -64,7 +64,7 @@ runInputLoop env win inpSt0 keyMap0 TStart = do
   if delay > 0
     then threadDelay delay
     else return ()
-  runInputLoop env win inpSt2 keyMap1 tsNew
+  runInputLoop env win inpSt3 keyMap1 tsNew
 -- pause not needed for this timer
 runInputLoop _ _ _ _ TPause = return ()
 runInputLoop _ _ _ _ TNULL  = return ()
@@ -261,14 +261,17 @@ processLoadInput env win inpSt keymap inp = case inp of
     return ResInpSuccess
   InpActNULL             → return ResInpSuccess
 
--- execute side effects of input state
-processInputSideEffects ∷ Env → InputState → IO ()
+-- execute side effects of input state, despite its name it atually creates
+-- non-side effects
+processInputSideEffects ∷ Env → InputState → IO (InputState)
 processInputSideEffects env is = do
   -- change camera acceleration
   camChan ← atomically $ readTVar (envCam env)
   let keyst   = keySt is
   case camChan of
-      Nothing      → atomically $ writeTVar (envCam env) (Just (0,0,-1))
+      Nothing      → do
+        atomically $ writeTVar (envCam env) (Just (0,0,-1))
+        return is
       Just (x,y,z) → do
         let xd      = x - (x * 0.1)
             yd      = y - (y * 0.1)
@@ -293,7 +296,8 @@ processInputSideEffects env is = do
             (x',y') = (x+i',y+j')
             id      = i-(0.1*i)
             jd      = j-(0.1*j)
+            is'     = is { keySt = (keySt is) { keyAccel = (i',j') } }
         atomically $ writeTVar (envCam env) (Just (x',y',z))
         atomically $ writeQueue (envEventQ env)
           $ EventInputState $ ISCAccelerate (i',j')
-  return ()
+        return is'

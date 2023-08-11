@@ -51,10 +51,14 @@ loadDyns ds = Dyns $ genDynDataFrames $ reverse $ loadDynData ds $ dsTiles ds
 -- | creates the corresponding data frame for each dyndata
 genDynDataFrames ∷ [DynData] → [DynData]
 genDynDataFrames [] = []
-genDynDataFrames ((DynData pos scale tex texi color _ _):dds)
+genDynDataFrames ((DynData pos scale tex texi color dataF' texDF'):dds)
   = DynData pos scale tex texi color dataF texDF : genDynDataFrames dds
-      where dataF = Just $ dynDataFrame pos scale
-            texDF = Just $ texDynDataFrame color texi tex
+      where dataF = case dataF' of
+                      Nothing → Just $ dynDataFrame pos scale
+                      df0     → df0
+            texDF = case texDF' of
+                      Nothing → Just $ texDynDataFrame color texi tex
+                      df1     → df1
 
 loadDynData ∷ DrawState → [Tile] → [DynData]
 loadDynData _  []            = []
